@@ -1,7 +1,7 @@
 # core — 共享库（WP-01 / WP-02 / WP-02E）
 
 被所有 `exp/*` 复用的三件套：STFT/ISTFT 工具、损失函数库、mini 评估。
-单测：`pytest tests -q`（35 项，全绿，float64 对拍误差 <1e-10）。
+单测：`pytest tests -q`（80 项，全绿，float64 对拍误差 <1e-10）。
 
 ## WP-01 STFT/ISTFT（`stft.py` / `istft.py`）
 

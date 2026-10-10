@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "avsuite"
+version = "1.0.0"
+description = "车载语音前端全链路：语音增强 / AEC / 端侧部署（求职技术攻关 monorepo）"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+
+[tool.setuptools]
+packages = ["core"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+# 与仓内既有风格一致：允许 exp 内的 sys.path 直插（E402 在文件头已 noqa 处理）
+src = ["."]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+# E501 行宽交给 formatter；E402 module-level-import-not-at-top 在 exp 直插 sys.path 场景放宽
+ignore = ["E501", "E402"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B011"]           # 测试里允许 assert False 类
+"exp/*/train.py" = ["B008"]
+"notebooks/*" = ["E", "F", "W", "B"]   # notebook 不参与 lint
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

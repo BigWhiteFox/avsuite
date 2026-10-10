@@ -1,0 +1,60 @@
+site_name: avsuite — 车载语音前端全链路
+site_description: 语音增强 / AEC / 端侧部署 求职攻关文档站
+theme:
+  name: material
+  language: zh
+  palette:
+    primary: deep blue
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - content.action.view
+
+markdown_extensions:
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.arithmatex:
+      generic: true
+  - admonition
+  - tables
+  - toc:
+      permalink: true
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+nav:
+  - 首页: index.md
+  - 30秒看懂: README_HOME.md
+  - 学习与面试:
+      - 学习路径（10天）: LEARNING.md
+      - 项目一页纸（90秒）: STORY.md
+      - 数字速查: CHEATSHEET.md
+      - 指标权威口径: NUMBERS.md
+  - 设计决策（ADR）:
+      - ADR 索引: adr/README.md
+      - 0001 DTD 相干判据: adr/0001-dtd-mic-vs-yecho-coherence.md
+      - 0002 全NN vs 级联: adr/0002-fullnn-vs-cascade-aec.md
+      - 0003 静态INT8崩坏: adr/0003-gtcrn-static-int8-collapse.md
+      - 0004 复数vs实数: adr/0004-dccrn-real-vs-complex.md
+  - 模块面试稿:
+      - 索引: INTERVIEW.md
+      - WP01 STFT: INTERVIEW-WP01-STFT.md
+      - WP02 损失: INTERVIEW-WP02-losses.md
+      - WP02E 评估: INTERVIEW-WP02E-eval.md
+      - WP03 CRN: INTERVIEW-WP03-CRN.md
+      - WP04 DCCRN: INTERVIEW-WP04-DCCRN.md
+      - WP05a GTCRN/ONNX: INTERVIEW-WP05a-GTCRN-ONNX.md
+      - WP06 传统AEC: INTERVIEW-WP06-tradAEC.md
+      - WP07 NN-AEC: INTERVIEW-WP07-NNAEC.md
+      - WP07D AEC数据: INTERVIEW-WP07D-AEC-data.md
+      - WP10.5 Capstone: INTERVIEW-WP10.5-capstone.md
+      - WP11 TSE: INTERVIEW-WP11-TSE.md
+  - 验收报告: ACCEPTANCE.md
+
+docs_dir: docs

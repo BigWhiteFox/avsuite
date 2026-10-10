@@ -25,3 +25,6 @@ outputs/
 build/
 *.dll
 *.exe
+
+# 文档站构建产物（mkdocs）
+site/

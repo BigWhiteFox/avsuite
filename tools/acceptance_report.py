@@ -169,7 +169,7 @@ def main():
             f"**NN {ne}**（Δ vs 传统 {round(ne-te,3) if isinstance(ne,float) and isinstance(te,float) else '—'}，"
             f"DoD +0.3 {'✅' if isinstance(ne,float) and isinstance(te,float) and ne-te >= 0.3 else '⚠️'}）")
         add(f"- DT deg_mos：原始 mic {jpick(raw, 'dt', 'deg_mos')} → 传统 {td} → NN {nd}"
-            f"{'（近端保真 ⚠️ 仍欠训，续训空间见 README）' if isinstance(nd,float) and isinstance(td,float) and nd < td else ' ✅'}")
+            f"{'（近端保真 ⚠️ 结构性瓶颈（非欠训，五变体探索矩阵见 exp/07 README 与 docs/adr/））' if isinstance(nd,float) and isinstance(td,float) and nd < td else ' ✅'}")
     else:
         add("- 待生成")
     add("")

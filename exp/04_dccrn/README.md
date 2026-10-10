@@ -61,25 +61,29 @@ val loss（复数谱 MSE + 0.1×SI-SNR）：-1.269（epoch ~94 best，全程无�
 
 | 测试集 | PESQ(wb) | STOI | SI-SNR | 带噪基线 |
 |---|---|---|---|---|
-| **DNS2020 官方 devtest**（synthetic_no_reverb 150 条） | **2.161** | 0.938 | 15.50 | 1.582 / 0.915 / 9.23 |
+| **DNS2020 官方 devtest**（synthetic_no_reverb 150 条，源 `outputs/eval/dccrn/summary_devtest.json`） | **2.1811** | 0.9384 | 15.61 | 1.582 / 0.915 / 9.23 |
 | DNS 素材自混 held-out（100 条，SNR U(-5,15)，seed 777） | 1.787 | 0.877 | 12.34 | 1.310 / 0.832 / 4.55 |
+| （历史 run，早期口径） | 2.161 | — | — | — |
+
+> 主结果以 `outputs/eval/dccrn/summary_devtest.json` 为准（devtest 150 条口径）；
+> 2.161 为早期 run 的历史值，仅作存档，不再作为主结果引用。
 
 **DoD 判定：未达 2.6，走 WORKLIST 降级路径**（趋势复现 + 差距分析）：
-- 趋势成立：官方 devtest 上 +0.58 PESQ / +6.3dB SI-SNR，方向与论文一致
+- 趋势成立：官方 devtest 上 +0.60 PESQ / +6.4dB SI-SNR，方向与论文一致
 - 差距分析（按影响排序）：
   1. **训练量 ~4%**：18.7K steps（100ep×187 步）vs 官方配方 500K+ steps——
      val 曲线仍在缓降，纯粹没喂饱；续训 `--resume outputs/dccrn/last.ckpt` 即可
   2. **模型压缩**：通道 [32,64,96,128] vs 官方 [32,64,128,256]（我们 3.99M≈官方
      3.71M 是靠 CLSTM hidden 64 省的，卷积容量小于官方）
   3. **数据子集**：DNS clean 10k 条 vs 官方全量（含增广配方差异）
-- 消融待跑：`--no-dm`（静态混合对照）与 `--real-conv`（复数运算价值）各 ~1h，
-  跑完回填下表
+- 消融已回填：`--no-dm`（静态混合对照）与 `--real-conv`（复数运算价值）均已实测，
+  见下表；real-conv 反直觉 ≥ 复数，归因分析见 `docs/adr/0004-dccrn-real-vs-complex.md`
 
 | 消融 | devtest PESQ | 备注 |
 |---|---|---|
-| DCCRN+DM（默认） | 2.161 | 已测 |
-| 静态混合 --no-dm | 待跑 | DM 价值量化 |
-| 实数卷积 --real-conv | 待跑 | 复数运算价值 |
+| DCCRN+DM（默认，主） | **2.1811** | 已测（源 `outputs/eval/dccrn/summary_devtest.json`） |
+| 静态混合 --no-dm | 2.0151 | 已测；DM 价值 ≈ +0.17 PESQ |
+| 实数卷积 --real-conv | 2.1898 | 已测；反直觉：实数 ≥ 复数（参数约 2×），归因见 `docs/adr/0004-dccrn-real-vs-complex.md` |
 
 ## 降级路径（WORKLIST 预案）
 PESQ 2.4-2.5 → 固定测试集趋势复现 + 完整消融 + 差距分析（DM 细节/训练时长/
