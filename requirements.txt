@@ -9,6 +9,7 @@ pystoi>=0.4
 matplotlib>=3.7
 pandas>=1.5
 pytest>=7.4
+einops>=0.7           # exp/05a gtcrn.py 模块级 import（缺失会让 CI pytest 收集期直接中断）
 
 # 后续批次启用（已一并装入 avsuite，保证环境一次到位）
 librosa>=0.10        # 批次2+ 数据管道
