@@ -8,6 +8,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -28,4 +30,17 @@ jobs:
           ruff check core exp tools scripts tests
 
       - name: Pytest
-        run: python -m pytest tests -q
+        run: |
+          set -o pipefail
+          python -m pytest tests -q 2>&1 | tee pytest_out.txt
+
+      # 临时调试：失败时把 pytest 输出推到 ci-debug-log 分支（raw 公开可读，便于无 logs API 权限时取日志）
+      - name: Dump pytest log to ci-debug-log branch
+        if: failure()
+        run: |
+          git config user.name "ci-log-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git checkout -B ci-debug-log
+          git add pytest_out.txt
+          git commit -m "ci debug: pytest log [skip ci]"
+          git push --force origin ci-debug-log
