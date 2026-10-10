@@ -1,0 +1,17 @@
+# 批次1 核心依赖（WP-00 定稿，配合 conda env：avsuite / python 3.11）
+# torch 装 CUDA 版：pip install torch --index-url https://download.pytorch.org/whl/cu124
+torch>=2.4
+numpy>=1.24
+scipy>=1.10
+soundfile>=0.12
+pesq>=0.0.4
+pystoi>=0.4
+matplotlib>=3.7
+pandas>=1.5
+pytest>=7.4
+
+# 后续批次启用（已一并装入 avsuite，保证环境一次到位）
+librosa>=0.10        # 批次2+ 数据管道
+onnxruntime>=1.17    # 批次5  ONNX 对拍/量化
+tensorboard>=2.14    # 批次2  训练曲线
+gradio>=4.0          # 批次7  在线 demo

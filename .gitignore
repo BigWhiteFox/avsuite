@@ -1,0 +1,27 @@
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+.venv/
+
+# 训练与中间产物
+runs/
+outputs/
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.parquet
+
+# 本地配置
+.env
+
+# IDE
+.idea/
+.vscode/
+*.log
+build/
+*.dll
+*.exe
