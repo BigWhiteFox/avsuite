@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
+import pytest
 import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -12,6 +13,10 @@ import dccrn_shim as X  # noqa: E402
 DCCRN = X.DCCRN
 complex_nn = X.complex_nn
 dm = X.dynamic_mixing
+
+# 本机 DNS 素材目录（CI 无此数据，相关用例按存在性跳过）
+DNS_CLEAN = Path("D:/data/dns-challenge-mirror/datasets/clean")
+DNS_NOISE = Path("D:/data/dns-challenge-mirror/datasets/noise")
 
 
 def test_complex_conv_matches_complex_algebra():
@@ -110,6 +115,8 @@ def test_mix_at_snr_accuracy():
         assert np.allclose(noisy, c + n_used)
 
 
+@pytest.mark.skipif(not (DNS_CLEAN.exists() and DNS_NOISE.exists()),
+                    reason="需要本机 DNS 素材(CI 跳过)")
 def test_dynamic_mix_levels_and_repro():
     """DM 数据集：响度归一落在 level_range、seed 固定可复现、SNR 在范围内。"""
     ds = dm.DNSDynamicMix(epoch_len=6, seg_sec=1.0, seed=42)

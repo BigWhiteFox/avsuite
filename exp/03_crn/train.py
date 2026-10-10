@@ -129,8 +129,9 @@ def main():
     n_par = sum(p.numel() for p in model.parameters())
     print(f"[model] CRN {args.rnn_type}/{args.mask_type}  {n_par/1e6:.2f}M params -> {device}")
     opt = torch.optim.Adam(model.parameters(), lr=args.lr)
+    # torch>=2.9 移除了 ReduceLROnPlateau 的 verbose 参数（原 verbose=True 仅打印降 lr 日志）
     sched = torch.optim.lr_scheduler.ReduceLROnPlateau(opt, mode="min", factor=0.5,
-                                                       patience=4, verbose=True)
+                                                       patience=4)
     loss_fn = make_loss_fn(args.mask_type, args.si_snr_weight, device)
     tb = SummaryWriter(out / "tb")
 
