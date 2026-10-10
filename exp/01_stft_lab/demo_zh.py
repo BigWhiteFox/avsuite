@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """中文语音 demo（WP-01）：共振峰合成"啊-咿-乌" -> 加噪 -> 谱减增强 -> 指标。
 
 全链路只用 core 自己的组件：STFT -> 幅度谱处理（谱减）-> ISTFT -> evaluate。
@@ -20,7 +19,7 @@ import matplotlib.pyplot as plt  # noqa: E402
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))   # repo root
 from core.evaluate import _safe_pesq, _safe_stoi, _si_snr_np, load16k  # noqa: E402
 from core.istft import ISTFT  # noqa: E402
-from core.stft import STFT, spec_from_2ch, spec_to_2ch  # noqa: E402
+from core.stft import STFT, spec_from_2ch  # noqa: E402
 
 try:
     plt.rcParams["font.sans-serif"] = ["Microsoft YaHei", "SimHei"]
@@ -85,7 +84,8 @@ def main():
     else:
         clean = synth_vowels()
         sf.write(out_dir / "demo_clean.wav", clean, SR)
-    clean_t = torch.from_numpy(clean).unsqueeze(0)
+    # clean_t 未被后续使用（RHS 为纯张量构造无副作用），保留原状豁免 F841
+    clean_t = torch.from_numpy(clean).unsqueeze(0)  # noqa: F841
 
     # 加噪（白噪声，前 0.2s 留作噪声估计窗）
     rng = np.random.default_rng(0)

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """CRN 评估脚本（WP-03）：checkpoint + noisy/clean 目录 -> 增强 wav + 指标 CSV。
 
     python eval.py --ckpt outputs/crm_blstm/best.ckpt \
@@ -17,10 +16,10 @@ import torch
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from core.evaluate import evaluate_dir  # noqa: E402
-
 from dataset import list_pairs  # noqa: E402
 from model import CRN  # noqa: E402
+
+from core.evaluate import evaluate_dir  # noqa: E402
 
 
 def load_model(ckpt_path, device):
@@ -52,7 +51,7 @@ def main():
         pairs = pairs[:args.max_files]
     import soundfile as sf
     with torch.no_grad():
-        for i, (noisy_p, clean_p) in enumerate(pairs):
+        for i, (noisy_p, _clean_p) in enumerate(pairs):
             noisy, _ = sf.read(str(noisy_p), dtype="float32", always_2d=True)
             noisy = torch.from_numpy(noisy.mean(1)).unsqueeze(0).to(device)
             enh = model.enhance_wav(noisy)[0].cpu().numpy()

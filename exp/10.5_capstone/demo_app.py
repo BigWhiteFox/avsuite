@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """全链路 Capstone 演示（WP-10.5）：三级处理效果 Gradio 页。
 
 上传 mic（带回声的麦克风录音）+ far（远端参考）→
@@ -7,12 +6,10 @@
 import sys
 from pathlib import Path
 
-import numpy as np
-
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
-from cascade import Cascade, SR  # noqa: E402
+from cascade import SR, Cascade  # noqa: E402
 
 _session = {"cascade": None, "last": None}
 
@@ -24,8 +21,9 @@ def get_cascade():
 
 
 def load16k(x):
-    import soundfile as sf
     from math import gcd
+
+    import soundfile as sf
     from scipy.signal import resample_poly
     if isinstance(x, (tuple, list)):
         sr_in, y = x

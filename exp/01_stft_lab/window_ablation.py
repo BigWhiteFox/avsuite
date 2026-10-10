@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """窗长(20/32/64ms) × 窗型(hann/hamming/blackman) 消融（WP-01）。
 
 每个配置报告三件事：

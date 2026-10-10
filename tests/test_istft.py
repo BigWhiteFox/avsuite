@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """WP-01 单测：ISTFT 往返重构 + vs torch.istft 对拍。"""
 import pytest
 import torch

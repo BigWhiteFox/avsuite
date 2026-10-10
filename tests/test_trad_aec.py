@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """WP-06 单测：GCC 精度 / NLMS 与 MDF 已知 FIR 辨识 / DTD 判决 / pipeline 端到端 ERLE / RES 门控。"""
 import sys
 from pathlib import Path
@@ -8,7 +7,11 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "exp"))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from trad06 import gcc, dtd as dtd_mod, mdf as mdf_mod, nlms as nlms_mod, pipeline as pipe_mod  # noqa: E402
+from trad06 import dtd as dtd_mod
+from trad06 import gcc  # noqa: E402
+from trad06 import mdf as mdf_mod
+from trad06 import nlms as nlms_mod
+from trad06 import pipeline as pipe_mod
 
 TradAEC = pipe_mod.TradAEC
 

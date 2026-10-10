@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """DCCRN 参数量校验（WP-04 DoD：3-4M 量级）+ 逐模块参数表 + MACs 估算。
 
     python param_check.py

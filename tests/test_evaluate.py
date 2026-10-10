@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """WP-02E 单测：多档 SNR 合成退化工况下指标单调合理 + 协议行为（重采样/对齐/CSV）。"""
 import numpy as np
 import soundfile as sf

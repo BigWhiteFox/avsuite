@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # GTCRN 官方模型代码移植（WP-05a）。
 # 来源: https://github.com/Xiaobin-Rong/gtcrn (MIT License), 作者 Xiaobin Rong。
 # 本仓库按 WORKLIST 约定"官方 repo 移植优先，不从头训"——文件内容与官方一致，
@@ -7,8 +6,8 @@
 GTCRN: ShuffleNetV2 + SFE + TRA + 2 DPGRNN
 Ultra tiny, 33.0 MMACs, 23.67 K params
 """
-import torch
 import numpy as np
+import torch
 import torch.nn as nn
 from einops import rearrange
 
@@ -49,16 +48,16 @@ class ERB(nn.Module):
                                                     / (bins[i + 2] - bins[i+1] + 1e-12)
 
         erb_filters[-1, bins[-2]:bins[-1]+1] = 1- erb_filters[-2, bins[-2]:bins[-1]+1]
-        
+
         erb_filters = erb_filters[:, erb_subband_1:]
         return torch.from_numpy(np.abs(erb_filters))
-    
+
     def bm(self, x):
         """x: (B,C,T,F)"""
         x_low = x[..., :self.erb_subband_1]
         x_high = self.erb_fc(x[..., self.erb_subband_1:])
         return torch.cat([x_low, x_high], dim=-1)
-    
+
     def bs(self, x_erb):
         """x: (B,C,T,F_erb)"""
         x_erb_low = x_erb[..., :self.erb_subband_1]
@@ -72,7 +71,7 @@ class SFE(nn.Module):
         super().__init__()
         self.kernel_size = kernel_size
         self.unfold = nn.Unfold(kernel_size=(1,kernel_size), stride=(1, stride), padding=(0, (kernel_size-1)//2))
-        
+
     def forward(self, x):
         """x: (B,C,T,F)"""
         xs = self.unfold(x).reshape(x.shape[0], x.shape[1]*self.kernel_size, x.shape[2], x.shape[3])
@@ -116,9 +115,9 @@ class GTConvBlock(nn.Module):
         self.use_deconv = use_deconv
         self.pad_size = (kernel_size[0]-1) * dilation[0]
         conv_module = nn.ConvTranspose2d if use_deconv else nn.Conv2d
-    
+
         self.sfe = SFE(kernel_size=3, stride=1)
-        
+
         self.point_conv1 = conv_module(in_channels//2*3, hidden_channels, 1)
         self.point_bn1 = nn.BatchNorm2d(hidden_channels)
         self.point_act = nn.PReLU()
@@ -131,7 +130,7 @@ class GTConvBlock(nn.Module):
 
         self.point_conv2 = conv_module(hidden_channels, in_channels//2, 1)
         self.point_bn2 = nn.BatchNorm2d(in_channels//2)
-        
+
         self.tra = TRA(in_channels//2)
 
     def shuffle(self, x1, x2):
@@ -154,7 +153,7 @@ class GTConvBlock(nn.Module):
         h1 = self.tra(h1)
 
         x =  self.shuffle(h1, x2)
-        
+
         return x
 
 
@@ -173,7 +172,8 @@ class GRNN(nn.Module):
         x: (B, seq_length, input_size)
         h: (num_layers, B, hidden_size)
         """
-        if h== None:
+        # h 只会是 None 或 Tensor：Tensor.__eq__ 被重载，== 与 is 求值路径不同，保守不改写，豁免 E711
+        if h== None:  # noqa: E711
             if self.bidirectional:
                 h = torch.zeros(self.num_layers*2, x.shape[0], self.hidden_size, device=x.device)
             else:
@@ -186,12 +186,12 @@ class GRNN(nn.Module):
         y = torch.cat([y1, y2], dim=-1)
         h = torch.cat([h1, h2], dim=-1)
         return y, h
-    
-    
+
+
 class DPGRNN(nn.Module):
     """Grouped Dual-path RNN"""
     def __init__(self, input_size, width, hidden_size, **kwargs):
-        super(DPGRNN, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.input_size = input_size
         self.width = width
         self.hidden_size = hidden_size
@@ -203,7 +203,7 @@ class DPGRNN(nn.Module):
         self.inter_rnn = GRNN(input_size=input_size, hidden_size=hidden_size, bidirectional=False)
         self.inter_fc = nn.Linear(hidden_size, hidden_size)
         self.inter_ln = nn.LayerNorm(((width, hidden_size)), eps=1e-8)
-    
+
     def forward(self, x):
         """x: (B, C, T, F)"""
         ## Intra RNN
@@ -217,16 +217,16 @@ class DPGRNN(nn.Module):
 
         ## Inter RNN
         x = intra_out.permute(0,2,1,3)  # (B,F,T,C)
-        inter_x = x.reshape(x.shape[0] * x.shape[1], x.shape[2], x.shape[3]) 
+        inter_x = x.reshape(x.shape[0] * x.shape[1], x.shape[2], x.shape[3])
         inter_x = self.inter_rnn(inter_x)[0]  # (B*F,T,C)
         inter_x = self.inter_fc(inter_x)      # (B*F,T,C)
         inter_x = inter_x.reshape(x.shape[0], self.width, -1, self.hidden_size) # (B,F,T,C)
         inter_x = inter_x.permute(0,2,1,3)   # (B,T,F,C)
-        inter_x = self.inter_ln(inter_x) 
+        inter_x = self.inter_ln(inter_x)
         inter_out = torch.add(intra_out, inter_x)
-        
+
         dual_out = inter_out.permute(0,3,1,2)  # (B,C,T,F)
-        
+
         return dual_out
 
 
@@ -265,7 +265,7 @@ class Decoder(nn.Module):
         for i in range(N_layers):
             x = self.de_convs[i](x + en_outs[N_layers-1-i])
         return x
-    
+
 
 class Mask(nn.Module):
     """Complex Ratio Mask"""
@@ -286,10 +286,10 @@ class GTCRN(nn.Module):
         self.sfe = SFE(3, 1)
 
         self.encoder = Encoder()
-        
+
         self.dpgrnn1 = DPGRNN(16, 33, 16)
         self.dpgrnn2 = DPGRNN(16, 33, 16)
-        
+
         self.decoder = Decoder()
 
         self.mask = Mask()
@@ -309,17 +309,17 @@ class GTCRN(nn.Module):
         feat = self.sfe(feat)     # (B,9,T,129)
 
         feat, en_outs = self.encoder(feat)
-        
+
         feat = self.dpgrnn1(feat) # (B,16,T,33)
         feat = self.dpgrnn2(feat) # (B,16,T,33)
 
         m_feat = self.decoder(feat, en_outs)
-        
+
         m = self.erb.bs(m_feat)
 
         spec_enh = self.mask(m, spec_ref.permute(0,3,2,1)) # (B,2,T,F)
         spec_enh = spec_enh.permute(0,3,2,1)  # (B,F,T,2)
-        
+
         return spec_enh
 
 
@@ -338,13 +338,13 @@ if __name__ == "__main__":
     c = torch.randn(1, 16000)
     x1 = torch.cat([a, b], dim=1)
     x2 = torch.cat([a, c], dim=1)
-    
+
     x1 = torch.stft(x1, 512, 256, 512, torch.hann_window(512).pow(0.5), return_complex=False)
     x2 = torch.stft(x2, 512, 256, 512, torch.hann_window(512).pow(0.5), return_complex=False)
     y1 = model(x1)[0]
     y2 = model(x2)[0]
     y1 = torch.istft(y1, 512, 256, 512, torch.hann_window(512).pow(0.5), return_complex=False)
     y2 = torch.istft(y2, 512, 256, 512, torch.hann_window(512).pow(0.5), return_complex=False)
-    
+
     print((y1[:16000-256*2] - y2[:16000-256*2]).abs().max())
     print((y1[16000:] - y2[16000:]).abs().max())

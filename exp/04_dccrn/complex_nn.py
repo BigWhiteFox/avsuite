@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """复数神经网络层（WP-04 / 模块4）：复数卷积 / 复数 LSTM。
 
 复数张量的存储约定：全部用**实数张量双通道拼接** (B, 2C, ...) / (B, T, 2D)，
@@ -76,7 +75,7 @@ class ComplexLSTM(nn.Module):
         self.w_im = nn.ModuleList()
         self.u_re = nn.ModuleList()
         self.u_im = nn.ModuleList()
-        for l in range(num_layers):
+        for _l in range(num_layers):
             self.w_re.append(nn.Linear(d_in, 4 * hidden_size))
             self.w_im.append(nn.Linear(d_in, 4 * hidden_size))
             self.u_re.append(nn.Linear(hidden_size, 4 * hidden_size, bias=False))
@@ -86,7 +85,7 @@ class ComplexLSTM(nn.Module):
     def forward(self, x):
         B, T, _ = x.shape
         H = self.hidden
-        for l in range(self.layers):
+        for layer in range(self.layers):
             h_re = x.new_zeros(B, H)
             h_im = x.new_zeros(B, H)
             c_re = x.new_zeros(B, H)
@@ -95,10 +94,10 @@ class ComplexLSTM(nn.Module):
             for t in range(T):
                 xt_re, xt_im = x[:, t, : x.shape[2] // 2], x[:, t, x.shape[2] // 2:]
                 # 复数线性：输入权重 + 递归权重
-                g_re = (self.w_re[l](xt_re) - self.w_im[l](xt_im)
-                        + self.u_re[l](h_re) - self.u_im[l](h_im))
-                g_im = (self.w_re[l](xt_im) + self.w_im[l](xt_re)
-                        + self.u_re[l](h_im) + self.u_im[l](h_re))
+                g_re = (self.w_re[layer](xt_re) - self.w_im[layer](xt_im)
+                        + self.u_re[layer](h_re) - self.u_im[layer](h_im))
+                g_im = (self.w_re[layer](xt_im) + self.w_im[layer](xt_re)
+                        + self.u_re[layer](h_im) + self.u_im[layer](h_re))
                 i_re, f_re, g_re2, o_re = g_re.chunk(4, dim=-1)
                 i_im, f_im, g_im2, o_im = g_im.chunk(4, dim=-1)
                 i = torch.complex(torch.sigmoid(i_re), torch.sigmoid(i_im))

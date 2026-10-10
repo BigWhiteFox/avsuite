@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """pytest 收集辅助：exp/04_dccrn 模块加载（作用域隔离版）。
 
 exp/03_crn 与 exp/04_dccrn 都有 model.py/train.py——sys.modules 先到先得。

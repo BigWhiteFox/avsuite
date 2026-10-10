@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """完整评估工具（WP-09 / 模块9）：checkpoint + 测试集 -> 分场景 CSV + 柱状图。
 
     python tools/evaluate_full.py --model crn --ckpt exp/03_crn/outputs/crn_crm_blstm/best.ckpt \
@@ -19,7 +18,6 @@ import importlib.util
 import json
 import multiprocessing as mp
 import sys
-import tempfile
 from pathlib import Path
 
 import numpy as np
@@ -135,7 +133,7 @@ def _score_one(job):
 
 def dnsmos_score_all(cases_enh, dnsmos):
     out = {}
-    for name, group, enh, _ in cases_enh:
+    for name, _group, enh, _ in cases_enh:
         s = dnsmos.score(enh)
         if s:
             out[name] = s

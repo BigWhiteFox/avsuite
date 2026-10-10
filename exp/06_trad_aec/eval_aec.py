@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """传统 AEC 验收评估（WP-06）：分场景 ERLE / 近端 PESQ / STOI。
 
 DoD 对应（WORKLIST WP-06）：

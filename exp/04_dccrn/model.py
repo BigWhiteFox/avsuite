@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """DCCRN 模型（WP-04 / 模块4）：Deep Complex CRN（Hu et al., ICASSP 2020 复现变体）。
 
 结构（@16k, n_fft=512, hop=200 → F=257, T=帧数）：
@@ -28,6 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))           # repo ro
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from complex_nn import ComplexConv2d, ComplexConvTranspose2d, ComplexLSTM, complex_mul, complex_view  # noqa: E402
+
 from core.istft import ISTFT  # noqa: E402
 from core.stft import STFT  # noqa: E402
 
@@ -50,10 +50,12 @@ class DCCRN(nn.Module):
         conv_cls = ComplexConv2d
         deconv_cls = ComplexConvTranspose2d
         if real_conv:      # 消融：实数卷积直接吃 2ch 视图（无复数代数）
-            conv_cls = lambda ci, co, **kw: nn.Conv2d(2 * ci, 2 * co, 5,
+            # 消融分支的卷积工厂保留 lambda 闭包写法，改写成 def 属纯风格调整，豁免 E731
+            conv_cls = lambda ci, co, **kw: nn.Conv2d(2 * ci, 2 * co, 5,  # noqa: E731
                                                       stride=kw.get("stride", (2, 2)),
                                                       padding=kw.get("padding", 2))
-            deconv_cls = lambda ci, co, **kw: nn.ConvTranspose2d(2 * ci, 2 * co, 5,
+            # 同上：反卷积工厂 lambda，豁免 E731
+            deconv_cls = lambda ci, co, **kw: nn.ConvTranspose2d(2 * ci, 2 * co, 5,  # noqa: E731
                                                                  stride=kw.get("stride", (2, 2)),
                                                                  padding=kw.get("padding", 2))
 

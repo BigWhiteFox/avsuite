@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """DCCRN 训练脚本（WP-04 / 模块4）。
 
 与 CRN train.py 同骨架（TensorBoard / Plateau / early stop / resume），差异：
@@ -26,11 +25,11 @@ from torch.utils.tensorboard import SummaryWriter
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from core.losses import complex_mse_loss, si_snr_loss  # noqa: E402
-from core.stft import STFT  # noqa: E402
-
 from dynamic_mixing import DNSDynamicMix, StaticPairs  # noqa: E402
 from model import DCCRN  # noqa: E402
+
+from core.losses import complex_mse_loss, si_snr_loss  # noqa: E402
+from core.stft import STFT  # noqa: E402
 
 
 def make_loss_fn(si_snr_weight, device):

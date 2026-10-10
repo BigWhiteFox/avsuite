@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """pytest 收集辅助：把 exp/03_crn 以包别名 `exp03` 暴露（目录名以数字开头不能直接 import）。"""
 import importlib
 import sys

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """WP-03 单测：CRN 模型形状与开关 / 单 batch 过拟合 / train 冒烟 / 断点续训 / 数据切分。"""
 import subprocess
 import sys
@@ -81,7 +80,7 @@ def test_overfit_single_batch():
     loss_fn = train_mod.make_loss_fn("crm")
     opt = torch.optim.Adam(m.parameters(), lr=3e-3)
     first = None
-    for i in range(60):
+    for _i in range(60):
         loss = loss_fn(m, batch)
         if first is None:
             first = float(loss)

@@ -1,12 +1,18 @@
-# -*- coding: utf-8 -*-
 """WP-02 单测：手算对拍 / 尺度不变性 / 梯度有限 / 数值稳定 / 退化关系。"""
 import math
 
 import pytest
 import torch
 
-from core.losses import (complex_mse_loss, irm_bce_loss, irm_target, multi_scale_stft_loss,
-                         si_snr, si_snr_loss, weighted_distortion_loss)
+from core.losses import (
+    complex_mse_loss,
+    irm_bce_loss,
+    irm_target,
+    multi_scale_stft_loss,
+    si_snr,
+    si_snr_loss,
+    weighted_distortion_loss,
+)
 
 
 def test_si_snr_hand_computed():
@@ -83,8 +89,10 @@ def test_weighted_distortion_emphasizes_loud_bins():
     ref = torch.zeros(1, 1, 2, dtype=torch.complex128)
     ref[..., 0] = 10.0 + 0j      # 高能量 bin
     ref[..., 1] = 0.1 + 0j       # 低能量 bin
-    est_loud = ref.clone(); est_loud[..., 0] += 0.1
-    est_quiet = ref.clone(); est_quiet[..., 1] += 0.1
+    est_loud = ref.clone()
+    est_loud[..., 0] += 0.1
+    est_quiet = ref.clone()
+    est_quiet[..., 1] += 0.1
     loss_loud = weighted_distortion_loss(est_loud, ref, gamma=0.5)
     loss_quiet = weighted_distortion_loss(est_quiet, ref, gamma=0.5)
     assert loss_loud.item() > loss_quiet.item()

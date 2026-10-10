@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """WP-04 单测：复数层手算对拍 / 模型结构与参数量 / DM 混合精度 / 过拟合冒烟。"""
 import sys
 from pathlib import Path
@@ -46,7 +45,8 @@ def test_complex_lstm_one_step_manual():
     g_re = lstm.w_re[0](xr) - lstm.w_im[0](xi)
     g_im = lstm.w_re[0](xi) + lstm.w_im[0](xr)
     i = torch.complex(torch.sigmoid(g_re[:2]), torch.sigmoid(g_im[:2]))
-    f = torch.complex(torch.sigmoid(g_re[2:4]), torch.sigmoid(g_im[2:4]))
+    # 遗忘门 f 为对齐门控公式保留的参考值（本用例输出路径未用到），豁免 F841
+    f = torch.complex(torch.sigmoid(g_re[2:4]), torch.sigmoid(g_im[2:4]))  # noqa: F841
     g = torch.complex(torch.tanh(g_re[4:6]), torch.tanh(g_im[4:6]))
     o = torch.complex(torch.sigmoid(g_re[6:]), torch.sigmoid(g_im[6:]))
     c = i * g                                       # c0=0, f·0=0

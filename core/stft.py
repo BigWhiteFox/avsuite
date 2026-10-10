@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """STFT 工具类（WP-01 / 模块1）。
 
 与 torch.stft 的约定逐项对齐（tests/test_stft.py 对拍 <1e-5）：
@@ -11,7 +10,6 @@
 流式接口 StreamingSTFT：任意大小 chunk 推入、按 hop 产出已完成帧；
 cache 内存固定 O(B·n_fft) 与信号长度无关；flush() 以零右填充结算尾帧。
 """
-from typing import List
 
 import torch
 import torch.nn.functional as F
@@ -110,7 +108,7 @@ class StreamingSTFT:
 
     def __init__(self, stft: STFT):
         self.stft = stft
-        self._buf: List[torch.Tensor] = []
+        self._buf: list[torch.Tensor] = []
         self._len = 0          # 缓冲样本数（含注入的左 pad 零）
         self._next_start = 0   # 下一帧在缓冲坐标系中的起点
         self._primed = False
@@ -127,7 +125,7 @@ class StreamingSTFT:
     def _cat(self) -> torch.Tensor:
         return self._buf[0] if len(self._buf) == 1 else torch.cat(self._buf, dim=-1)
 
-    def _drain(self) -> List[torch.Tensor]:
+    def _drain(self) -> list[torch.Tensor]:
         out = []
         n_fft = self.stft.n_fft
         buf = self._cat()
@@ -141,7 +139,7 @@ class StreamingSTFT:
             self._buf, self._len, self._next_start = [buf], buf.shape[-1], 0
         return out
 
-    def push(self, chunk: torch.Tensor) -> List[torch.Tensor]:
+    def push(self, chunk: torch.Tensor) -> list[torch.Tensor]:
         """推入一段样本 [B, C]（或 [C]），返回本次新产出的复数帧列表（每个 [B, F]）。"""
         if self._closed:
             raise RuntimeError("flush() 之后流已关闭")
@@ -154,7 +152,7 @@ class StreamingSTFT:
         self._append(chunk)
         return self._drain()
 
-    def flush(self) -> List[torch.Tensor]:
+    def flush(self) -> list[torch.Tensor]:
         """右填充 n_fft//2 个零结算尾帧（对应离线右 pad），之后流关闭。"""
         if self._closed:
             raise RuntimeError("flush() 只能调用一次")

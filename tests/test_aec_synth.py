@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """WP-07D 单测：时延正确性 / 三场景成分 / SER-SNR 定标 / soft-clip / 配比 / manifest 可复现。"""
 import csv
 import math

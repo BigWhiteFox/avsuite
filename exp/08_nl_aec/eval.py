@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """非线性 AEC 评估 v2（WP-08 验收）：线性级 vs 线性+GRU 残差级 的 ERLE 对比。
 
     python eval.py --ckpt outputs/nl_aec_v2/best.ckpt --eval-dir D:/data/aec-synth/eval_nl

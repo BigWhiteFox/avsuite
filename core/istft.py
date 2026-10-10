@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ISTFT：overlap-add 重构（WP-01 / 模块1）。
 
 WOLA（加权重叠相加）公式：
@@ -12,7 +11,6 @@ WOLA（加权重叠相加）公式：
 - center=True 时与 torch.istft 一致地裁掉两侧各 n_fft//2 的 pad 区；
 - 对拍 torch.istft：float64 全量 <1e-10，float32 <1e-5（tests/test_istft.py）。
 """
-from typing import Optional
 
 import torch
 import torch.nn.functional as F
@@ -43,7 +41,7 @@ class ISTFT(nn.Module):
         self.eps = eps
         self.register_buffer("window", make_window(n_fft, window), persistent=False)
 
-    def inverse(self, spec: torch.Tensor, length: Optional[int] = None) -> torch.Tensor:
+    def inverse(self, spec: torch.Tensor, length: int | None = None) -> torch.Tensor:
         """复数谱 [B, F, T] -> 时域 [B, L]。
 
         length: 目标点数。None 时与 torch.istft 一致（center=True 输出 (T-1)*hop 点）；
@@ -89,7 +87,8 @@ class StreamingISTFT:
     （parity 单测：core 级 + exp/07_nn_aec 模型级）。
     """
 
-    def __init__(self, n_fft: int = 512, hop: int = 320, window: "np.ndarray|None" = None,
+    # np 只出现在字符串注解里作类型提示（numpy 在函数内延迟导入、模块顶层不引入），运行时不会求值
+    def __init__(self, n_fft: int = 512, hop: int = 320, window: "np.ndarray|None" = None,  # noqa: F821
                  eps: float = 1e-11):
         import numpy as np
         if window is None:
@@ -102,7 +101,8 @@ class StreamingISTFT:
         self.buf = np.zeros(n_fft + hop)
         self.wn = np.zeros(n_fft + hop)
 
-    def add_frame(self, frame: "np.ndarray") -> "np.ndarray":
+    # 同上：字符串注解不做运行时求值，np 未在模块顶层导入属有意的延迟导入设计
+    def add_frame(self, frame: "np.ndarray") -> "np.ndarray":  # noqa: F821
         """入一帧（n_fft 实数样本），出 hop 个样本。"""
         import numpy as np
         n_fft, hop = self.n_fft, self.hop

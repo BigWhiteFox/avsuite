@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """传统 AEC 全链路 pipeline（WP-06）。
 
     far ─GCC-PHAT 时延估计─> 对齐 ─┐
@@ -15,9 +14,9 @@
 
 NLMS 分支为基线/消融用（无在线 DTD 冻结，use_dtd 时告警降级）——完整链路走 MDF。
 """
+import sys
 from dataclasses import dataclass
 from pathlib import Path
-import sys
 
 import numpy as np
 
@@ -106,7 +105,8 @@ class TradAEC:
         elif self.method == "nlms":
             if self.use_dtd:
                 import warnings
-                warnings.warn("NLMS 分支不支持在线 DTD 冻结（基线用途），按静态远端门运行")
+                # 不补 stacklevel（会改变警告归属的调用栈行号），保持基线行为，豁免 B028
+                warnings.warn("NLMS 分支不支持在线 DTD 冻结（基线用途），按静态远端门运行")  # noqa: B028
             af = NLMS(length=self.nlms_len, mu=self.mu)
             scale_ps = np.repeat(base_scale, self.block)[:n]
             e, y = af.process(far_al, mic, adapt_scale=scale_ps, return_y=True)

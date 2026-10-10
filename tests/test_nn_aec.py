@@ -1,9 +1,9 @@
-# -*- coding: utf-8 -*-
 """WP-07 单测：参数量 <1M / 时间因果性（核心约束）/ 形状 / 梯度 / 过拟合 / jitter。"""
 import sys
 from pathlib import Path
 
 import numpy as np
+import pytest
 import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -13,6 +13,9 @@ import nnaec_shim as X  # noqa: E402
 NNAEC = X.NNAEC
 dataset = X.dataset
 train_mod = X.train
+
+# 本机合成数据根目录（CI 无此数据，相关用例按存在性跳过）
+EVAL_V3 = Path("D:/data/aec-synth/eval_v3")
 
 
 def test_param_count_under_1m():
@@ -91,6 +94,7 @@ def test_overfit_single_batch():
     assert float(loss) < 0.7 * first, f"{first:.4f} -> {float(loss):.4f}"
 
 
+@pytest.mark.skipif(not EVAL_V3.exists(), reason="需要本机 eval_v3 数据(CI 跳过)")
 def test_dataset_jitter_and_shift():
     """_shift 语义 + AecDataset jitter 只动 far。"""
     x = np.arange(10, dtype=np.float32)

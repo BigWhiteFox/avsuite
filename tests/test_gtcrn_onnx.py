@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """WP-05a 单测：GTCRN 参数量 / 权重加载推理 / ONNX 对拍(<1e-4 DoD) / 时间因果性。"""
 import sys
 from pathlib import Path

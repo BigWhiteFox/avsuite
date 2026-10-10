@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """WP-01 单测：自实现 STFT vs torch.stft 对拍 + 流式接口逐帧对齐。"""
 import pytest
 import torch

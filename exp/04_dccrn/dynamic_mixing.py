@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """DNS 子集数据管道 + 动态混合 Dynamic Mixing（WP-04 / 模块4）。
 
 Dynamic Mixing（Koizumi et al. 2019，DNS 冠军方案标配）：
@@ -106,7 +105,7 @@ class StaticPairs(Dataset):
         noise_files = sorted(Path(noise_dir).glob("*.wav"))
         n = int(seg_sec * SR)
         self.items = []
-        for i in range(n_pairs):
+        for _i in range(n_pairs):
             clean = fit_length(load_16k(rng.choice(clean_files)), n, rng)
             noise = fit_length(load_16k(rng.choice(noise_files)), n, rng)
             clean = clean * (10 ** ((rng.uniform(-35, -20) - rms_db(clean)) / 20))

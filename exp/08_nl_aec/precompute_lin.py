@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """预计算线性回声估计（WP-08 级联结构的前置）：每条 clip 跑 TradAEC(MDF)，
 把 y_echo（线性滤波器回声估计）存成 wav。
 

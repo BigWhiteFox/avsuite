@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """WP-05a 公共工具：模型加载 / STFT 约定 / 测试信号。
 
 官方推理约定（infer.py 同款，必须严格一致否则权重对不上）：
@@ -10,7 +9,6 @@ sqrt-hann 双端各乘一次 = 整窗 hann 的 WOLA 重构（与 core/istft 的�
 import sys
 from pathlib import Path
 
-import numpy as np
 import torch
 
 HERE = Path(__file__).resolve().parent

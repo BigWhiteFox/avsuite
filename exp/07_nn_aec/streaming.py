@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """NN-AEC 流式推理（WP-05b 模式）：20ms 块进块出，conv cache + LSTM state。
 
 架构前提（WP-07 设计时埋好）：时间维严格因果——conv 左 pad 4、deconv 右移 2、

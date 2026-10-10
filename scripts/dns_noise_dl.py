@@ -1,4 +1,5 @@
 import os
+
 # HF via FlClash proxy (falls back gracefully if proxy down -> script retries)
 os.environ.setdefault("HF_ENDPOINT", "https://huggingface.co")
 os.environ["https_proxy"] = "http://127.0.0.1:7890"

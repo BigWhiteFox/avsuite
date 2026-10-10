@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """CRN 消融驱动（WP-03）：IRM↔cRM、BLSTM↔LSTM、跳连 on/off、bounded mask。
 
 两种模式：

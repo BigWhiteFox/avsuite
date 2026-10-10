@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """GTCRN ONNX 导出（WP-05a）：PyTorch 官方权重 -> fp32 ONNX（动态 T 轴）-> 简化。
 
     python onnx_export.py                     # 导出 outputs/gtcrn_dns3.onnx

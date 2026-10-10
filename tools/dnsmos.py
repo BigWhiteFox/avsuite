@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """DNSMOS 无参考 MOS 预测（WP-09/10 共用）。
 
 微软 DNS-Challenge 官方 ONNX 模型（sig_bak_ovr = P.835 式 SIG/BAK/OVR 三分量）。
@@ -24,7 +23,7 @@ PROXY = "http://127.0.0.1:7890"
 def _download():
     import requests
     CACHE.parent.mkdir(parents=True, exist_ok=True)
-    for attempt in range(3):
+    for _attempt in range(3):
         try:
             r = requests.get(URL, proxies={"http": PROXY, "https": PROXY}, timeout=60)
             if r.status_code == 200 and len(r.content) > 100_000:

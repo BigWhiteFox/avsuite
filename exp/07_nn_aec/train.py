@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """NN-AEC 训练（WP-07 / 模块7，简历核心）。
 
 损失（复用 core/losses，WORKLIST：加权失真 γ 消融）：
@@ -25,11 +24,11 @@ from torch.utils.tensorboard import SummaryWriter
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+from dataset import AecDataset  # noqa: E402
+from model import HOP, N_FFT, NNAEC  # noqa: E402
+
 from core.losses import si_snr_loss, weighted_distortion_loss  # noqa: E402
 from core.stft import STFT  # noqa: E402
-
-from dataset import AecDataset  # noqa: E402
-from model import HOP, NNAEC, N_FFT  # noqa: E402
 
 
 def collate(batch):

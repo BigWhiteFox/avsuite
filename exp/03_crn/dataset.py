@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """VoiceBank-DEMAND 数据管道（WP-03 / 模块3）。
 
 两层结构：
@@ -29,7 +28,6 @@ def extract_parquet(parquet_dir=VB_ROOT, out_dir=None, overwrite=False):
     out_dir 默认 parquet_dir/extracted。文件名用 id（如 p226_001.wav）。
     幂等：已存在且非 overwrite 则跳过。
     """
-    import io
 
     import pyarrow.parquet as pq
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """AEC 数据合成管道（WP-07D / 模块7 前置）：造 (farend, nearend, mic) 三元组 + manifest。
 
 物理链路（每条样本）：

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """GTCRN CPU 基准（WP-05a DoD：RTF < 0.2，单帧 < 3ms）。
 
 测三件事：

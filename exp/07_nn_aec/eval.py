@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """NN-AEC 评估（WP-07）：分场景 ERLE / 近端 PESQ / STOI + 与 WP-06 传统基线对比表。
 
     python eval.py --ckpt outputs/nnaec_g0.5_j10/best.ckpt \
@@ -24,10 +23,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "06_trad_aec"))
 
-from core.evaluate import _safe_pesq, _safe_stoi, _si_snr_np  # noqa: E402
-
 from dataset import _shift  # noqa: E402
 from model import NNAEC  # noqa: E402
+
+from core.evaluate import _safe_pesq, _safe_stoi, _si_snr_np  # noqa: E402
 
 SR = 16000
 SKIP_S = 2.0        # ERLE 跳收敛瞬态——与 WP-06 eval_aec 同口径（对比公平性）

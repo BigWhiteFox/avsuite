@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """GTCRN INT8 量化（WP-05a）：PTQ 后训练量化 + 精度损失报告。
 
     python quantize.py                # dynamic PTQ（GRU/Linear 权重量化）
@@ -21,7 +20,7 @@ import torch
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from common import load_model, stft_convention  # noqa: E402
+from common import stft_convention  # noqa: E402
 
 OUT = Path(__file__).parent / "outputs"
 FP32_ONNX = OUT / "gtcrn_dns3.sim.onnx"
@@ -38,8 +37,12 @@ def quantize_dynamic():
 
 def quantize_static(n_calib=50):
     """静态 QDQ：Conv 也量化，需要校准数据读入器。"""
-    from onnxruntime.quantization import (CalibrationDataReader, QuantFormat,
-                                          QuantType, quantize_static)
+    from onnxruntime.quantization import (
+        CalibrationDataReader,
+        QuantFormat,
+        QuantType,
+        quantize_static,
+    )
 
     class Reader(CalibrationDataReader):
         def __init__(self, n):
@@ -60,6 +63,7 @@ def quantize_static(n_calib=50):
 def accuracy_report(n_clips=50):
     """fp32 vs int8：DNS 自混集上 PESQ/STOI/SI-SNR。"""
     import onnxruntime as ort
+
     from core.evaluate import _safe_pesq, _safe_stoi, _si_snr_np
     sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "04_dccrn"))
     from dynamic_mixing import DNSDynamicMix

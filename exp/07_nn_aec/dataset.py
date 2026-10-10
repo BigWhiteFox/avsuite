@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """NN-AEC 数据管道（WP-07）：aec_synth 产物目录 -> (mic, far, near) 训练三元组。
 
 训练期时延扰动（WORKLIST：复用 WP-07D 思想）：far 参考相对文件内对齐再随机

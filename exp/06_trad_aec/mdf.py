@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """MDF / PBFDAF 分块频域自适应滤波（WP-06）。
 
 Overlap-save 分块卷积实现（Valin, "On Adjusting the Learning Rate in

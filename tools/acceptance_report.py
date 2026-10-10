@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """项目验收报告生成（WP-00~10 全部工作包的结果汇总 → docs/ACCEPTANCE.md）。
 
 读取各模块的 summary JSON / CSV，按 WORKLIST 的 DoD 逐项给出 ✅/⚠️ 判定。
@@ -60,7 +59,7 @@ def test_count():
     try:
         r = subprocess.run([sys.executable, "-s", "-m", "pytest", "tests", "-q"],
                            cwd=ROOT, capture_output=True, text=True, timeout=600)
-        tail = [l for l in r.stdout.splitlines() if l.strip()]
+        tail = [line for line in r.stdout.splitlines() if line.strip()]
         return tail[-1].strip() if tail else "?"
     except Exception:
         return "?"
@@ -73,7 +72,7 @@ def main():
 
     L = []
     add = L.append
-    add(f"# avsuite 项目验收报告（自动生成）")
+    add("# avsuite 项目验收报告（自动生成）")
     add(f"\n生成时间：{datetime.now():%Y-%m-%d %H:%M}。指标协议统一：16k / PESQ-wb / "
         f"测试集口径见各 exp README。\n")
 

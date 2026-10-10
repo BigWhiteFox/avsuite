@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """pytest 收集辅助：exp/07_nn_aec 作用域加载（防与 03/04 的 model/train 冲突）。"""
 import importlib
 import sys

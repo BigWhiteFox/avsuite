@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """把仓库根目录加进 sys.path，使 `import core.*` 在 pytest 下可用。"""
 import sys
 from pathlib import Path

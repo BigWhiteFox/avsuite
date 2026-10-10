@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """CRN 训练脚本（WP-03 / 模块3）。
 
 特性：TensorBoard、ReduceLROnPlateau、early stop、断点续训（--resume）、
@@ -26,11 +25,11 @@ from torch.utils.tensorboard import SummaryWriter
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))     # repo root
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+from dataset import PairsDataset, extract_parquet, list_pairs, speaker_split  # noqa: E402
+from model import CRN  # noqa: E402
+
 from core.losses import complex_mse_loss, irm_bce_loss, si_snr_loss  # noqa: E402
 from core.stft import STFT  # noqa: E402
-
-from dataset import PairsDataset, VoiceBankDataset, extract_parquet, list_pairs, speaker_split  # noqa: E402
-from model import CRN  # noqa: E402
 
 DEFAULT_DATA = Path("D:/data/voicebank-demand-16k/extracted")
 

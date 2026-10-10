@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Gradio 在线 Demo（WP-10 / 模块10）：上传带噪音频 -> GTCRN 增强 -> A/B 对比 + DNSMOS。
 
 设计要点：
@@ -42,9 +41,10 @@ def get_dnsmos():
 
 def load16k(path_or_tuple):
     """Gradio Audio 返回 (sr, ndarray)；文件路径输入则直接读。"""
+    from math import gcd
+
     import soundfile as sf
     from scipy.signal import resample_poly
-    from math import gcd
     if isinstance(path_or_tuple, (tuple, list)):
         sr_in, y = path_or_tuple
     else:

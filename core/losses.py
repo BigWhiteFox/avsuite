@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """损失函数库（WP-02 / 模块2）。
 
 五个损失：SI-SNR / 复数谱 MSE / IRM 掩码 BCE / 加权语音失真（power-law）/ 多尺度 STFT。

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """WP-06 消融实验：NLMS vs MDF 收敛曲线 + MDF 步长扫描。
 
 受控信号（确定性种子）：真实语音 far + pyroomacoustics 房间 RIR（100ms 截断）
@@ -16,14 +15,14 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import soundfile as sf  # noqa: E402
-from scipy.signal import fftconvolve  # noqa: E402
-
 from gcc import align_far, gcc_phat_stats  # noqa: E402
 from mdf import MDF  # noqa: E402
 from nlms import NLMS  # noqa: E402
+from scipy.signal import fftconvolve  # noqa: E402
 
 try:
     plt.rcParams["font.sans-serif"] = ["Microsoft YaHei", "SimHei"]
@@ -98,7 +97,7 @@ def main():
         print(f"{kind.upper():5s} μ={mu}: steady {steady:5.1f}dB  t(15dB)={t15:4.1f}s  "
               f"wall {wall:5.1f}s  RTF {rtf:.2f}  ||W||={w_norm:.2f}")
     # 真实路径范数（过拟合诊断：MDF 逐 bin 白化在非平稳语音上 ||W|| 会远超真值）
-    print(f"（参考：真实回声路径 ||W_true|| ≈ 0.34）")
+    print("（参考：真实回声路径 ||W_true|| ≈ 0.34）")
     ax.axhline(20, color="gray", ls="--", lw=1, label="DoD 20dB")
     ax.set_xlabel("时间 (s)")
     ax.set_ylabel("滑窗 ERLE (dB)")

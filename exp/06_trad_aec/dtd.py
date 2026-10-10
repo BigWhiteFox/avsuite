@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """双讲检测 DTD（WP-06）：Geigel 能量比 + 频域相干性 双判据。
 
 判据 1（Geigel 能量）：假设回声路径衰减 ≥ alpha（0.5≈6dB ERL）；

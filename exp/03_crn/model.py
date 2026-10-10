@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """CRN 模型（WP-03 / 模块3）：卷积编码 + 循环层 + 对称解码 + 复数比率掩码。
 
 结构（Tan & Wang 2018 CRN 变体，@16k n_fft=512）：
@@ -14,14 +13,15 @@
     mask_type: 'crm'（复数掩码，2 通道，默认）| 'irm'（幅度掩码，1 通道 sigmoid，保留带噪相位）
     rnn_type:  'blstm'（默认，双向，非因果）| 'lstm'（单向，因果/流式友好）
 """
+import sys
+from pathlib import Path
+
 import torch
 from torch import nn
 
-import sys
-from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from core.istft import ISTFT          # noqa: E402
+from core.istft import ISTFT  # noqa: E402
 from core.stft import STFT, spec_from_2ch, spec_to_2ch  # noqa: E402
 
 __all__ = ["CRN"]

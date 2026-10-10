@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """GTCRN 推理 demo（WP-05a）：官方测试 wav + DNS 自混样本，fp32 ONNX 增强 + 指标。
 
     python infer_demo.py                 # 输出 outputs/demo/*.wav + 指标表
@@ -15,8 +14,8 @@ sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(HERE.parents[1]))
 
 import onnxruntime as ort  # noqa: E402
+from common import SR, stft_convention, synth_noisy  # noqa: E402
 
-from common import SR, istft_convention, stft_convention, synth_noisy  # noqa: E402
 from core.evaluate import _safe_pesq, _safe_stoi, _si_snr_np  # noqa: E402
 
 ONNX = HERE / "outputs" / "gtcrn_dns3.sim.onnx"

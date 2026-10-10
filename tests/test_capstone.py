@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """WP-10.5 单测：级联端到端（真实 DT 片段）+ 三级 AECMOS 单调改善。"""
 import sys
 from pathlib import Path
@@ -20,6 +19,7 @@ def cascade():
     return Cascade()
 
 
+@pytest.mark.skipif(not EVAL.exists(), reason="需要本机 eval_v3 数据(CI 跳过)")
 def test_cascade_shapes_and_finite(cascade):
     mic = sf.read(EVAL / "mic" / "fileid_0_dt.wav", dtype="float32")[0][:32000]
     far = sf.read(EVAL / "farend" / "fileid_0_dt.wav", dtype="float32")[0][:32000]
@@ -35,6 +35,7 @@ def test_cascade_shapes_and_finite(cascade):
     assert echo_proxy(sigs["aec"]) < e_mic * 0.6, "AEC 级应显著消回声"
 
 
+@pytest.mark.skipif(not EVAL.exists(), reason="需要本机 eval_v3 数据(CI 跳过)")
 def test_cascade_aecmos_stagewise(cascade):
     """三级 AECMOS：echo_mos 单调上升（原始→AEC→AEC+NR），量化'每级贡献'。"""
     mic = sf.read(EVAL / "mic" / "fileid_0_dt.wav", dtype="float32")[0][:32000]

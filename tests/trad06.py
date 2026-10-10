@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """把 exp/06_trad_aec（数字开头目录）以包别名 `trad06` 暴露给 pytest。"""
 import importlib
 import sys

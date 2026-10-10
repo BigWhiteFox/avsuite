@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """非线性 AEC 训练 v2（WP-08）：Ivry 2021 级联结构。
 
     级联：ŷ_lin = MDF(far)（预计算，消 180ms 长记忆）
@@ -16,7 +15,6 @@ import sys
 import time
 from pathlib import Path
 
-import numpy as np
 import soundfile as sf
 import torch
 from torch.utils.data import DataLoader, Dataset

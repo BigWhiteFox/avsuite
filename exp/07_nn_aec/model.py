@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """NN-AEC 模型（WP-07 / 模块7，简历核心）：远端参考 + 麦克风 双输入复数谱 CRN 压缩版。
 
 设计约束（对标 AEC-Challenge 2022+ 规格与车载部署）：
@@ -22,7 +21,7 @@ from torch import nn
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from core.istft import ISTFT  # noqa: E402
-from core.stft import STFT, spec_from_2ch, spec_to_2ch  # noqa: E402
+from core.stft import STFT, spec_from_2ch  # noqa: E402
 
 __all__ = ["NNAEC"]
 

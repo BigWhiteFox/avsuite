@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """DCCRN 评估（WP-04）：DNS2020 devtest（官方 parquet）+ 自混 held-out，PESQ/STOI/SI-SNR。
 
     python eval.py --ckpt outputs/dccrn/best.ckpt --devtest --num 824
@@ -7,22 +6,20 @@
 协议：16k / PESQ-wb / 全长推理 batch=1 / core.evaluate 统一口径。
 """
 import argparse
-import io
 import sys
 import tempfile
 from pathlib import Path
 
-import numpy as np
 import soundfile as sf
 import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from core.evaluate import evaluate_dir  # noqa: E402
-
-from dynamic_mixing import DNSDynamicMix, load_16k, fit_length, mix_at_snr, rms_db  # noqa: E402
+from dynamic_mixing import DNSDynamicMix, load_16k  # noqa: E402
 from model import DCCRN  # noqa: E402
+
+from core.evaluate import evaluate_dir  # noqa: E402
 
 DEVTEST = Path("D:/data/dns2020-devtest/data/synthetic_no_reverb-00000-of-00001.parquet")
 
@@ -114,7 +111,7 @@ def main():
     (out / f"summary_{mode}.json").write_text(json.dumps(summary, indent=2))  # 分模式存，
     (out / "summary.json").write_text(json.dumps(summary, indent=2))          # 兼容旧引用
     print(json.dumps(summary, indent=2))
-    print(f"DoD 参考：DNS 合成测试 PESQ ≥2.6（DM+充分训练）；2.4-2.5 走降级路径")
+    print("DoD 参考：DNS 合成测试 PESQ ≥2.6（DM+充分训练）；2.4-2.5 走降级路径")
 
 
 if __name__ == "__main__":

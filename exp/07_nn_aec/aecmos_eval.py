@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """AECMOS 官方口径评估（WP-07 DoD：双讲 echo MOS 较传统基线 +0.3）。
 
 用 AEC-Challenge 仓库 AECMOS_local 的 ONNX 模型（本地推理，无 Web API）。

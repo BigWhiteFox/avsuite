@@ -1,9 +1,9 @@
-# -*- coding: utf-8 -*-
 """WP-05b 单测：流式 vs 非流式逐帧对齐（<1e-5）+ cache 有界性。"""
 import sys
 from pathlib import Path
 
 import numpy as np
+import pytest
 import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -11,6 +11,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import nnaec_shim as X  # noqa: E402
 
 NNAEC = X.NNAEC
+
+# 本机合成数据根目录（CI 无此数据，相关用例按存在性跳过）
+EVAL_V3 = Path("D:/data/aec-synth/eval_v3")
 
 
 def _load_model():
@@ -104,6 +107,7 @@ def test_cache_bounded_and_accounted():
     assert st.dec[0].cache.shape == (1, 64, 33, 5)
 
 
+@pytest.mark.skipif(not EVAL_V3.exists(), reason="需要本机 eval_v3 数据(CI 跳过)")
 def test_real_data_end_to_end():
     """真实数据（eval_v3 2s 段）：流式输出与离线一致 + 全零静音段输出非 NaN。"""
     import soundfile as sf

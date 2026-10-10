@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """全链路 Capstone 级联器（WP-10.5）：NN-AEC(20ms 流式) → GTCRN NR。
 
     mic + far(lpb) ──► [NN-AEC 流式，WP-07+WP-05b] ──► [GTCRN ONNX，WP-05a] ──► 最终输出
