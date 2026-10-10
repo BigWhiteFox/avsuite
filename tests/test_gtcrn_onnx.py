@@ -60,6 +60,7 @@ def test_onnx_parity_dod():
     assert err < 1e-4, f"parity {err:.2e} >= 1e-4"
 
 
+@pytest.mark.skipif(not CKPT_DNS3.exists(), reason="需要本机 DNS3 官方权重(CI 跳过)")
 def test_time_causality():
     """时间因果性：改动未来帧输入，过去帧输出必须逐位不变（流式部署的前提，
     官方 repo 同款检查）。GTConv 时间维只做左侧 padding、inter-GRU 单向。"""
