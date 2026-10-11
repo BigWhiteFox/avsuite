@@ -89,3 +89,33 @@ python ../../scripts/aec_synth.py --num 60 --dur-sec 8 \
   滤波器没机会收敛——NN-AEC（WP-07）的核心卖点之一
 - MDF 语音稳态 misadjustment（见消融节，prop 加权是改进方向）
 - 非线性回声（功放失真）线性滤波封顶 ~10-15dB —— WP-08 的入口
+
+## 附记（V4 整改：对齐余量 / 周期重估 / DTD 复位 / 发散防护，2026-10-11 晚）
+
+代码审查定位三个实现级缺陷（详见 `tests/test_trad_aec_hardening.py` 与
+`reports/v4_rectification/`），本次修复，**默认参数逐位兼容**（原 93 项测试不改一字全绿）：
+
+1. **对齐余量** `align_margin_ms`（默认 0）：对齐右移量 = max(估计时延 − margin, 0)，
+   使残余直达径落在 MDF 窗口内部而非 lag 0——修复"负向时延漂移/路径移动 → 残余路径
+   非因果 → FIR 不可表示"的实现缺陷（漂移集崩塌与官方集 with-movement 发散的共享根因，
+   与本 README 上文第 7 条自记失效同族）。
+2. **周期重估再对齐** `reestimate_sec`（默认关）+ `realign_min_delta_ms` /
+   `reestimate_win_s` / `realign_search_pad_ms`：每 N 秒用最近窗口原始 mic/far 做窗ed
+   GCC，超阈值即再对齐并复位 MDF+DTD。单测实测：+130ms 跳变（残差 155ms 越出 128ms 窗）
+   下固定对齐 ERLE 崩至 ~3dB，重估列恢复 ~49dB（gap ≈46dB）。
+3. **DTD 可复位** `DTDStreaming.reset()`：清闩锁/EMA/暖机计数，重对齐后暖机期重新冻结
+   ——修复"闩锁只置位永不复位 + 路径突变后误冻正反馈"。
+4. **MDF 发散防护** `w_abs_cap`（默认 1e3，谱域绝对界）+ 有限性检查：触发即复位并计数
+   （`n_divergence_resets`），输出恒有限——修复官方集 with-movement 1/800 条系数几何
+   增长耗尽 float64 的问题（相对信赖域随 ||w|| 水涨船高、leak 只界随机游走）。
+
+**单元测试运动的如实发现（影响漂移归因的强度）**：噪声激励下，慢速时延游走
+（±10ms/8s ≈ 0.36 样本/块）使 MDF 的 ERLE 从静态 ~46dB 跌到 4-5.5dB——**margin=25
+也只恢复到 5.5dB**（块内路径移动 × 块级自适应的跟踪代价，大于纯几何的"非因果泄漏"
+解释）；而周期激励（6 稳定正弦）下滤波器可"周期性预测"补偿超窗回声（残差 155ms 仍
+19-27dB）。两个效应都说明：**漂移崩溃的定量归因（非因果泄漏 vs 跟踪代价 vs DTD 误冻
+vs 插值副产物）必须靠真实语音+RIR 的重跑定位**（V4 任务 S10：
+`reports/trad_hardening_rerun.md`），单元测试只锁几何语义与不倒退。修复配置的漂移/
+官方集/真实 RIR 三列重跑数字以 S10 报告为准。
+
+回归：全仓 pytest **100 passed / 0 failed**（93 + 7 新增）。

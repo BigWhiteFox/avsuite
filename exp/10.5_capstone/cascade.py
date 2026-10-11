@@ -4,7 +4,7 @@
     20ms 块进块出的 AEC 级（真流式）+ 整段批处理的 NR 级（离线；官方 stream/ 版
     可替换为全流式，README 注明）。
 
-输出三路信号（原始 / AEC 后 / AEC+NR 后）+ AECMOS 三分量（echo/deg 逐级变化）
+输出三路信号（原始 / AEC 后 / AEC+NR 后）+ AECMOS echo/deg 两路分数（逐级变化）
 ——"三级处理效果"的量化演示，对车载团队的说服力超过任何单个模块。
 """
 import sys

@@ -20,7 +20,7 @@ class MDF:
     def __init__(self, block: int = 256, partitions: int = 8, mu: float = 0.5,
                  power_ema: float = 0.97, power_floor: float = 0.5,
                  rel_cap: float = 1.0, sig_cap: float = 0.5, leak: float = 1e-4,
-                 loading: float = 0.05):
+                 loading: float = 0.05, w_abs_cap: float = 1e3):
         self.B, self.P, self.mu = block, partitions, mu
         self.N = 2 * block
         self.W = np.zeros((partitions, self.N // 2 + 1), dtype=complex)
@@ -32,6 +32,11 @@ class MDF:
         self.rel_cap, self.sig_cap = rel_cap, sig_cap   # 信赖域（相对/信号标度）
         self.leak = leak                            # 系数泄漏（界住远端静默期随机游走）
         self.loading = loading                      # 对角加载（深谷 bin 梯度限幅）
+        # V4 发散防护：系数谱域绝对界（合法回声路径 |W| ≪ 1，1e3 远高于量级——
+        # 只拦"几何增长耗尽 float64"的发散（官方集 with-movement 条 1/800 实测），
+        # 正常路径永不触发，保持逐位兼容。触发即 reset() 并计数。
+        self.w_abs_cap = w_abs_cap
+        self.n_divergence_resets = 0
 
     @property
     def taps(self) -> np.ndarray:
@@ -70,7 +75,6 @@ class MDF:
             for p in range(self.P):
                 y += np.fft.irfft(self.W[p] * self.X[p], N)[B:]
             eb = db - y
-            e[i:i + B], y_all[i:i + B] = eb, y
             scale = float(scales[bi]) if block_hook is None else float(block_hook(bi, fb, db, y))
             E = np.fft.rfft(np.concatenate([np.zeros(B), eb]))
             # 归一化 = 跨度总功率 Σ_p|X[p]|² 的慢速 EMA（Mansour-Gray PBFDAF 期望功率版）
@@ -100,6 +104,17 @@ class MDF:
                 w[:B] = (w[:B] + dw[:B]) * (1 - self.leak)   # 更新 + 泄漏
                 w[B:] = 0                                    # 系数约束
                 self.W[p] = np.fft.rfft(w)
+            # V4 发散防护：系数谱域绝对界 + 有限性——触发即复位，本块输出兜底。
+            # （官方集 with-movement 1/800 条：相对信赖域随 ||w|| 水涨船高、leak 只界
+            # 随机游走，系数几何增长耗尽 float64 → 173,816 非有限样本。此防护保证
+            # 输出恒有限；正常路径永不触发，保持逐位兼容。）
+            if (not np.isfinite(self.W).all() or not np.isfinite(eb).all()
+                    or np.max(np.abs(self.W)) > self.w_abs_cap):
+                self.reset()
+                self.n_divergence_resets += 1
+                y = np.zeros(B)
+                eb = db.copy() if np.isfinite(db).all() else np.zeros(B)
+            e[i:i + B], y_all[i:i + B] = eb, y
         e, y_all = e[:len(far)], y_all[:len(far)]
         return (e, y_all) if return_y else e
 

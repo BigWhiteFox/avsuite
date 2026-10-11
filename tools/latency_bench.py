@@ -1,4 +1,5 @@
-"""P2-7 端到端时延账本实测：NN-AEC v4 流式单块 + GTCRN ONNX 单帧/整段基准。
+"""P2-7 端到端时延账本实测：NN-AEC v4 流式单块 + GTCRN ONNX 单帧/整段基准
+（V4 扩展：+ MDF 单块基准，级联 MDF→NN 线性级入账）。
 
 整改项 P2-7（时延叙事 AEC 32ms + NR 32ms = 64ms 的实测底账）：
   1. NN-AEC v4 流式（20ms 块进块出）：加载 exp/07_nn_aec/outputs_v4/
@@ -9,6 +10,12 @@
      intra_op=1，同 exp/05a bench.py 口径）+ 整段批处理 RTF（4s，stft+模型
      +istft 端到端——capstone run_nr 的实际口径是整段批，非流式，如实分列）。
   3. 记录 CPU 型号 / 线程配置 / 测量时背景负载（psutil cpu_percent 采样）。
+  4. MDF 单块（V4 级联 MDF→NN 的线性级，exp/09_cascade_aec 同配置）：
+     MDF(block=256, partitions=8, mu=0.7)，逐块调用 process 传一个 256 样本块
+     （实例状态跨调用延续 = process 整段接口内部块循环的流式等价形态，脚本内
+     自动校验逐块与整段输出一致性），预热 50 块后连续 1000 块逐块 perf_counter
+     -> mean/p50/p95/p99（ms）；合成噪声 float64（级联部署口径 TradAEC.process
+     内转 float64）；纯 numpy pocketfft，无线程可配。
 
 输出：控制台表 + JSON（默认打印到 stdout；--json PATH 可落盘）。
 
@@ -30,9 +37,11 @@ HERE = Path(__file__).resolve().parent        # avsuite/tools
 ROOT = HERE.parent                            # avsuite/ 仓库根
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "exp" / "07_nn_aec"))
+sys.path.insert(0, str(ROOT / "exp" / "06_trad_aec"))
 
 SR = 16000
 CHUNK = 320                      # 20ms @16k（模型 hop）
+MDF_BLOCK = 256                  # 16ms @16k（exp/09 级联 MDF→NN 线性级块粒度）
 N_WARM = 50                      # 预热块数（=50 帧）
 N_ITERS = 1000                   # 计时块数
 NNAEC_CKPT = ROOT / "exp/07_nn_aec/outputs_v4/nnaec_g0.5_j10/last.ckpt"
@@ -179,6 +188,71 @@ def bench_gtcrn_batch(dur: float = 4.0, reps: int = 5) -> dict:
     }
 
 
+def mdf_blockwise_equivalence(n_blocks: int = 150) -> dict:
+    """逐块调用 process(256) 与整段 process 的输出一致性校验。
+
+    MDF 为确定性过程；段长取 n_blocks×256（B 整数倍，整段路径无尾部补零），
+    两路径逐块运算序列相同，应逐位一致。"""
+    from mdf import MDF
+    n = n_blocks * MDF_BLOCK
+    far = np.random.default_rng(12).standard_normal(n) * 0.05
+    mic = np.random.default_rng(13).standard_normal(n) * 0.05
+    m_blk = MDF(block=MDF_BLOCK, partitions=8, mu=0.7)
+    e_blk = np.concatenate([
+        m_blk.process(far[i * MDF_BLOCK:(i + 1) * MDF_BLOCK],
+                      mic[i * MDF_BLOCK:(i + 1) * MDF_BLOCK])
+        for i in range(n_blocks)])
+    m_seg = MDF(block=MDF_BLOCK, partitions=8, mu=0.7)
+    e_seg = m_seg.process(far, mic)
+    return {
+        "n_blocks": n_blocks,
+        "samples": n,
+        "max_abs_diff": float(np.max(np.abs(e_blk - e_seg))),
+        "bitwise_equal": bool(np.array_equal(e_blk, e_seg)),
+    }
+
+
+def bench_mdf_block() -> dict:
+    """MDF 单块基准（exp/09_cascade_aec 级联线性级同配置 TradAEC(mdf,8,0.7)）。
+
+    process 是整段接口（内部按 B 分块循环）；等价逐块方式 = 构造实例后每次
+    调用 process 传一个 256 样本块，实例状态（xhist/X/W/span_ph）跨调用延续
+    ——与整段调用的一致性由 mdf_blockwise_equivalence 校验。预热 50 块后
+    连续 1000 块逐块 perf_counter（=16 s 音频）。"""
+    from mdf import MDF
+    B = MDF_BLOCK
+    far = np.random.default_rng(12).standard_normal((N_WARM + N_ITERS) * B) * 0.05
+    mic = np.random.default_rng(13).standard_normal((N_WARM + N_ITERS) * B) * 0.05
+    mdf = MDF(block=B, partitions=8, mu=0.7)
+    for i in range(N_WARM):
+        mdf.process(far[i * B:(i + 1) * B], mic[i * B:(i + 1) * B])
+    samples = []
+    gc.disable()
+    try:
+        for i in range(N_ITERS):
+            off = (N_WARM + i) * B
+            t0 = time.perf_counter()
+            mdf.process(far[off:off + B], mic[off:off + B])
+            samples.append((time.perf_counter() - t0) * 1000.0)
+    finally:
+        gc.enable()
+    r = {
+        "config": f"MDF(block=256, partitions=8, mu=0.7) 逐块 process(256)，"
+                  f"合成噪声 float64，numpy {np.__version__}（pocketfft，无线程配置）",
+        "block_samples": B,
+        "block_ms": 16.0,
+        "filter_taps": 8 * 256,
+        "warmup_chunks": N_WARM,
+        "timed_chunks": N_ITERS,
+        "audio_processed_s": round(N_ITERS * B / SR, 1),
+        "note": "计时含 process 入口簿记（pad/scales/输出缓冲分配，O(B)）——"
+                "即部署形态逐次调用的真实成本，非内联内核耗时",
+    }
+    r.update(stats_ms(samples))
+    r["rtf_block_mean"] = round(r["mean_ms"] / 16.0, 5)
+    return r
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--json", type=Path, default=None, help="JSON 落盘路径（默认仅 stdout）")
@@ -220,6 +294,11 @@ def main():
 
     result["gtcrn_frame_1thread"] = bench_gtcrn_frame()
     result["gtcrn_batch_1thread"] = bench_gtcrn_batch()
+    result["mdf_blockwise_vs_segment"] = mdf_blockwise_equivalence()
+    mdf_pre = psutil.cpu_percent(interval=0.3)
+    result["mdf_block"] = bench_mdf_block()
+    result["mdf_block"]["cpu_percent_pre"] = mdf_pre
+    result["mdf_block"]["cpu_percent_post"] = psutil.cpu_percent(interval=0.3)
     meta["cpu_percent_sample_end"] = psutil.cpu_percent(interval=0.3)
 
     print()
@@ -237,6 +316,13 @@ def main():
     b = result["gtcrn_batch_1thread"]
     print(f"GTCRN 整段批 {b['dur_s']}s: model {b['model_ms_per_call']}ms + "
           f"stft/istft {b['stft_istft_ms_per_call']}ms -> RTF(e2e) {b['rtf_e2e']}")
+    m = result["mdf_block"]
+    print(f"{'MDF 单块 256 样本 (16ms)':<38}{m['mean_ms']:>8.3f}{m['p50_ms']:>8.3f}"
+          f"{m['p95_ms']:>8.3f}{m['p99_ms']:>8.3f}")
+    eq = result["mdf_blockwise_vs_segment"]
+    print(f"MDF 逐块 vs 整段一致性: max|d|={eq['max_abs_diff']:.2e} "
+          f"bitwise_equal={eq['bitwise_equal']} ({eq['n_blocks']} 块)")
+    print(f"MDF 段 CPU% 采样: pre {m['cpu_percent_pre']} / post {m['cpu_percent_post']}")
     print(f"AEC flush 单次: {result['aec_flush_ms_single_call']}ms "
           f"(出 {result['aec_flush_out_samples']} 样本；仅流结束调用，不计稳态预算)")
     print(f"CPU% 采样: start {meta['cpu_percent_sample_start']} / end {meta['cpu_percent_sample_end']}")

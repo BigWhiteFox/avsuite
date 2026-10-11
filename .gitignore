@@ -35,5 +35,9 @@ exp/09_cascade_aec/results/enh_long/
 exp/09_cascade_aec/results/zerotrain_enh/
 exp/09_cascade_aec/outputs_long/
 exp/09_cascade_aec/outputs_smoke/
+exp/07_nn_aec/outputs_v4_drift/
+exp/07_nn_aec/outputs_v4_drift_full/
+exp/07_nn_aec/outputs/deg_mechanism/enh_wavs/
+exp/06_trad_aec/outputs/hardening_rerun_enh/
 *.tfevents.*
 

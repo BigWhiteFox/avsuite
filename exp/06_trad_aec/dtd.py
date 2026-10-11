@@ -116,6 +116,28 @@ class DTDStreaming:
         self.hang = 0
         self.far_active = True
 
+    def reset(self):
+        """V4 整改：路径重对齐后清空全部自适应状态（闩锁/EMA/hangover/暖机计数）。
+
+        保留构造参数与 echo_prior 整段判决——重对齐后暖机期（前 warm_blocks 块）
+        重新冻结，防止旧路径的收敛证据污染新路径的 DT 判决。修复"闩锁只置位永不
+        复位 + 路径突变后误冻正反馈"的实现缺陷（漂移/移动路径下三层证据一致性
+        被破坏，同一机制从防近端污染翻转为阻止重收敛）。"""
+        self.sxx = np.zeros(self.frame // 2 + 1)
+        self.syy = np.zeros(self.frame // 2 + 1)
+        self.sxy = np.zeros(self.frame // 2 + 1, dtype=complex)
+        self.erle_ema = None
+        self.cmxy = self.cmxx = self.cmyy = 0.0
+        self.run = 0
+        self.converged = False
+        self.far_rms_max = 1e-10
+        self.far_peaks = np.zeros(8)
+        self.hang = 0
+        self.last_state = 2
+        self.nb = 0
+        self.n_active = 0
+        self.far_active = True
+
     def update(self, mic_b: np.ndarray, far_b: np.ndarray, y_b: np.ndarray) -> int:
         """喂一个块，返回三态：0=正常自适应，1=DT 软冻结（步长×FREEZE，允许
         慢速跟踪回声路径漂移），2=近端主导硬冻结（步长=0，完全不学——NST 下
