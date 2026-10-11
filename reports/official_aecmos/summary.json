@@ -1,0 +1,95 @@
+{
+  "proto:trad:fest": {
+    "n": 299,
+    "echo_mos": 2.725,
+    "deg_mos": 5.0,
+    "failed": 1
+  },
+  "proto:trad:dt": {
+    "n": 300,
+    "echo_mos": 2.305,
+    "deg_mos": 3.692
+  },
+  "proto:trad:nst": {
+    "n": 200,
+    "echo_mos": 4.999,
+    "deg_mos": 4.183
+  },
+  "proto:nn:fest": {
+    "n": 300,
+    "echo_mos": 3.094,
+    "deg_mos": 4.999
+  },
+  "proto:nn:dt": {
+    "n": 300,
+    "echo_mos": 3.239,
+    "deg_mos": 3.114
+  },
+  "proto:nn:nst": {
+    "n": 200,
+    "echo_mos": 4.998,
+    "deg_mos": 3.755
+  },
+  "full:trad:fest": {
+    "n": 299,
+    "echo_mos": 2.798,
+    "deg_mos": 5.0,
+    "failed": 1
+  },
+  "full:trad:dt": {
+    "n": 300,
+    "echo_mos": 2.707,
+    "deg_mos": 3.31
+  },
+  "full:trad:nst": {
+    "n": 200,
+    "echo_mos": 4.999,
+    "deg_mos": 4.183
+  },
+  "full:nn:fest": {
+    "n": 300,
+    "echo_mos": 3.313,
+    "deg_mos": 4.999
+  },
+  "full:nn:dt": {
+    "n": 300,
+    "echo_mos": 3.969,
+    "deg_mos": 2.727
+  },
+  "full:nn:nst": {
+    "n": 200,
+    "echo_mos": 4.998,
+    "deg_mos": 3.755
+  },
+  "t2s:trad:fest": {
+    "n": 299,
+    "echo_mos": 2.801,
+    "deg_mos": 4.999,
+    "failed": 1
+  },
+  "t2s:trad:dt": {
+    "n": 300,
+    "echo_mos": 2.654,
+    "deg_mos": 3.49
+  },
+  "t2s:trad:nst": {
+    "n": 200,
+    "echo_mos": 4.998,
+    "deg_mos": 4.146
+  },
+  "t2s:nn:fest": {
+    "n": 300,
+    "echo_mos": 3.212,
+    "deg_mos": 4.999
+  },
+  "t2s:nn:dt": {
+    "n": 300,
+    "echo_mos": 3.92,
+    "deg_mos": 2.933
+  },
+  "t2s:nn:nst": {
+    "n": 200,
+    "echo_mos": 4.997,
+    "deg_mos": 3.709
+  }
+}
