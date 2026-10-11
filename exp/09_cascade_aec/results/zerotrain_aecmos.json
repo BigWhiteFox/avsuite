@@ -1,0 +1,382 @@
+{
+  "tag": "enhdir",
+  "summary": {
+    "fest": {
+      "n": 26,
+      "echo_mos": 3.003,
+      "deg_mos": 5.0
+    },
+    "dt": {
+      "n": 14,
+      "echo_mos": 3.174,
+      "deg_mos": 1.887
+    },
+    "nst": {
+      "n": 20,
+      "echo_mos": 5.0,
+      "deg_mos": 2.013
+    }
+  },
+  "rows": [
+    {
+      "name": "fileid_0_dt",
+      "scenario": "dt",
+      "echo_mos": 4.495028018951416,
+      "deg_mos": 1.5191229581832886
+    },
+    {
+      "name": "fileid_1_fest",
+      "scenario": "fest",
+      "echo_mos": 2.184391498565674,
+      "deg_mos": 4.999856948852539
+    },
+    {
+      "name": "fileid_2_nst",
+      "scenario": "nst",
+      "echo_mos": 4.999970436096191,
+      "deg_mos": 1.6326738595962524
+    },
+    {
+      "name": "fileid_3_dt",
+      "scenario": "dt",
+      "echo_mos": 4.775979995727539,
+      "deg_mos": 1.2687187194824219
+    },
+    {
+      "name": "fileid_4_dt",
+      "scenario": "dt",
+      "echo_mos": 3.2328217029571533,
+      "deg_mos": 1.9058104753494263
+    },
+    {
+      "name": "fileid_5_nst",
+      "scenario": "nst",
+      "echo_mos": 4.999978065490723,
+      "deg_mos": 2.1685194969177246
+    },
+    {
+      "name": "fileid_6_fest",
+      "scenario": "fest",
+      "echo_mos": 1.4168511629104614,
+      "deg_mos": 4.999989032745361
+    },
+    {
+      "name": "fileid_7_fest",
+      "scenario": "fest",
+      "echo_mos": 4.774296760559082,
+      "deg_mos": 4.999351978302002
+    },
+    {
+      "name": "fileid_8_dt",
+      "scenario": "dt",
+      "echo_mos": 2.659777879714966,
+      "deg_mos": 2.0641770362854004
+    },
+    {
+      "name": "fileid_9_fest",
+      "scenario": "fest",
+      "echo_mos": 4.770517349243164,
+      "deg_mos": 4.999363422393799
+    },
+    {
+      "name": "fileid_10_fest",
+      "scenario": "fest",
+      "echo_mos": 1.5430716276168823,
+      "deg_mos": 4.99999475479126
+    },
+    {
+      "name": "fileid_11_nst",
+      "scenario": "nst",
+      "echo_mos": 4.999875068664551,
+      "deg_mos": 2.1774115562438965
+    },
+    {
+      "name": "fileid_12_nst",
+      "scenario": "nst",
+      "echo_mos": 4.999946594238281,
+      "deg_mos": 1.4786752462387085
+    },
+    {
+      "name": "fileid_13_fest",
+      "scenario": "fest",
+      "echo_mos": 3.9516654014587402,
+      "deg_mos": 4.99898624420166
+    },
+    {
+      "name": "fileid_14_nst",
+      "scenario": "nst",
+      "echo_mos": 4.999970436096191,
+      "deg_mos": 1.6871628761291504
+    },
+    {
+      "name": "fileid_15_fest",
+      "scenario": "fest",
+      "echo_mos": 4.792805194854736,
+      "deg_mos": 4.999504089355469
+    },
+    {
+      "name": "fileid_16_fest",
+      "scenario": "fest",
+      "echo_mos": 4.129849910736084,
+      "deg_mos": 4.99917459487915
+    },
+    {
+      "name": "fileid_17_dt",
+      "scenario": "dt",
+      "echo_mos": 4.313631057739258,
+      "deg_mos": 1.7151744365692139
+    },
+    {
+      "name": "fileid_18_fest",
+      "scenario": "fest",
+      "echo_mos": 1.8907126188278198,
+      "deg_mos": 4.99992561340332
+    },
+    {
+      "name": "fileid_19_dt",
+      "scenario": "dt",
+      "echo_mos": 2.4015097618103027,
+      "deg_mos": 1.6468418836593628
+    },
+    {
+      "name": "fileid_20_fest",
+      "scenario": "fest",
+      "echo_mos": 4.852819442749023,
+      "deg_mos": 4.999682903289795
+    },
+    {
+      "name": "fileid_21_dt",
+      "scenario": "dt",
+      "echo_mos": 2.029062271118164,
+      "deg_mos": 2.143683433532715
+    },
+    {
+      "name": "fileid_22_nst",
+      "scenario": "nst",
+      "echo_mos": 4.999998092651367,
+      "deg_mos": 2.3947060108184814
+    },
+    {
+      "name": "fileid_23_dt",
+      "scenario": "dt",
+      "echo_mos": 2.4742014408111572,
+      "deg_mos": 1.7383347749710083
+    },
+    {
+      "name": "fileid_24_fest",
+      "scenario": "fest",
+      "echo_mos": 4.7286810874938965,
+      "deg_mos": 4.99881649017334
+    },
+    {
+      "name": "fileid_25_nst",
+      "scenario": "nst",
+      "echo_mos": 4.998996257781982,
+      "deg_mos": 1.6091258525848389
+    },
+    {
+      "name": "fileid_26_fest",
+      "scenario": "fest",
+      "echo_mos": 1.623019814491272,
+      "deg_mos": 4.999991416931152
+    },
+    {
+      "name": "fileid_27_nst",
+      "scenario": "nst",
+      "echo_mos": 4.999997138977051,
+      "deg_mos": 1.71970534324646
+    },
+    {
+      "name": "fileid_28_fest",
+      "scenario": "fest",
+      "echo_mos": 1.9816712141036987,
+      "deg_mos": 4.999983787536621
+    },
+    {
+      "name": "fileid_29_fest",
+      "scenario": "fest",
+      "echo_mos": 4.639425277709961,
+      "deg_mos": 4.998857021331787
+    },
+    {
+      "name": "fileid_30_fest",
+      "scenario": "fest",
+      "echo_mos": 1.7699623107910156,
+      "deg_mos": 4.999981880187988
+    },
+    {
+      "name": "fileid_31_nst",
+      "scenario": "nst",
+      "echo_mos": 4.999788761138916,
+      "deg_mos": 1.9367753267288208
+    },
+    {
+      "name": "fileid_32_fest",
+      "scenario": "fest",
+      "echo_mos": 1.8323512077331543,
+      "deg_mos": 4.9999823570251465
+    },
+    {
+      "name": "fileid_33_fest",
+      "scenario": "fest",
+      "echo_mos": 1.678660273551941,
+      "deg_mos": 4.999972820281982
+    },
+    {
+      "name": "fileid_34_fest",
+      "scenario": "fest",
+      "echo_mos": 1.8940776586532593,
+      "deg_mos": 4.999983787536621
+    },
+    {
+      "name": "fileid_35_fest",
+      "scenario": "fest",
+      "echo_mos": 1.9444161653518677,
+      "deg_mos": 4.999927520751953
+    },
+    {
+      "name": "fileid_36_nst",
+      "scenario": "nst",
+      "echo_mos": 4.999907493591309,
+      "deg_mos": 2.0392980575561523
+    },
+    {
+      "name": "fileid_37_nst",
+      "scenario": "nst",
+      "echo_mos": 4.999998569488525,
+      "deg_mos": 1.6980091333389282
+    },
+    {
+      "name": "fileid_38_nst",
+      "scenario": "nst",
+      "echo_mos": 4.999984264373779,
+      "deg_mos": 2.0396320819854736
+    },
+    {
+      "name": "fileid_39_fest",
+      "scenario": "fest",
+      "echo_mos": 2.231243371963501,
+      "deg_mos": 4.999979496002197
+    },
+    {
+      "name": "fileid_40_fest",
+      "scenario": "fest",
+      "echo_mos": 2.1019630432128906,
+      "deg_mos": 4.999931335449219
+    },
+    {
+      "name": "fileid_41_fest",
+      "scenario": "fest",
+      "echo_mos": 1.6700776815414429,
+      "deg_mos": 4.999986171722412
+    },
+    {
+      "name": "fileid_42_nst",
+      "scenario": "nst",
+      "echo_mos": 4.999995231628418,
+      "deg_mos": 2.2841742038726807
+    },
+    {
+      "name": "fileid_43_dt",
+      "scenario": "dt",
+      "echo_mos": 4.3198699951171875,
+      "deg_mos": 1.748981237411499
+    },
+    {
+      "name": "fileid_44_nst",
+      "scenario": "nst",
+      "echo_mos": 4.999979019165039,
+      "deg_mos": 2.746983051300049
+    },
+    {
+      "name": "fileid_45_nst",
+      "scenario": "nst",
+      "echo_mos": 4.999874591827393,
+      "deg_mos": 2.0511715412139893
+    },
+    {
+      "name": "fileid_46_fest",
+      "scenario": "fest",
+      "echo_mos": 2.415444850921631,
+      "deg_mos": 4.999857425689697
+    },
+    {
+      "name": "fileid_47_dt",
+      "scenario": "dt",
+      "echo_mos": 2.7146313190460205,
+      "deg_mos": 2.1172869205474854
+    },
+    {
+      "name": "fileid_48_nst",
+      "scenario": "nst",
+      "echo_mos": 4.999975204467773,
+      "deg_mos": 2.42625093460083
+    },
+    {
+      "name": "fileid_49_dt",
+      "scenario": "dt",
+      "echo_mos": 2.7079954147338867,
+      "deg_mos": 2.0907142162323
+    },
+    {
+      "name": "fileid_50_nst",
+      "scenario": "nst",
+      "echo_mos": 4.999969482421875,
+      "deg_mos": 2.3066813945770264
+    },
+    {
+      "name": "fileid_51_nst",
+      "scenario": "nst",
+      "echo_mos": 4.995164394378662,
+      "deg_mos": 2.0980782508850098
+    },
+    {
+      "name": "fileid_52_dt",
+      "scenario": "dt",
+      "echo_mos": 2.1343114376068115,
+      "deg_mos": 2.059499979019165
+    },
+    {
+      "name": "fileid_53_nst",
+      "scenario": "nst",
+      "echo_mos": 4.999971389770508,
+      "deg_mos": 1.9394844770431519
+    },
+    {
+      "name": "fileid_54_fest",
+      "scenario": "fest",
+      "echo_mos": 4.580625057220459,
+      "deg_mos": 4.999589443206787
+    },
+    {
+      "name": "fileid_55_nst",
+      "scenario": "nst",
+      "echo_mos": 4.999987602233887,
+      "deg_mos": 1.8286877870559692
+    },
+    {
+      "name": "fileid_56_dt",
+      "scenario": "dt",
+      "echo_mos": 2.128683567047119,
+      "deg_mos": 2.7596490383148193
+    },
+    {
+      "name": "fileid_57_fest",
+      "scenario": "fest",
+      "echo_mos": 4.82520866394043,
+      "deg_mos": 4.999538421630859
+    },
+    {
+      "name": "fileid_58_fest",
+      "scenario": "fest",
+      "echo_mos": 3.8431921005249023,
+      "deg_mos": 4.999333381652832
+    },
+    {
+      "name": "fileid_59_dt",
+      "scenario": "dt",
+      "echo_mos": 4.0515336990356445,
+      "deg_mos": 1.6468991041183472
+    }
+  ]
+}

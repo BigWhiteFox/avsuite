@@ -122,6 +122,8 @@ python ../../scripts/aec_synth.py --num 3000 --dur-sec 4 \
   等价性测试模式复用 WP-05b 的流式 vs 非流式逐帧对齐
 - AECMOS 集成延后（降级路径已按 WORKLIST 授权）；非线性回声（soft-clip 15% 样本
   在训练集里）NN 天然能学一部分——WP-08 的对照组
+- train/eval 同用 28 说话人池（同池不同句），未见说话人泛化此前未单独评估——
+  已补全全未见说话人（DNS clean 素材）重评：exp/07_nn_aec/outputs/eval_v4_speaker_heldout/summary.md
 
 ## 流式推理（WP-05b 模式已实现，`streaming.py`）
 

@@ -21,7 +21,7 @@ sys.path.insert(0, str(ROOT / "exp" / "05a_gtcrn_onnx"))
 
 from streaming import NNAECStreaming  # noqa: E402  (按路径直载 model，无名字冲突)
 
-NNAEC_CKPT = ROOT / "exp/07_nn_aec/outputs_v3/nnaec_g0.5_j10/last.ckpt"
+NNAEC_CKPT = ROOT / "exp/07_nn_aec/outputs_v4/nnaec_g0.5_j10/last.ckpt"
 GTCRN_ONNX = ROOT / "exp/05a_gtcrn_onnx/outputs/gtcrn_dns3.sim.onnx"
 SR = 16000
 CHUNK = 320                                    # 20ms

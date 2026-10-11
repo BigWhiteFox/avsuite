@@ -18,6 +18,13 @@ RIR 来源（三选一，自动降级）：
 时延扰动：echo 相对 far 参考随机右移 delay∈[--delay-min-ms,--delay-max-ms]，
 模拟 loopback 时延不确定性，训练 AEC 的时延鲁棒性（WP-07 用）。
 
+时延漂移（--delay-drift，P2-1）：>0 时每条样本在基础时延上叠加慢随机游走
+delay(t) = delay_ms + w(t)：w 每整秒步进 N(0, σ)、限幅 ±2σ（σ=--delay-drift ms），
+节点间线性过渡；分数时延用线性插值实现（近似口径见 apply_delay_drift 注释）。
+游走从**独立** Generator(default_rng([seed, 0x9E3779B9])) 抽样，不占主 rng——
+同 seed 下开/关漂移的底座内容（场景/文件/时延/SER/SNR 序列）完全一致，可配对对比。
+0（默认）= 关闭：不走漂移分支、不建不抽任何游走流，输出与固定时延版逐比特一致。
+
 用法：
     python aec_synth.py --num 100 --out-dir D:/data/aec-synth/v1 \
         --near-dir D:/data/voicebank-demand-16k/extracted/train/clean \
@@ -119,12 +126,55 @@ def db_scale(x, ref_power, target_db, eps=1e-12):
     return x * np.sqrt(g)
 
 
+# ---------------------------------------------------------------- 时延漂移（P2-1）
+def delay_drift_walk(n, delay_ms, drift_ms, rng):
+    """慢随机游走节点序列（P2-1 --delay-drift，漂移幅度 σ=drift_ms）。
+
+    w_0 = 0（基础时延处出发）；每整秒一步：w_k = clip(w_{k-1} + N(0, σ), -2σ, +2σ)，
+    节点时刻 t_k = k 秒，覆盖 [0, ceil(n/SR)]。w 是相对基础时延 delay_ms 的偏移（ms），
+    与固定时延口径一致。返回 (node_t_sec, node_w_ms)。
+    """
+    n_steps = int(np.ceil(n / SR))
+    lim = 2.0 * drift_ms
+    w = np.empty(n_steps + 1, dtype=np.float64)
+    w[0] = 0.0
+    for k in range(1, n_steps + 1):
+        w[k] = np.clip(w[k - 1] + rng.normal(0.0, drift_ms), -lim, lim)
+    return np.arange(n_steps + 1, dtype=np.float64), w
+
+
+def apply_delay_drift(echo, n, delay_ms, drift_ms, rng):
+    """把固定时延 echo 换成时变分数时延版本（仅 --delay-drift>0 时进入）。
+
+    delay(t) = delay_ms + w(t)，w 为每秒步进 σ 的限幅随机游走（见 delay_drift_walk）。
+    近似口径（二选一之「线性插值」，未采用 resample_poly 变比率重采样）：
+      ① 游走在整秒节点间线性过渡（分段线性时延轨迹，慢漂移）；
+      ② 输出样本 m 在 echo 上的分数读位置 pos = m - delay(t_m)·SR/1000，
+         用一阶线性插值取值——相对理想带限分数时延有高频镜像/陷波误差，
+         对 16k 语音的 AECMOS 评分影响可忽略（本开关关注时延失配本身）；
+      ③ 读位置为负（段首大时延）与旧口径一致补零；far 参考不移；
+         pos 越出 echo 右界的极端配置做边界夹取（正常参数到不了）。
+    """
+    node_t, node_w = delay_drift_walk(n, delay_ms, drift_ms, rng)
+    t = np.arange(n) / SR
+    tau_ms = np.interp(t, node_t, node_w) + delay_ms        # 每样本时延（ms）
+    pos = np.arange(n) - tau_ms * SR / 1000.0               # echo 上的分数读位置
+    i0 = np.floor(pos).astype(np.int64)
+    frac = pos - i0
+    i0c = np.clip(i0, 0, len(echo) - 2)                     # 越界夹取（仅极端配置触顶）
+    y = (1.0 - frac) * echo[i0c] + frac * echo[i0c + 1]
+    y[pos < 0] = 0.0
+    return y
+
+
 def generate_one(near, far, noise, rir, scenario, ser_db, snr_db,
-                 delay_ms, use_soft_clip):
+                 delay_ms, use_soft_clip, drift_ms=0.0, drift_rng=None):
     """单样本合成 -> (far_ref, near_clean, mic, noise, aux)。
 
     前四条等长 float32 波形（noise 一并返回便于测试对账/后续 ERLE 抽检）；
-    aux 为参数 dict（manifest 用）。
+    aux 为参数 dict（manifest 用）。drift_ms>0 且 drift_rng 给定时，echo 时延
+    = delay_ms + 慢随机游走（P2-1 --delay-drift，口径见 apply_delay_drift）；
+    默认 drift_ms=0 走原固定时延路径，且不消耗 drift_rng 抽样（逐比特兼容）。
 
     定标协议（全在函数内完成，输入为原始电平）：
       FEST: echo 相对 noise 定 snr_db；NST: near 相对 noise 定 snr_db；
@@ -135,8 +185,11 @@ def generate_one(near, far, noise, rir, scenario, ser_db, snr_db,
     echo = fftconvolve(far, rir)[: n + int(SR * 0.1)]      # RIR 尾部截断缓冲
     if use_soft_clip:
         echo = soft_clip(echo)
-    d = int(round(delay_ms * SR / 1000))
-    echo = np.concatenate([np.zeros(d), echo])[:n]          # 时延扰动（far 参考不移）
+    if drift_ms > 0 and drift_rng is not None:
+        echo = apply_delay_drift(echo, n, delay_ms, drift_ms, drift_rng)
+    else:
+        d = int(round(delay_ms * SR / 1000))
+        echo = np.concatenate([np.zeros(d), echo])[:n]      # 时延扰动（far 参考不移）
     noise_p = np.mean(noise ** 2)
     if scenario == "fest":
         near = np.zeros(n)
@@ -152,10 +205,12 @@ def generate_one(near, far, noise, rir, scenario, ser_db, snr_db,
     if peak > 0.9:                                          # 防削波统一缩放（SER/SNR 不变）
         k = 0.9 / peak
         mic, near, echo, noise, far = mic * k, near * k, echo * k, noise * k, far * k
+    aux = dict(delay_ms=float(delay_ms), ser_db=float(ser_db), snr_db=float(snr_db),
+               soft_clip=int(bool(use_soft_clip)))
+    if drift_ms > 0 and drift_rng is not None:
+        aux["delay_drift_ms"] = float(drift_ms)             # 游走 σ；轨迹体现在 wav 内
     return (far.astype(np.float32), near.astype(np.float32), mic.astype(np.float32),
-            noise.astype(np.float32),
-            dict(delay_ms=float(delay_ms), ser_db=float(ser_db), snr_db=float(snr_db),
-                 soft_clip=int(bool(use_soft_clip))))
+            noise.astype(np.float32), aux)
 
 
 # ---------------------------------------------------------------- 批量驱动
@@ -194,6 +249,12 @@ def main():
     ap.add_argument("--snr-range", default="5,20", help="噪声 SNR dB 范围")
     ap.add_argument("--delay-min-ms", type=float, default=10.0)
     ap.add_argument("--delay-max-ms", type=float, default=80.0)
+    ap.add_argument("--delay-drift", type=float, default=0.0,
+                    help="回声时延漂移 σ（ms，P2-1）：>0 时每条样本时延 = 基础时延 + "
+                         "慢随机游走（每整秒步进 N(0,σ)、限幅 ±2σ、节点间线性过渡），"
+                         "分数时延用线性插值实现（近似口径见 apply_delay_drift 注释）；"
+                         "游走用独立 Generator（不占主 rng，同 seed 开/关漂移底座内容一致，"
+                         "可配对对比）；0（默认）关闭，输出与固定时延版逐比特一致")
     ap.add_argument("--soft-clip-prob", type=float, default=0.3,
                     help="启用功放软剪切的样本比例（WP-08 开关）")
     ap.add_argument("--dt-leadin-sec", type=float, default=2.0,
@@ -206,6 +267,11 @@ def main():
     ser_lo, ser_hi = map(float, args.ser_range.split(","))
     snr_lo, snr_hi = map(float, args.snr_range.split(","))
     rng = np.random.default_rng(args.seed)
+    # 游走专用 Generator（P2-1）：与主 rng 分流——drift>0 时游走抽样不扰动主
+    # 序列，同 seed 下开/关漂移的底座内容逐项一致（可做配对对照）；drift=0 时
+    # 不建不抽，默认路径逐比特兼容。
+    walk_rng = (np.random.default_rng([args.seed, 0x9E3779B9])
+                if args.delay_drift > 0 else None)
 
     near_files = sorted(Path(args.near_dir).glob("**/*.wav"))
     far_files = sorted(Path(args.far_dir).glob("**/*.wav"))
@@ -243,7 +309,8 @@ def main():
             ser_db=rng.uniform(ser_lo, ser_hi),
             snr_db=rng.uniform(snr_lo, snr_hi),
             delay_ms=rng.uniform(args.delay_min_ms, args.delay_max_ms),
-            use_soft_clip=bool(rng.random() < args.soft_clip_prob))
+            use_soft_clip=bool(rng.random() < args.soft_clip_prob),
+            drift_ms=args.delay_drift, drift_rng=walk_rng)
         uid = f"fileid_{i}_{scene}"
         sf.write(out / "farend" / f"{uid}.wav", far_r, SR)
         sf.write(out / "nearend" / f"{uid}.wav", near_r, SR)
@@ -255,12 +322,16 @@ def main():
                          **par))
     fields = ["name", "scenario", "rir_src", "near_file", "far_file", "noise_file",
               "delay_ms", "ser_db", "snr_db", "soft_clip", "leadin_sec"]
+    if args.delay_drift > 0:
+        fields.append("delay_drift_ms")
     with open(out / "manifest.csv", "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=fields)
         w.writeheader()
         w.writerows(rows)
     from collections import Counter
     print(f"[aec_synth] {args.num} 条 -> {out}")
+    if args.delay_drift > 0:
+        print(f"  delay-drift σ={args.delay_drift} ms（每秒步进，限幅 ±{2 * args.delay_drift} ms）")
     print(f"  场景分布 {dict(Counter(r['scenario'] for r in rows))}（目标 {ratio}）")
     print(f"  manifest: {out/'manifest.csv'}")
 
