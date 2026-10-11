@@ -327,10 +327,21 @@ if __name__ == "__main__":
     model = GTCRN().eval()
 
     """complexity count"""
-    from ptflops import get_model_complexity_info
-    flops, params = get_model_complexity_info(model, (257, 63, 2), as_strings=True,
-                                           print_per_layer_stat=True, verbose=True)
-    print(flops, params)
+    # ptflops 是**可选**的统计依赖：仅本文件直跑时用于 FLOPs / 逐层参数量统计，
+    # 推理、训练、单测都不依赖它。缺失时给出明确中文提示并降级为纯 PyTorch 参数量
+    # 统计（等价口径，参考 exp/04_dccrn/param_check.py 的 sum(p.numel()) 路径），
+    # 不中断后面的 causality check。安装方式：pip install ptflops
+    try:
+        from ptflops import get_model_complexity_info
+    except ImportError:
+        n_all = sum(p.numel() for p in model.parameters())
+        n_train = sum(p.numel() for p in model.parameters() if p.requires_grad)
+        print("[gtcrn.py] 未安装可选的统计依赖 ptflops（pip install ptflops 可启用 FLOPs "
+              f"逐层统计）；本次降级为纯 PyTorch 参数量：总 {n_all}，可训练 {n_train}")
+    else:
+        flops, params = get_model_complexity_info(model, (257, 63, 2), as_strings=True,
+                                                 print_per_layer_stat=True, verbose=True)
+        print(flops, params)
 
     """causality check"""
     a = torch.randn(1, 16000)
@@ -339,12 +350,19 @@ if __name__ == "__main__":
     x1 = torch.cat([a, b], dim=1)
     x2 = torch.cat([a, c], dim=1)
 
-    x1 = torch.stft(x1, 512, 256, 512, torch.hann_window(512).pow(0.5), return_complex=False)
-    x2 = torch.stft(x2, 512, 256, 512, torch.hann_window(512).pow(0.5), return_complex=False)
+    # torch>=2.x 写法：stft 用 return_complex=True 再 view_as_real 取 (B,F,T,2) 实虚视图
+    # （与旧 return_complex=False **逐位等价**，已实测 torch.equal=True 且不再告警）；
+    # istft 只吃 complex——旧写法传 (…,2) 实张量 + return_complex=False 在 torch 2.6
+    # 会直接 RuntimeError。模型输出经两次 permute 后末维 stride≠1，view_as_complex 会
+    # 报 "Tensor must have a last dimension with stride 1"，故与 common.istft_convention
+    # 统一用 torch.complex(实, 虚) 还原（数值逐位等价）。
+    win = torch.hann_window(512).pow(0.5)
+    x1 = torch.view_as_real(torch.stft(x1, 512, 256, 512, win, return_complex=True))
+    x2 = torch.view_as_real(torch.stft(x2, 512, 256, 512, win, return_complex=True))
     y1 = model(x1)[0]
     y2 = model(x2)[0]
-    y1 = torch.istft(y1, 512, 256, 512, torch.hann_window(512).pow(0.5), return_complex=False)
-    y2 = torch.istft(y2, 512, 256, 512, torch.hann_window(512).pow(0.5), return_complex=False)
+    y1 = torch.istft(torch.complex(y1[..., 0], y1[..., 1]), 512, 256, 512, win)
+    y2 = torch.istft(torch.complex(y2[..., 0], y2[..., 1]), 512, 256, 512, win)
 
     print((y1[:16000-256*2] - y2[:16000-256*2]).abs().max())
     print((y1[16000:] - y2[16000:]).abs().max())

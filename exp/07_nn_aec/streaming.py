@@ -58,10 +58,13 @@ class _ConvStream:
 
 
 class _DeconvStream:
-    """因果转置卷积逐帧：cache 最近 5 帧输入，输出 6 帧取第 2 帧（右移 2 等价）。
+    """因果转置卷积逐帧：cache 最近 5 帧输入，输出 5 帧取下标 2（右移 2 等价）。
+
+    时间轴口径：ConvTranspose2d(k=5, p=2, s=1) 保长——T_in=5 → T_out=5（stride
+    只在频率轴=2），故 5 帧 cache 得 5 帧输出，取 y[..., 2]（0-based 下标 2）。
 
     离线语义：out_t = convT_full[t-2]（t<2 时为零——右移的启动延迟）。流式需
-    显式复刻：前 2 帧直接输出零（cache 里是零+首帧，直接取第 2 帧会算出非零）。
+    显式复刻：前 2 帧直接输出零（cache 里是零+首帧，直接取下标 2 会算出非零）。
     """
 
     def __init__(self, block: torch.nn.Module, cin: int, fin: int):
@@ -156,7 +159,35 @@ class NNAECStreaming:
         return np.concatenate(outs)
 
     def flush(self) -> np.ndarray:
-        """结算尾帧（右零 pad，等价离线 center 右边缘），返回剩余增强样本。"""
+        """结算尾帧（右零 pad）+ 透传 core ISTFT 尾段，返回剩余增强样本。
+
+        两段合成（deep_audit G5 / t11 发现 2 的模型级闭环）：
+        1) STFT 侧：self.s_mic / self.s_far 的 flush() 右填 n_fft//2 个零（等价离线
+           右 pad），结算最后的增强帧，每帧经 self.istft.add_frame 发射 hop 个样本；
+        2) ISTFT 侧：self.istft.flush() 取回 core 缓冲里残留的 **n_fft - hop** 个
+           样本（512/320 → 192 个 = 12ms）。不透传时这 192 个样本永远拿不到：模型级
+           流式总长停在 T·hop，而离线全网格是 (T-1)·hop + n_fft。
+
+        实测（10 chunk × 320 = 3200 样本输入）：process_chunk 出 3200、本方法出
+        320 + 192 = 512，总长 3712 == 离线全网格（T=11 帧）；透传前总长 3520
+        （残留 192）。注意：当 (L+64) mod 320 < 64 时 STFT 侧 flush 不产出新帧
+        （outs 为空），此时返回值全部来自 ISTFT 尾段——这正是旧实现"整段丢尾"的
+        最坏情形（例如 L=3136：旧实现 flush 返回空数组，末尾 192 样点全丢）。
+
+        对既有消费者的影响：capstone cascade.run_aec 把返回值**追加在末尾**、再取
+        前缀 out[256 : 256+len(mic)]，故其输出逐位不变（实测 md5 相同）；本仓
+        tests/test_streaming_nnaec._align 同样只取前缀，亦不变。
+
+        语义透传（不在本层加额外防护，core 侧既有语义直接透出）：
+        - 重复调用本方法 → RuntimeError（core StreamingSTFT.flush 的"只能调用一次"）；
+        - flush 后调用 process_chunk → RuntimeError（core StreamingSTFT.push 的
+          "flush() 之后流已关闭"）；
+        - **从未 push 过就调用本方法 → 返回空数组（长度 0），不抛错**：core 侧
+          `StreamingSTFT.flush()` 已在 V5 t11/t24 修好空缓冲路径（实测：空流
+          `NNAECStreaming.flush()` 返回 len=0）；早先此处记的"core 对空缓冲调
+          torch.cat 报 expected a non-empty list of Tensors"已失效（V5 终审 F6 更正）。
+          本方法不额外拦截（语义透传）。
+        """
         mf = self.s_mic.flush()
         ff = self.s_far.flush()
         outs = []
@@ -164,7 +195,10 @@ class NNAECStreaming:
             enh = self._frame_step(m[0].to(self.device), f[0].to(self.device))
             frame_td = torch.fft.irfft(enh, n=self.model.n_fft)
             outs.append(self.istft.add_frame(frame_td.cpu().numpy()))
-        return np.concatenate(outs) if outs else np.zeros(0, dtype=np.float32)
+        tail = self.istft.flush()            # core 侧尾段：n_fft - hop 个样本
+        if outs:
+            return np.concatenate([*outs, tail])
+        return tail if tail.size else np.zeros(0, dtype=np.float32)
 
     def reset(self):
         for e in self.enc:

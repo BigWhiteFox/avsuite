@@ -74,8 +74,12 @@ def _train_inline(mask_type, rnn_type, bounded, skip, a):
     stft = STFT().to(device)
 
     def loss_fn(batch):
-        _, mask, noisy_spec, enh_spec = model(batch["noisy"])
-        clean_spec = stft.transform(batch["clean"])
+        # V5 v3b-023：输入张量必须搬到 device。旧实现模型/STFT 在 device 而 batch 仍在
+        # cpu → `--device cuda` 直接 device mismatch 崩（cpu 下 .to 是恒等，行为不变）。
+        noisy = batch["noisy"].to(device)
+        clean = batch["clean"].to(device)
+        _, mask, noisy_spec, enh_spec = model(noisy)
+        clean_spec = stft.transform(clean)
         if mask_type == "irm":
             return irm_bce_loss(mask, noisy_spec, clean_spec)
         return complex_mse_loss(enh_spec, clean_spec)

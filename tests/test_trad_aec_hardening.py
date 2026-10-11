@@ -106,7 +106,16 @@ def test_align_margin_clamps_at_zero():
 
 
 def test_mdf_divergence_guard_keeps_output_finite():
-    """发散防护：病态输入（巨幅 far + NaN 突发）下输出恒有限、复位计数 ≥1。"""
+    """发散防护：病态输入（巨幅 far + mic NaN 突发）下输出恒有限。
+
+    V5 更新（T10 / deep_audit G1）：pipeline 现在在入口把非有限样本按 0 处理
+    （nan_to_num，对有限输入是恒等变换）。本用例的 far（参考端）本身是有限的，
+    只有 mic 含 NaN——按 G1 的分端语义这属于"丢几个采集样本"、参考端证据仍有效，
+    因此既不降级也不告警（`n_gcc_fallback == 0`），MDF 也不再需要靠"NaN 传播把
+    系数顶到 1e3"的偶然路径复位（修复前该用例的 `n_divergence_resets` 恰恰只由
+    这条路径达成；"far 脏"的显式降级由 tests/test_exp06_wave5.py 覆盖）。
+    MDF 自身的发散防护仍在本用例下一段直接验证。
+    """
     rng = np.random.default_rng(5)
     n = 3 * SR
     far = _voice_like(rng, n) * 1e6
@@ -116,8 +125,9 @@ def test_mdf_divergence_guard_keeps_output_finite():
     aec = TradAEC(method="mdf", partitions=8, mu=0.7)
     r = aec.process(mic, far)
     assert np.isfinite(r.out).all() and np.isfinite(r.error).all()
-    assert r.n_divergence_resets >= 1
-    # MDF 级直接验证
+    assert r.n_gcc_fallback == 0                  # far（参考端）有限 -> 无证据降级
+    assert r.n_divergence_resets == 0             # 净化后不再需要 MDF 兜底复位
+    # MDF 级直接验证（不经 pipeline 的净化，守卫必须自己顶住并复位）
     m = MDF(block=256, partitions=8, mu=0.7)
     far_b = rng.standard_normal(256) * 1e6
     mic_b = far_b * 0.4

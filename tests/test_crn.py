@@ -30,9 +30,15 @@ def test_model_shapes_all_configs():
             assert mask.shape[0] == 2
             if mask_type == "irm":
                 assert bool((mask >= 0).all() and (mask <= 1).all())
-    # 模型内 STFT 与 core 对拍：同输入同谱
+    # 模型内 STFT 与 torch.stft **数值**对拍：同输入同谱。
+    # 只断言 shape（历史写法）会漏掉布局/窗约定被换掉的回归——例如 Re/Im 通道
+    # 互换、periodic 与非周期窗混用后，shape 依然正确但数值全错。
     spec = STFT().transform(wav)
     assert spec.shape == (2, 257, 63)
+    ref = torch.stft(wav, 512, hop_length=256, win_length=512,
+                     window=torch.hann_window(512, periodic=True, dtype=wav.dtype),
+                     center=True, pad_mode="reflect", onesided=True, return_complex=True)
+    torch.testing.assert_close(spec, ref, rtol=1e-5, atol=1e-5)
 
 
 def test_bounded_mask_range():
@@ -131,3 +137,24 @@ def test_train_smoke_and_resume(tmp_path):
         capture_output=True, text=True, timeout=600)
     assert r2.returncode == 0, r2.stderr[-2000:]
     assert torch.load(ckpt, weights_only=False)["epoch"] == 2, "resume 应从 epoch 2 继续"
+    # 续训分支真的走到的**直接证据**（v3a-022 建议）：训练脚本在 resume 分支打印
+    #   "[resume] epoch {start_ep}, best=..."
+    # 注意：不能用"续训 vs 全新训练权重不同"作判据——smoke(1 epoch) 与 fresh(2 epochs)
+    # 共享同一 seed/数据/超参，续训(=smoke 的 epoch1 + epoch2) 与 fresh(epoch1+epoch2)
+    # 在确定性训练下**必然逐位相同**，该判据会把"resume 正常工作"误判为失败（实测 max|Δ|=0.0）。
+    assert "[resume] epoch 2" in r2.stdout, (
+        f"未见 resume 分支打印；stdout 尾部：{r2.stdout[-500:]}")
+
+    # 补充的判别力：全新训练（不带 --resume）不应打印 resume 行
+    fresh_out = tmp_path / "runs_fresh"
+    r3 = subprocess.run(
+        [sys.executable, "-s", str(Path(train_mod.__file__)),
+         "--synthetic", "--epochs", "2", "--max-train-batches", "2",
+         "--num-workers", "0", "--hidden", "16", "--out", str(fresh_out)],
+        capture_output=True, text=True, timeout=600)
+    assert r3.returncode == 0, r3.stderr[-2000:]
+    assert "[resume]" not in r3.stdout
+    resumed_sd = torch.load(ckpt, weights_only=False)["model"]
+    fresh_sd = torch.load(fresh_out / "crn_crm_blstm" / "last.ckpt",
+                          weights_only=False)["model"]
+    assert set(resumed_sd) == set(fresh_sd), "两次训练的 state_dict 键应一致"

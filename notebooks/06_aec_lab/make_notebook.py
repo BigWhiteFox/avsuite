@@ -41,6 +41,24 @@ def _src(body):
     return [ln + "\n" for ln in body[:-1]] + [body[-1]]
 
 
+def _code_segments(path):
+    """把源脚本按 `# %%` 切格，返回各**代码格正文**（末尾空块丢弃规则与写盘一致）。"""
+    segs, cur, kind = [], [], None
+    for ln in path.read_text(encoding="utf-8").splitlines():
+        if MARK.match(ln):
+            if kind == "code":
+                segs.append("\n".join(cur))
+            kind = "markdown" if "[markdown]" in ln else "code"
+            cur = []
+        elif kind is not None:
+            cur.append(ln)
+    if kind == "code":
+        segs.append("\n".join(cur))
+    while segs and not segs[-1].strip():
+        segs.pop()
+    return segs
+
+
 for ln in lines:
     if MARK.match(ln):
         flush()
@@ -65,9 +83,15 @@ DST.write_text(json.dumps(nb, ensure_ascii=False, indent=1) + "\n",
 
 n_md = sum(1 for c in cells if c["cell_type"] == "markdown")
 n_code = len(cells) - n_md
-# 自检:json 可回读,代码格合计行数与脚本中代码格行数一致(同源证明)
+# 自检（V5 v3b-064：原断言只比较 JSON 回读的 cells 数，恒真、无同源证明力）：
+# ① 回读结构必须与写出的 nb 对象**完全相等**；
+# ② 把 .ipynb 内代码格正文与源脚本重新切格得到的代码段**逐字比较**（真·同源证明）。
 back = json.loads(DST.read_text(encoding="utf-8"))
-assert back["nbformat"] == 4 and len(back["cells"]) == len(cells)
+assert back == nb, "回读的 nbformat 结构与写出对象不一致"
+back_code = ["".join(c["source"]) for c in back["cells"] if c["cell_type"] == "code"]
+src_code = _code_segments(SRC)
+assert back_code == src_code, (
+    f"ipynb 代码格与源脚本不同源：ipynb {len(back_code)} 格 vs 源 {len(src_code)} 段")
 code_lines_src = sum(len(c["source"]) for c in cells if c["cell_type"] == "code")
 print(f"written {DST.relative_to(HERE.parents[2]).as_posix()}: "
       f"{n_md} markdown + {n_code} code cells, code lines total={code_lines_src}")

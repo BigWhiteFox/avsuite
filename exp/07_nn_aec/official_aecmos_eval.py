@@ -158,6 +158,10 @@ def stage_infer_nn(clips, ckpt, vram_floor_gib=1.5):
     man = STAGE / "manifest_nn.csv"
     rows, note = [], []
     t0 = time.time()
+    # V5 v3b-019（high，读码实测）：当前推理设备必须**跨 clip 持久化**。旧实现每轮
+    # `dev = device` 重置回 cuda，而 VRAM 守卫/OOM 已把 model 永久搬到 cpu →
+    # 下一轮把输入送 cuda、权重在 cpu，整列 nn 打分全失败。降级后不再回 cuda。
+    dev = device
     with torch.no_grad():
         for i, clip in enumerate(clips, 1):
             tc = time.time()
@@ -168,7 +172,6 @@ def stage_infer_nn(clips, ckpt, vram_floor_gib=1.5):
                                      sec=0.0, out=str(dst), error="cached"))
                     continue
                 l16, m16 = load16(clip)
-                dev = device
                 if dev == "cuda":
                     free, _ = torch.cuda.mem_get_info(0)
                     if free < vram_floor_gib * 2**30:   # 显存紧张:整列退 CPU

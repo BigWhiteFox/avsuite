@@ -1,9 +1,17 @@
 """WP-05a 公共工具：模型加载 / STFT 约定 / 测试信号。
 
-官方推理约定（infer.py 同款，必须严格一致否则权重对不上）：
-    spec = torch.stft(wav, 512, 256, 512, hann(512)**0.5, return_complex=False)
+官方推理约定（infer.py 同款，必须严格一致否则权重对不上）；torch>=2.x 推荐写法：
+    spec = torch.view_as_real(torch.stft(wav, 512, 256, 512, hann(512)**0.5,
+                                         return_complex=True))  # (F,T,2) 实虚视图
     enh  = model(spec[None])           # (B,F,T,2) -> (B,F,T,2) 复数谱实虚视图
-    wav  = torch.istft(enh, 512, 256, 512, hann(512)**0.5)
+    wav  = torch.istft(torch.complex(enh[..., 0], enh[..., 1]), 512, 256, 512,
+                       hann(512)**0.5)
+旧写法 `torch.stft(..., return_complex=False)` 已弃用（torch 2.6 实测每次调用都发
+UserWarning，未来版本直接 raise）；view_as_real 写法与其**逐位等价**（已实测
+torch.equal=True）。istft 侧只吃 complex，旧写法传 (…,2) 实张量在 torch 2.6 会
+直接 RuntimeError；模型输出经 permute 后末维 stride≠1，view_as_complex 会报
+"Tensor must have a last dimension with stride 1"，故统一用 torch.complex(实, 虚)
+还原（见本文件 istft_convention，数值逐位等价）。
 sqrt-hann 双端各乘一次 = 整窗 hann 的 WOLA 重构（与 core/istft 的窗平方归一等价路径）。
 """
 import sys
@@ -39,8 +47,8 @@ def stft_convention(wav: torch.Tensor) -> torch.Tensor:
     w = sqrt_hann().to(wav.device)
     if wav.dim() == 1:
         wav = wav.unsqueeze(0)
-    return torch.stack([torch.stft(x, 512, 256, 512, w, return_complex=False)
-                        for x in wav])
+    return torch.stack([torch.view_as_real(
+        torch.stft(x, 512, 256, 512, w, return_complex=True)) for x in wav])
 
 
 def istft_convention(spec: torch.Tensor, length=None) -> torch.Tensor:

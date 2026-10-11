@@ -24,7 +24,9 @@ jobs:
 
       - name: Ruff lint
         run: |
-          pip install ruff
+          # 钉版：ruff 0.17.0（= environment.yml 实测版本），避免新版规则集
+          # 让"既有 32 条 lint 债务"的判定随上游漂移（V5 已清本波新增；全量清零排程中）
+          pip install ruff==0.17.0
           ruff check core exp tools scripts tests
 
       - name: Pytest

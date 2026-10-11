@@ -5,8 +5,12 @@
   唯一差异 = 自适应滤波器本体;两边都不加 RES(RES 对两者加同量增益,会掩盖滤波器差异)。
 - MDF 基线 = TradAEC(method='mdf', mu=0.7, partitions=8, use_res=False) —— 与验收同参。
 - Kalman = 平行驱动(gcc_phat_stats/align_far + far_gate 复刻 + DTDStreaming hook + FDKalman)。
-- 口径:稳态 ERLE 公式 = eval_aec.erle_db(10lg(Σmic²/Σout²));滑窗曲线 = ablation.py 同款
-  (0.5s 步长,±0.5s 窗);稳态读数 = 最后 2s 窗;t90 = 曲线首次 ≥ 0.9×稳态;
+- 口径:稳态 ERLE 公式 = eval_aec.erle_db(10lg(Σmic²/Σout²))（**注意:本文件不 import
+  eval_aec**——eval_aec.erle_db 的默认实现内部会跳过前 2s 瞬态,而本脚本要的是"最后 2s 窗"
+  读数,故用等价的窗口化实现 window_erle() 就地计算,两者公式同源、取窗不同;
+  早期版本曾 import 该函数但从未调用,已删除以免误读为同取窗口径）;
+  滑窗曲线 = ablation.py 同款 (0.5s 步长,±0.5s 窗);稳态读数 = 最后 2s 窗;
+  t90 = 曲线首次 ≥ 0.9×稳态;
   DT 段 ERLE = t≥leadin_sec 窗(注意:DT 段 mic 与 e 都含近端,该读数只作趋势/发散监测,
   近端保真看补充读数 DT 段 PESQ 与 corr(e, near))。
 
@@ -32,12 +36,10 @@ import soundfile as sf
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from eval_aec import erle_db  # noqa: E402  同口径稳态公式(skip 2s)
-from pipeline import (TradAEC, FREEZE, IDLE, FAR_REL_THR, FAR_ABS_THR,  # noqa: E402
-                      EVIDENCE_THR)
-from gcc import align_far, gcc_phat_stats  # noqa: E402
 from dtd import DTDStreaming  # noqa: E402
+from gcc import align_far, gcc_phat_stats  # noqa: E402
 from kalman import FDKalman  # noqa: E402
+from pipeline import EVIDENCE_THR, FAR_ABS_THR, FAR_REL_THR, FREEZE, IDLE, TradAEC  # noqa: E402
 
 SR = 16000
 BLOCK, PARTITIONS, MU = 256, 8, 0.7
@@ -82,10 +84,27 @@ def far_gate(far_al: np.ndarray, n_blocks: int) -> np.ndarray:
 
 
 def run_kalman(mic: np.ndarray, far: np.ndarray, q: float, r: float):
-    """平行驱动:GCC 对齐 + 远端门 + DTDStreaming 三态 hook + FDKalman(与 MDF 同策略)。"""
+    """平行驱动:GCC 对齐 + 远端门 + DTDStreaming 三态 hook + FDKalman(与 MDF 同策略)。
+
+    V5 G23/G1：
+    - DTDStreaming 的 far_rms_max/far_peaks/converged 是跨调用持久状态（本函数每次
+      新建实例，故单文件安全），**但评估脚本按文件循环时若复用实例会继承上一文件的
+      历史峰值 -> far_active 长期 False -> 全程硬冻结**；故在返回前显式 reset()，
+      把"一文件一状态"的纪律写进代码（调用方 eval_one 逐文件调用本函数）。
+    - GCC 证据失效（far 含非有限样本 / peak_ratio 非有限）时与 pipeline.process 同口径
+      降级：不把不可用证据当成"无回声"，而是按"可能有回声"放行自适应。
+    """
     n = len(mic)
-    delay_ms, evidence = gcc_phat_stats(mic, far, SR)
-    echo_prior = evidence >= EVIDENCE_THR
+    # V5（T10 / deep_audit G1）：gcc_phat_stats 现在返回
+    # (delay_ms, peak_ratio, evidence_valid)——第三个值 = "参考端 far 有限且
+    # peak_ratio 可用于回声存在性判决"。证据失效时与 pipeline.process 同口径降级
+    # （不把不可用证据当成"无回声"），delay/evidence 取安全值。
+    delay_ms, evidence, evidence_valid = gcc_phat_stats(mic, far, SR)
+    if (not evidence_valid) or (not np.isfinite(evidence)):
+        delay_ms, evidence, echo_prior = 0.0, float("nan"), True
+    else:
+        echo_prior = evidence >= EVIDENCE_THR
+    delay_ms = float(delay_ms) if np.isfinite(delay_ms) else 0.0
     far_al = align_far(far, delay_ms, SR, n)
     n_blocks = int(np.ceil(n / BLOCK))
     gate = far_gate(far_al, n_blocks)
@@ -99,6 +118,7 @@ def run_kalman(mic: np.ndarray, far: np.ndarray, q: float, r: float):
         return FREEZE if st == 1 else 0.0
 
     e, y = kf.process(far_al, mic, block_hook=hook, return_y=True)
+    dtds.reset()          # V5 G23：跨文件状态卫生——下一个文件不得继承本文件的历史统计
     return e[:n], y[:n], delay_ms, evidence
 
 
@@ -142,7 +162,7 @@ def eval_one(row, cfg, pesq_baseline):
                       use_dtd=True, use_res=False)
         e = aec.process(mic, far).error
     else:
-        e, _, _, _ = run_kalman(mic, far, cfg["q"], cfg["r"])
+        e, _, _, _ = run_kalman(mic, far, cfg["q"], cfg["r"])   # 返回前已 dtds.reset()（V5 G23）
     wall = time.perf_counter() - t0
 
     xs, ys = erle_curve(mic, e)
@@ -227,6 +247,10 @@ def build_conclusion(summary):
 
     收敛读数以绝对门槛 t(15dB) 为主、t90 为辅:t90 是「达自身稳态 90%」,
     稳态≈0 的配置(Q1e-06 组 fest 稳态中位 0.01dB)会让它退化为曲线过零时刻。
+
+    V5/t23 健壮化:DT 组或诊断组整体缺失时不再抛 `ValueError: max() arg is an
+    empty sequence`(原实现对空列表直接 max) —— 缺失时按 0 条/None 处理并在正文显式
+    标注「组缺失」，便于只跑 FEST 子集/分批跑网格；数据齐全时输出与旧实现逐字一致。
     """
     mdf = summary["MDF(mu0.7,P8)"]
     grid = [c["label"] for c in CONFIGS if c["kind"] == "kal" and not c["diag"]]
@@ -235,21 +259,30 @@ def build_conclusion(summary):
     t90n = [summary[l]["fest_t90_n"] for l in grid]
     t90s = [summary[l]["fest_t90_median_s"] for l in grid]
     t15n = [summary[l]["fest_t15_n"] for l in grid]
-    dte = [summary[l]["dt_seg_erle_median"] for l in grid]
-    dpq = [summary[l]["dt_pesq_median"] for l in grid]
-    ste_diag = max(s for s in (summary[l]["fest_steady_median"] for l in diag) if s is not None)
-    dt_best = max(dte)
+    dte = [v for v in (summary[key]["dt_seg_erle_median"] for key in grid) if v is not None]
+    dpq = [v for v in (summary[key]["dt_pesq_median"] for key in grid) if v is not None]
+    ste_diag_vals = [s for s in (summary[key]["fest_steady_median"] for key in diag)
+                     if s is not None]
+    ste_diag = max(ste_diag_vals) if ste_diag_vals else None
+    dt_best = max(dte) if dte else None
+    dt_line = (
+        (f"③ DT:段 ERLE 中位 MDF {mdf['dt_seg_erle_median']}dB vs Kalman 最好 {dt_best}dB"
+         f"(差 {mdf['dt_seg_erle_median'] - dt_best:.2f}dB,在 1dB 容差内,该读数含近端仅趋势);"
+         f"DT PESQ(近端保真,基线 1.466)MDF {mdf['dt_pesq_median']} vs Kalman "
+         f"{min(dpq)}~{max(dpq)} → 近端保真 MDF 更好")
+        if dt_best is not None else
+        ("③ DT:组缺失(0 条,未跑 DT 子集)→ 跳过 DT 段 ERLE/PESQ 对比;"
+         f"MDF 侧读数 {mdf['dt_seg_erle_median']}")
+    )
     lines = [
         (f"① 收敛:MDF t(15dB)={mdf['fest_t15_median_s']}s({mdf['fest_t15_n']}/12 条达 15dB)最快;"
          f"Kalman 网格组 {t15n[0]}、{t15n[1]}、{t15n[2]}/12 条达标 → MDF 全面更快"
          f"(t90 名义最好 {t90s[0]}s 的 Q1e-06 组稳态仅 {ste[0]}dB,该口径在稳态≈0 时退化,且仅 {t90n[0]}/12 条达成)"),
         (f"② 稳态 ERLE(FEST 最后2s 中位):MDF {mdf['fest_steady_median']}dB;"
-         f"Kalman 网格 {ste[0]}/{ste[1]}/{ste[2]}dB(最好诊断组 {ste_diag}dB)→ MDF 更高;"
+         f"Kalman 网格 {ste[0]}/{ste[1]}/{ste[2]}dB(最好诊断组 "
+         f"{ste_diag if ste_diag is not None else '缺失'}dB)→ MDF 更高;"
          f"32s 单条诊断:Kalman(1e-4,1e-2) 渐近与 MDF 同 ~20dB 平台——输在速率非上限"),
-        (f"③ DT:段 ERLE 中位 MDF {mdf['dt_seg_erle_median']}dB vs Kalman 最好 {dt_best}dB"
-         f"(差 {mdf['dt_seg_erle_median'] - dt_best:.2f}dB,在 1dB 容差内,该读数含近端仅趋势);"
-         f"DT PESQ(近端保真,基线 1.466)MDF {mdf['dt_pesq_median']} vs Kalman "
-         f"{min(dpq)}~{max(dpq)} → 近端保真 MDF 更好"),
+        dt_line,
     ]
     return lines
 

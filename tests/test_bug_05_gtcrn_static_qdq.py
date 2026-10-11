@@ -23,7 +23,7 @@ HERE = Path(__file__).resolve().parents[1] / "exp" / "05a_gtcrn_onnx"
 sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from common import sqrt_hann, stft_convention  # noqa: E402
+from common import sqrt_hann  # noqa: E402
 
 SIM_ONNX = HERE / "outputs" / "gtcrn_dns3.sim.onnx"
 BAD_ONNX = HERE / "outputs" / "gtcrn_dns3.int8_static_BAD.onnx"
@@ -31,7 +31,14 @@ BAD_ONNX = HERE / "outputs" / "gtcrn_dns3.int8_static_BAD.onnx"
 
 def _enhance(sess, noisy, w):
     import torch
-    spec = stft_convention(torch.from_numpy(noisy)).numpy()
+    # 官方 STFT 约定 (B,F,T,2)，与 exp/05a common.stft_convention 数值逐位一致；
+    # 但走 torch>=2.x 推荐写法：return_complex=True 再 view_as_real 取实虚视图。
+    # 原因：return_complex=False 已弃用（"stft with return_complex=False is
+    # deprecated ... will raise an error"，实测 torch 2.6.0 每次调用都告警），
+    # 未来版本会直接报错。等价性已实测：同一输入下两种写法 bitwise equal。
+    x = torch.from_numpy(noisy)
+    spec = torch.view_as_real(
+        torch.stft(x, 512, 256, 512, w, return_complex=True)).unsqueeze(0).numpy()
     enh = sess.run(None, {"spec": spec})[0]                    # (1,F,T,2)
     e = torch.complex(torch.from_numpy(enh[0, ..., 0]), torch.from_numpy(enh[0, ..., 1]))
     return torch.istft(e, 512, 256, 512, w, length=len(noisy)).numpy()
@@ -50,7 +57,11 @@ def test_bug05_static_qdq_si_snr_collapse():
         from dynamic_mixing import DNSDynamicMix
         ds = DNSDynamicMix(epoch_len=3, seg_sec=4.0, seed=777)   # quantize.py 同源
         _ = ds[0]
-    except Exception as e:                                       # noqa: BLE001
+    except FileNotFoundError as e:
+        # 只吞"本机 DNS 素材缺失"这一类（DNSDynamicMix.__init__ 对空 glob 显式抛
+        # FileNotFoundError）。历史写法 `except Exception` 会把真实回归——例如加载
+        # 逻辑被改坏后抛 KeyError/IndexError、或 wav 采样率断言失败——一并静默 skip，
+        # 使本用例在坏机器上永远"绿"。其余异常必须外抛。
         pytest.skip(f"DNS 本机数据缺失:{e}")
 
     sess32 = ort.InferenceSession(str(SIM_ONNX), providers=["CPUExecutionProvider"])

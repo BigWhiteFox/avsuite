@@ -178,8 +178,17 @@ def run_instrumented(mic, far, snap_w=False):
     - snap_w=True 时逐块快照 MDF 系数(本块更新前),供 ④ 逐 bin 收敛曲线。
     """
     n = len(mic)
-    delay_ms, evidence = gcc_phat_stats(mic, far, SR)
-    echo_prior = evidence >= EVIDENCE_THR            # GCC 峰旁瓣比整段回声存在性
+    # V5 R8（blocker）：gcc_phat_stats 现返回 3 值 (delay_ms, peak_ratio, evidence_valid)
+    # （t10 为 G1 非有限降级所加）——旧的 2 值解包会直接 ValueError。
+    # 语义与 pipeline.process 对齐：证据失效/非有限时按"回声可能存在"降级（放行自适应，
+    # 而不是把不可用证据当成"无回声"而永久硬冻结），对齐量取 0 避免 int(round(nan)) 崩溃。
+    delay_ms, evidence, ev_valid = gcc_phat_stats(mic, far, SR)
+    if (not ev_valid) or (not np.isfinite(evidence)):
+        delay_ms, evidence, echo_prior = 0.0, float("nan"), True
+    elif not np.isfinite(delay_ms):
+        delay_ms, echo_prior = 0.0, True
+    else:
+        echo_prior = evidence >= EVIDENCE_THR        # GCC 峰旁瓣比整段回声存在性
     far_al = align_far(far, delay_ms, SR, n)
     n_blocks = int(np.ceil(n / BLOCK))
     aec = TradAEC(method="mdf", mu=MU, block=BLOCK, partitions=PARTS,

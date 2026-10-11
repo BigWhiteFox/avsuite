@@ -74,7 +74,11 @@ def run_filter(kind, far_al, mic, mu):
 def main():
     OUT.mkdir(exist_ok=True)
     far, mic = make_signal()
-    d_est, ratio = gcc_phat_stats(mic, far, SR)
+    # V5（T10 / deep_audit G1）：gcc_phat_stats 现在返回
+    # (delay_ms, peak_ratio, evidence_valid)——第三个值表示"参考端 far 是否有限、
+    # peak_ratio 是否可用于回声存在性判决"。本脚本只用 delay 做对齐，故按与
+    # kalman_eval.run_kalman 一致的写法解包并显式忽略多余值（_ =）。
+    d_est, ratio, _ = gcc_phat_stats(mic, far, SR)
     far_al = align_far(far, d_est, SR, len(mic))
     print(f"GCC: delay {d_est:.1f}ms (真值 30ms+直达径), 峰旁瓣比 {ratio:.1f}\n")
 

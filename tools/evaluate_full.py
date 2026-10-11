@@ -21,15 +21,31 @@ import sys
 from pathlib import Path
 
 import numpy as np
-import soundfile as sf
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 sys.path.insert(0, str(ROOT))
 
-from core.evaluate import _safe_pesq, _safe_stoi, _si_snr_np  # noqa: E402
+from core.evaluate import _safe_pesq, _safe_stoi, _si_snr_np, load16k  # noqa: E402
 
 SR = 16000
+ERLE_SKIP_S = 2.0        # ERLE 跳收敛瞬态——与 exp/07_nn_aec/eval.py 同口径
+
+
+def _erle_db(enh, mic, skip_s: float = ERLE_SKIP_S) -> float:
+    """ERLE（dB）= 10·log10(Σmic² / Σenh²)，跳 skip_s 秒瞬态。
+
+    口径与 `exp/07_nn_aec/eval.py::erle_db` **完全一致**（含 1e-12 下限），
+    便于与传统 AEC / NN-AEC 的报告数字直接对比。
+    """
+    k = int(skip_s * SR)
+    return float(10 * np.log10((np.sum(np.asarray(mic[k:], dtype=np.float64) ** 2) + 1e-12)
+                               / (np.sum(np.asarray(enh[k:], dtype=np.float64) ** 2) + 1e-12)))
+
+
+def _is_zero_ref(ref) -> bool:
+    """零参考判定：fest 场景的 nearend 是全零（无近端语音）。"""
+    return ref is None or not np.any(ref)
 
 
 # ---------------------------------------------------------------- 模型加载
@@ -88,15 +104,21 @@ def load_model(args):
 
 # ---------------------------------------------------------------- 数据装配
 def collect_cases(args):
-    """返回 [(name, group, noisy/mic, clean/near, far|None)]。"""
+    """返回 [(name, group, noisy/mic, clean/near, far|None)]。
+
+    读音频统一走 `core.evaluate.load16k`（单声道化 + 重采样到 16k）——修 v3a g29：
+    旧实现直接 `sf.read(...)[0]` 忽略文件原生采样率（48k 数据会被当 16k 喂模型，
+    数值全错），且立体声会拿到 (N,2) 直接崩。
+    """
     if args.model == "nnaec":
         eval_dir = Path(args.eval_dir)
-        rows = list(csv.DictReader(open(eval_dir / "manifest.csv", encoding="utf-8")))
+        with open(eval_dir / "manifest.csv", encoding="utf-8") as f:
+            rows = list(csv.DictReader(f))
         cases = []
         for r in rows:
-            mic = sf.read(eval_dir / "mic" / f"{r['name']}.wav", dtype="float32")[0]
-            far = sf.read(eval_dir / "farend" / f"{r['name']}.wav", dtype="float32")[0]
-            near = sf.read(eval_dir / "nearend" / f"{r['name']}.wav", dtype="float32")[0]
+            mic = load16k(eval_dir / "mic" / f"{r['name']}.wav")
+            far = load16k(eval_dir / "farend" / f"{r['name']}.wav")
+            near = load16k(eval_dir / "nearend" / f"{r['name']}.wav")
             cases.append((r["name"], r["scenario"], mic, near, far))
         return cases
     if args.synth:
@@ -112,8 +134,8 @@ def collect_cases(args):
         names = names[: args.max_files]
     cases = []
     for n in names:
-        noisy = sf.read(noisy_dir / n, dtype="float32")[0]
-        clean = sf.read(clean_dir / n, dtype="float32")[0]
+        noisy = load16k(noisy_dir / n)
+        clean = load16k(clean_dir / n)
         group = n.split("_")[0] if args.group_by == "speaker" else "all"
         cases.append((n, group, noisy, clean, None))
     return cases
@@ -121,8 +143,25 @@ def collect_cases(args):
 
 # ---------------------------------------------------------------- 指标计算
 def _score_one(job):
-    """worker 函数（多进程）：(name, group, enh, ref, dnsmos) -> 指标 dict。"""
-    name, group, enh, ref = job
+    """worker 函数（多进程）：(name, group, enh, ref[, mic]) -> 指标 dict。
+
+    **fest / 零参考场景**（nearend 全零，即只有回声+噪声、没有近端语音）：
+    PESQ/STOI/SI-SNR 对全零参考都没有定义（PESQ 抛 NoUtterancesError、
+    SI-SNR 在旧口径下恒返回 0.0dB 假高分），因此**不算这三项**（记 NaN，
+    汇总时自动跳过），只算 ERLE（跳 2s，口径同 exp/07）。triage_v3 §4 R4。
+    非 fest 场景行为与旧实现完全一致。
+    """
+    name, group, enh, ref = job[0], job[1], job[2], job[3]
+    mic = job[4] if len(job) > 4 else None
+    if _is_zero_ref(ref):
+        if mic is None:
+            return {"name": name, "group": group, "pesq_wb": float("nan"),
+                    "stoi": float("nan"), "si_snr": float("nan"),
+                    "erle_db": float("nan")}
+        n = min(len(enh), len(mic))
+        return {"name": name, "group": group, "pesq_wb": float("nan"),
+                "stoi": float("nan"), "si_snr": float("nan"),
+                "erle_db": _erle_db(enh[:n], mic[:n])}
     n = min(len(enh), len(ref))
     enh, ref = enh[:n].astype(np.float32), ref[:n].astype(np.float32)
     row = {"name": name, "group": group,
@@ -133,7 +172,8 @@ def _score_one(job):
 
 def dnsmos_score_all(cases_enh, dnsmos):
     out = {}
-    for name, _group, enh, _ in cases_enh:
+    for case in cases_enh:
+        name, enh = case[0], case[2]
         s = dnsmos.score(enh)
         if s:
             out[name] = s
@@ -168,12 +208,12 @@ def main():
     for i, (name, group, noisy, ref, far) in enumerate(cases):
         b = {"noisy": noisy} if far is None else {"mic": noisy, "far": far, "near": ref}
         enh = infer(b)
-        enhanced.append((name, group, enh, ref))
+        enhanced.append((name, group, enh, ref, noisy))     # noisy 即 AEC 输入 mic（ERLE 用）
         if (i + 1) % 50 == 0:
             print(f"  enhance {i+1}/{len(cases)}", flush=True)
 
     # 2) 指标（多进程；Windows spawn 需可 pickle 的模块级 worker）
-    jobs = [(name, group, enh, ref) for name, group, enh, ref in enhanced]
+    jobs = [(name, group, enh, ref, mic) for name, group, enh, ref, mic in enhanced]
     if args.workers > 1 and len(jobs) > 2:
         ctx = mp.get_context("spawn")
         with ctx.Pool(args.workers) as pool:
@@ -213,6 +253,8 @@ def main():
     for g, sub in df.groupby("group"):
         summary[g] = {k: round(float(sub[k].mean()), 4)
                       for k in ("pesq_wb", "stoi", "si_snr") if not sub[k].isna().all()}
+        if "erle_db" in df.columns and not sub["erle_db"].isna().all():
+            summary[g]["erle_db"] = round(float(sub["erle_db"].mean()), 4)
         if "ovr" in df:
             summary[g]["ovr"] = round(float(sub["ovr"].dropna().mean()), 4)
     (out / "summary.json").write_text(json.dumps(summary, indent=2))

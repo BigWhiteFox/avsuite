@@ -16,10 +16,12 @@ import argparse
 import csv
 import json
 import sys
+from math import gcd
 from pathlib import Path
 
 import numpy as np
 import soundfile as sf
+from scipy.signal import resample_poly
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
@@ -29,11 +31,40 @@ AECMOS_DIR = Path("D:/data/repos/AEC-Challenge/AECMOS/AECMOS_local")
 AECMOS_MODEL = AECMOS_DIR / "Run_1668423760_Stage_0.onnx"      # 最新版（v2 有单讲 bug）
 TALK = {"fest": "st", "dt": "dt", "nst": "nst"}
 
+# ---------------------------------------------------------------- 采样率对齐（t20 / R1）
+# 官方 AECMOS_local/aecmos.py:45-50 对 Run_1668423760_Stage_0.onnx 设 sampling_rate=48000，
+# 其官方入口 read_and_process_audio_files 用 librosa.load(path, sr=sampling_rate) 统一重采样；
+# 本脚本用 sf.read 读 16k 直送 est.run 会绕过该重采样 ⇒ mel 变换按 48k 解释 16k 波形，
+# echo_mos 被系统性压低（实测 dt −0.65~−1.35，见报告 §1）。
+# 修复口径：送评前把三路统一重采样到 **模型采样率**（AECMOS@48k 模型协议）。
+# 方法与 t19 auditor 探针 reports/refactor_wave5/_t19_p0_aecmos.py:53 一致
+# （resample_poly(x, 3, 1)，即 gcd 约简后的 (up, down)），并与其 "升采样口径" 逐位可对。
+SR_IN_DEFAULT = 16000
 
-def score_all(pairs, est):
-    """pairs: [(name, scenario, lpb, mic, enh)] -> per-scenario 汇总。"""
+
+def resample_to_model_sr(x, sr_in, sr_out):
+    """把一路波形重采样到模型采样率（与 auditor 探针 _t19_p0_aecmos.py 同法）。"""
+    if int(sr_in) == int(sr_out):
+        return x
+    g = gcd(int(sr_in), int(sr_out))
+    return resample_poly(x, int(sr_out) // g, int(sr_in) // g).astype(np.float32)
+
+
+def score_all(pairs, est, sr_in=SR_IN_DEFAULT):
+    """pairs: [(name, scenario, lpb, mic, enh)] -> per-scenario 汇总。
+
+    t20 修复：三路在送 est.run 之前统一重采样到 est.sampling_rate（AECMOS@48k 模型协议），
+    与官方 read_and_process_audio_files 的 librosa.load(sr=sampling_rate) 等价。
+    三路等长断言保留（重采样后仍等长；不等长时显式报错而非静默算错）。
+    """
+    sr_model = int(getattr(est, "sampling_rate", sr_in))
     rows = []
     for name, sc, lpb, mic, enh in pairs:
+        lpb = resample_to_model_sr(lpb, sr_in, sr_model)
+        mic = resample_to_model_sr(mic, sr_in, sr_model)
+        enh = resample_to_model_sr(enh, sr_in, sr_model)
+        assert len(lpb) == len(mic) == len(enh), (
+            f"{name}: 送评三路长度不等 {len(lpb)}/{len(mic)}/{len(enh)}")
         echo_mos, deg_mos = est.run(TALK[sc], lpb, mic, enh)
         rows.append(dict(name=name, scenario=sc, echo_mos=echo_mos, deg_mos=deg_mos))
     summary = {}
@@ -50,7 +81,8 @@ def score_all(pairs, est):
 
 def load_clips(eval_dir):
     eval_dir = Path(eval_dir)
-    rows = list(csv.DictReader(open(eval_dir / "manifest.csv", encoding="utf-8")))
+    with open(eval_dir / "manifest.csv", encoding="utf-8") as f:
+        rows = list(csv.DictReader(f))
     clips = []
     for r in rows:
         lpb, _ = sf.read(eval_dir / "farend" / f"{r['name']}.wav", dtype="float32")
@@ -67,12 +99,16 @@ def main():
     g.add_argument("--trad", action="store_true")
     g.add_argument("--enh-dir", type=Path, default=None)
     ap.add_argument("--out", type=Path, default=None)
+    ap.add_argument("--in-sr", type=int, default=None,
+                    help="输入波形采样率（默认从 farend wav 自动探测；送评前会重采样到模型采样率）")
     args = ap.parse_args()
 
     sys.path.insert(0, str(AECMOS_DIR))
     from aecmos import AECMOSEstimator
     est = AECMOSEstimator(str(AECMOS_MODEL))
     clips = load_clips(args.eval_dir)
+    sr_in = (int(args.in_sr) if args.in_sr
+             else int(sf.info(args.eval_dir / "farend" / f"{clips[0][0]}.wav").samplerate))
 
     if args.enh_dir:
         pairs = []
@@ -104,11 +140,18 @@ def main():
                 pairs.append((name, sc, lpb, mic, enh[0].cpu().numpy()))
         tag = "nn_wp07"
 
-    rows, summary = score_all(pairs, est)
+    rows, summary = score_all(pairs, est, sr_in=sr_in)
     out = args.out or HERE / "outputs" / f"aecmos_{tag}.json"
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps({"tag": tag, "summary": summary, "rows": rows}, indent=2))
-    print(f"[aecmos:{tag}]")
+    out.write_text(json.dumps({
+        "tag": tag,
+        "aecmos_model": str(AECMOS_MODEL),
+        "aecmos_sr_model": int(getattr(est, "sampling_rate", sr_in)),   # t20：口径元数据
+        "input_sr": int(sr_in),
+        "resample": "scipy.signal.resample_poly(gcd-reduced) -> model sr",
+        "summary": summary, "rows": rows}, indent=2))
+    print(f"[aecmos:{tag}] 口径 AECMOS@{getattr(est, 'sampling_rate', sr_in)}Hz 模型"
+          f"（输入 {sr_in}Hz，送评前重采样）")
     for sc, s in summary.items():
         print(f"  {sc.upper():5s} n={s['n']:3d}  echo_mos {s['echo_mos']:.3f}  "
               f"deg_mos {s['deg_mos']:.3f}")

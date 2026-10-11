@@ -46,7 +46,9 @@ def main():
     args = ap.parse_args()
 
     root, out = args.synth_dir, args.out_dir
-    rows = list(csv.DictReader(open(root / "manifest.csv", encoding="utf-8")))
+    SR = 16000                       # V5 v3b-046：读入校验与写盘统一用同一常量
+    with open(root / "manifest.csv", encoding="utf-8") as f:
+        rows = list(csv.DictReader(f))
     for sub in ("mic", "farend", "nearend"):
         (out / sub).mkdir(parents=True, exist_ok=True)
 
@@ -61,15 +63,19 @@ def main():
         if not args.force and p_mic.exists() and p_far.exists() and p_near.exists():
             n_skip += 1
             continue
-        mic = sf.read(root / "mic" / f"{name}.wav", dtype="float32")[0]
-        far = sf.read(root / "farend" / f"{name}.wav", dtype="float32")[0]
+        mic, sr_m = sf.read(root / "mic" / f"{name}.wav", dtype="float32")
+        far, sr_f = sf.read(root / "farend" / f"{name}.wav", dtype="float32")
+        # V5 v3b-046：读入采样率必须显式校验。旧实现写盘硬编码 16000 而读入完全不校验 →
+        # 44.1k/48k 数据集会被静默按 16k 处理（时延/ERLE 全错且无任何告警）。
+        assert sr_m == sr_f == SR, \
+            f"{name}: 采样率不一致 mic={sr_m} far={sr_f}（期望 {SR}）"
         n = min(len(mic), len(far))
         mic, far = mic[:n], far[:n]
         res = aec.process(mic.astype(np.float64), far.astype(np.float64))
         y_echo = res.y_echo[:n].astype(np.float32)
         e_lin = (mic - y_echo).astype(np.float32)   # = res.error(MDF 误差,RES 前)
-        sf.write(p_mic, e_lin, 16000, subtype="FLOAT")
-        sf.write(p_far, y_echo, 16000, subtype="FLOAT")
+        sf.write(p_mic, e_lin, SR, subtype="FLOAT")
+        sf.write(p_far, y_echo, SR, subtype="FLOAT")
         shutil.copyfile(root / "nearend" / f"{name}.wav", p_near)   # 目标逐字节复制
         n_done += 1
         if (i + 1) % 200 == 0:

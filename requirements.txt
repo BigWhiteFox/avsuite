@@ -1,18 +1,90 @@
-# 批次1 核心依赖（WP-00 定稿，配合 conda env：avsuite / python 3.11）
-# torch 装 CUDA 版：pip install torch --index-url https://download.pytorch.org/whl/cu124
-torch>=2.4
-numpy>=1.24
-scipy>=1.10
-soundfile>=0.12
-pesq>=0.0.4
-pystoi>=0.4
-matplotlib>=3.7
-pandas>=1.5
-pytest>=7.4
-einops>=0.7           # exp/05a gtcrn.py 模块级 import（缺失会让 CI pytest 收集期直接中断）
+# ============================================================================
+# avsuite 直接依赖（requirements.txt）
+# ----------------------------------------------------------------------------
+# 口径：只列"项目代码直接 import / CI 与工具链直接调用"的包，不列传递依赖
+#      （完整锁定快照见 environment.yml：19 conda 包 + 122 pip 包）。
+#      与 pyproject.toml 一致：requires-python = ">=3.10"（实测 3.11.17），
+#      lint 规则见 [tool.ruff]，测试入口见 [tool.pytest.ini_options]。
+# 核对方式：& 'C:\Users\14805\.conda\envs\avsuite\python.exe' -m pip freeze
+# 核对时间：2026-10-11
+# 核对结论：pip freeze 123 项 = environment.yml pip 段 122 项 + packaging(conda 管)，
+#          版本逐项一致、零漂移。每行 `# 实测 <版本>` 即该包在 avsuite 环境的实际版本。
+#
+# ⚠ 必须设置 PYTHONNOUSERSITE=1 —— 环境可复现性的关键（2026-10-11 实测）
+#   本机用户站点 C:\Users\14805\AppData\Roaming\Python\Python311\site-packages
+#   混装了整套旧包，且它在 sys.path 中排在 conda 环境 site-packages **之前**，
+#   会静默遮蔽环境内包。实测被遮蔽项（Roaming 版本 vs 环境内版本）：
+#       pandas     1.5.3   vs  3.0.6    <- 实测告警源（去隔离跑 test_evaluate.py）:
+#           C:\Users\14805\AppData\Roaming\Python\Python311\site-packages\
+#             pandas\core\dtypes\cast.py:1641 DeprecationWarning:
+#             "np.find_common_type is deprecated" (Deprecated NumPy 1.25)
+#           pandas 1.5.x 已 EOL；属上游内部调用，本任务不改代码，仅记录
+#       scipy      1.10.1  vs  1.17.1
+#       matplotlib 3.10.8  vs  3.11.2
+#       onnx       1.17.0  vs  1.23.2
+#       pyarrow    23.0.1  vs  25.0.1
+#       requests   2.33.1  vs  2.34.2
+#       pydantic   2.12.5  vs  2.13.5
+#       uvicorn    0.44.0  vs  0.54.0 / typer 0.24.1 vs 0.27.3 ...
+#   不加隔离时 `import pandas` 拿到的是 Roaming 的 1.5.3 而非环境的 3.0.6 ——
+#   同一份 requirements 装出两种行为，这正是环境不可复现的实证。
+#   → Windows(cmd): set PYTHONNOUSERSITE=1
+#   → Git Bash / Linux: export PYTHONNOUSERSITE=1
+#   → 等价兜底: python -s（跳过用户站点）
+#
+# 重建命令（pip 口径；精确重建优先用 environment.yml，见 README 环境节）:
+#     conda create -n avsuite python=3.11 -y && conda activate avsuite
+#     set PYTHONNOUSERSITE=1
+#     pip install torch --index-url https://download.pytorch.org/whl/cu124
+#     pip install -r requirements.txt
+#     python env_check.py --strict && python -m pytest tests -q
+# ============================================================================
 
-# 后续批次启用（已一并装入 avsuite，保证环境一次到位）
-librosa>=0.10        # 批次2+ 数据管道
-onnxruntime>=1.17    # 批次5  ONNX 对拍/量化
-tensorboard>=2.14    # 批次2  训练曲线
-gradio>=4.0          # 批次7  在线 demo
+# --- 批次1 核心依赖（CI `pytest tests` 收集/通过所必需）-----------------------
+torch>=2.4            # 实测 2.6.0+cu124（CI 用 CPU wheel）
+numpy>=1.24           # 实测 1.26.4
+scipy>=1.10           # 实测 1.17.1
+soundfile>=0.12       # 实测 0.14.0
+pesq>=0.0.4           # 实测 0.0.4
+pystoi>=0.4           # 实测 0.4.1
+matplotlib>=3.7       # 实测 3.11.2
+pandas>=2.0           # 实测 3.0.6  [漂移修正] 原 >=1.5 会放行 Roaming 遮蔽的
+                      #   pandas 1.5.3（其 cast.py:1641 触发 np.find_common_type
+                      #   弃用告警）——下界抬到实测大版本 2.0，保证 pip 解析与
+                      #   隔离后的实际导入都拿不到 1.5.x
+pytest>=7.4           # 实测 9.1.1
+einops>=0.7           # 实测 0.8.2；exp/05a gtcrn.py 模块级 import（缺失会让 CI 收集期直接中断）
+
+# --- 后续批次启用（已一并装入 avsuite，保证环境一次到位）----------------------
+librosa>=0.10         # 实测 0.11.0；批次2+ 数据管道
+onnxruntime>=1.17     # 实测 1.30.0；批次5 ONNX 对拍/量化
+tensorboard>=2.14     # 实测 2.21.0；批次2 训练曲线
+gradio>=4.0           # 实测 6.29.1；批次7 在线 demo。[漂移记录] 声明下界 4.0 而
+                      #   实装 6.29.1（跨 2 个大版本）；demo 用 Blocks/Audio API，
+                      #   4-6 兼容故不收紧下界（收紧会阻断 4.x/5.x 用户）
+
+# --- [缺失补齐] 仓库代码直接 import 但原 requirements.txt 未列 -----------------
+# 这些包原先只存在于本机环境（CI 装不上，靠手工补装），补齐后 `pip install -r`
+# 可一次到位。均为惰性 import（函数内），不影响测试收集。
+# CI 可安装性已实测（`pip install --dry-run --only-binary=:all: --platform
+# manylinux_2_28_x86_64 --python-version 3.11 --implementation cp --abi cp311`）：
+# 下列 7 项均解析到 cp311 Linux wheel，无需源码构建，不增加 CI 编译风险。
+onnx>=1.17            # 实测 1.23.2；exp/05a_gtcrn_onnx/onnx_export.py
+onnxsim>=0.4          # 实测 0.7.3；同上（图简化 simplify）
+pyroomacoustics>=0.7  # 实测 0.10.1；scripts/aec_synth.py（车厢 RIR 合成）
+                      #   CI wheel: 0.10.1 cp311 manylinux_2_27/2_28 x86_64
+pyarrow>=14.0         # 实测 25.0.1；exp/03_crn/dataset.py、exp/04_dccrn/eval.py（parquet）
+psutil>=5.9           # 实测 7.2.2；exp/05a_gtcrn_onnx/bench.py、tools/latency_bench.py
+huggingface_hub>=0.23 # 实测 2.1.1；scripts/dns_clean_dl.py、scripts/dns_noise_dl.py
+requests>=2.31        # 实测 2.34.2；tools/dnsmos.py（DNSMOS 模型下载）
+
+# --- 开发 / 文档工具（CI lint 与 mkdocs 站点）--------------------------------
+ruff>=0.6             # 实测 0.17.0；CI `ruff check core exp tools scripts tests`，规则见 pyproject
+mkdocs>=1.6           # 实测 1.6.1；mkdocs.yml -> site/
+mkdocs-material>=9.5  # 实测 9.7.7；同上主题
+
+# --- 已知未装（可选，按需手工安装；不在 CI 路径）-----------------------------
+# ptflops  —— exp/05a_gtcrn_onnx/gtcrn.py:335 附近函数内 import（模型 FLOPs 统计），
+#             当前环境未安装（pip freeze 无此包）；V5 已加降级防护：缺失时打印中文提示
+#             并回退纯 PyTorch 参数量统计（总 48245 / 可训练 23669），不再 ModuleNotFoundError。
+#             如需 FLOPs 口径：pip install ptflops。

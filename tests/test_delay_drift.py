@@ -1,11 +1,12 @@
 """P2-1 单测：--delay-drift 时延漂移（回归 / 特性 / 开关语义 / CLI 接线）。
 
 口径说明：
-(a) 回归——drift=0（默认）时同 seed 输出与「旧版」逐字节一致。旧版 =
-    `git show HEAD:scripts/aec_synth.py`（P2-1 编辑前已核对工作树与 HEAD 无差异），
-    取到临时目录、同参数各跑一次小规模合成（num=2、1.0s、同 fixture），对
-    farend/nearend/mic 全部 wav 与 manifest.csv **逐字节比较**——比"关键统计量"
-    更强的口径。
+(a) 回归——drift=0（默认）时同 seed 输出与 **tests/golden/ 固化黄金基准** 逐字节
+    一致（t14 改造：原口径是 `git show HEAD:scripts/aec_synth.py` 现场取旧版对比）。
+    改造理由：那个口径只在**未提交**改动时有效——一旦把 aec_synth.py 的改动提交，
+    HEAD 与工作树相同，比较退化为"自己 vs 自己"，保护归零；且它把 HEAD 当正确
+    基准、没有正规的"更新基准"入口，还依赖 git 可执行文件。固化基准与 HEAD 解耦，
+    详见 test_drift0_matches_golden_baseline 的 docstring。
 (b) 特性——drift=5ms、基础时延 40ms、8s 单条 FEST（DIRAC RIR + 零噪声，
     mic = 纯时变时延回声）：0.25s 窗 / 0.5s 步互相关估计时延轨迹，极差 > 0
     （本机实测 ~10-14ms）、落在 [40-2σ-2, 40+2σ+2] ms 限幅带内、与声明游走
@@ -16,6 +17,8 @@
     （场景/文件/时延/SER/SNR 序列）逐字段一致，漂移对照可做同内容配对。
 """
 import csv
+import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -68,35 +71,106 @@ def _traj(mic, far, win_s=0.25, hop_s=0.5, lag_lo=400, lag_hi=880):
     return np.array(out, dtype=np.float64)
 
 
-def test_drift0_matches_head_bitwise(tmp_path):
-    """(a) 回归：--delay-drift 缺省(0) 时同 seed 输出与旧版逐字节一致。"""
-    r = subprocess.run(["git", "show", "HEAD:scripts/aec_synth.py"],
-                       capture_output=True, cwd=str(REPO), timeout=60)
-    if r.returncode != 0:
-        pytest.skip(f"git show 不可用，无法取旧版基准: {r.stderr[-200:]!r}")
-    old = tmp_path / "aec_synth_head.py"
-    old.write_bytes(r.stdout)
-    fx = _make_fixture(tmp_path / "fx")
-    common = ["--num", "2", "--dur-sec", "1.0",
-              "--near-dir", str(fx / "near"), "--far-dir", str(fx / "far"),
-              "--noise-dir", str(fx / "noise"), "--seed", "7"]
-    outs = {}
-    for tag, script in (("old", old), ("new", Path(S.__file__))):
-        o = tmp_path / f"out_{tag}"
-        rr = subprocess.run([sys.executable, "-s", str(script), *common,
-                             "--out-dir", str(o)],
-                            capture_output=True, text=True, timeout=600)
-        assert rr.returncode == 0, f"[{tag}] {rr.stderr[-2000:]}"
-        outs[tag] = o
-    assert (outs["old"] / "manifest.csv").read_bytes() == \
-           (outs["new"] / "manifest.csv").read_bytes(), "manifest 与旧版不一致"
-    for sub in ("farend", "nearend", "mic"):
-        wavs = sorted(p.name for p in (outs["old"] / sub).glob("*.wav"))
-        assert len(wavs) == 2
-        for name in wavs:
-            assert (outs["old"] / sub / name).read_bytes() == \
-                   (outs["new"] / sub / name).read_bytes(), \
-                   f"drift=0 输出与旧版不一致: {sub}/{name}"
+# ---------------------------------------------------------------- 黄金基准（t14）
+_GOLDEN_DIR = Path(__file__).resolve().parent / "golden" / "aec_synth_drift0"
+_GOLDEN_RIR_DIR = _GOLDEN_DIR / "rir"
+_GOLDEN_EXPECT = _GOLDEN_DIR / "expected"
+_GOLDEN_SUBS = ("farend", "nearend", "mic")
+_GOLDEN_NUM, _GOLDEN_DUR, _GOLDEN_SEED = 2, 0.5, 7
+
+
+def _golden_inputs(root):
+    """确定性输入 fixture：near/far/noise 各 2 条 0.75s 噪声 wav（seed 0）。
+
+    长度 12000 > dur_sec*SR=8000，使 fit_len 走"随机裁剪"分支（覆盖 rng 消耗）。
+    """
+    root.mkdir(parents=True)
+    rng = np.random.default_rng(0)
+    for sub in ("near", "far", "noise"):
+        d = root / sub
+        d.mkdir()
+        for i in range(2):
+            y = (0.2 * rng.standard_normal(12000)).astype(np.float32)
+            sf.write(d / f"{sub}{i}.wav", y, SR)
+    return root
+
+
+def _make_golden_rir(path):
+    """确定性合成 RIR：直达径 + 指数衰减尾（固定 seed）。
+
+    用自备 RIR 而非默认的 pyroomacoustics 仿真，是为了让基准**与环境无关**：
+    默认路径在 pyroomacoustics 缺失时退化为 rir_exponential，装了它就换成房间
+    仿真——那样基准会随"是否装了 pra / pra 版本"漂移。
+    """
+    rng = np.random.default_rng(12345)
+    n = 512
+    t = np.arange(n) / SR
+    h = rng.standard_normal(n) * np.exp(-t / 0.02)
+    h[0] = 1.0                                   # 直达径
+    h = (h / np.linalg.norm(h) * 0.7).astype(np.float32)
+    sf.write(path, h, SR)
+
+
+def _run_golden_synth(out_dir, fx, rir_dir, extra=()):
+    """按固定参数跑一次 aec_synth.py（子进程，与基准生成时完全同参）。"""
+    argv = [sys.executable, "-s", str(Path(S.__file__)),
+            "--num", str(_GOLDEN_NUM), "--dur-sec", str(_GOLDEN_DUR),
+            "--seed", str(_GOLDEN_SEED),
+            "--near-dir", str(fx / "near"), "--far-dir", str(fx / "far"),
+            "--noise-dir", str(fx / "noise"),
+            "--rir-dir", str(rir_dir), "--out-dir", str(out_dir), *extra]
+    rr = subprocess.run(argv, capture_output=True, text=True, timeout=600)
+    assert rr.returncode == 0, rr.stderr[-2000:]
+    return out_dir
+
+
+def _regen_golden(fx):
+    """重写 tests/golden/aec_synth_drift0/（RIR + expected/）。仅 REGEN_GOLDEN 路径调用。"""
+    if _GOLDEN_DIR.exists():
+        shutil.rmtree(_GOLDEN_DIR)
+    _GOLDEN_RIR_DIR.mkdir(parents=True)
+    _make_golden_rir(_GOLDEN_RIR_DIR / "rir_seed12345.wav")
+    _run_golden_synth(_GOLDEN_EXPECT, fx, _GOLDEN_RIR_DIR)
+
+
+def test_drift0_matches_golden_baseline(tmp_path):
+    """(a) 回归：--delay-drift 缺省(0) 输出与 tests/golden/ 固化基准逐字节一致。
+
+    与旧口径（`git show HEAD:scripts/aec_synth.py` 现场对比）的差别：
+    1) 旧口径只在**未提交**改动时有效——改动一旦提交，HEAD == 工作树，比较退化成
+       "自己 vs 自己"，回归保护归零；固化基准入库后与 HEAD 无关，跨提交持续有效；
+    2) 旧口径把"HEAD 版"当正确基准，**有意的** drift=0 输出变化会误报，且没有正规
+       的更新入口；固化基准的更新是一次显式、可 review 的提交（见下方命令）；
+    3) 旧口径依赖 git 可执行文件与仓库历史（浅克隆/无 git 时只能 skip）；本用例
+       不再需要 git。
+    因此改 aec_synth.py 的**非默认路径**（例如 drift>0 的游走分支）不会误报；
+    只有 drift=0 的实际输出字节变了才红。
+
+    生成/更新基准（需要时手动跑一次，review 后提交 tests/golden/）：
+        $env:PYTHONNOUSERSITE='1'
+        $env:REGEN_GOLDEN='1'; & 'C:\\Users\\14805\\.conda\\envs\\avsuite\\python.exe' `
+            -m pytest tests/test_delay_drift.py -q -k golden
+    基准构成：自备合成 RIR（固定 seed，不依赖 pyroomacoustics）+ num=2 / 0.5s /
+    seed=7 的 farend/nearend/mic 全部 wav 与 manifest.csv。
+    """
+    fx = _golden_inputs(tmp_path / "fx")
+    if os.environ.get("REGEN_GOLDEN"):
+        _regen_golden(fx)
+        pytest.skip("REGEN_GOLDEN 已置位：黄金基准已重写，请 review 后提交 tests/golden/")
+
+    assert _GOLDEN_RIR_DIR.is_dir() and _GOLDEN_EXPECT.is_dir(), (
+        f"缺少黄金基准目录 {_GOLDEN_DIR}（生成命令见本用例 docstring）")
+    out = _run_golden_synth(tmp_path / "out", fx, _GOLDEN_RIR_DIR)
+
+    assert (out / "manifest.csv").read_bytes() == \
+        (_GOLDEN_EXPECT / "manifest.csv").read_bytes(), "manifest.csv 与黄金基准不一致"
+    names = sorted(p.name for p in (_GOLDEN_EXPECT / "mic").glob("*.wav"))
+    assert len(names) == _GOLDEN_NUM, f"基准内 mic wav 数 {len(names)} != {_GOLDEN_NUM}"
+    for sub in _GOLDEN_SUBS:
+        for name in names:
+            assert (out / sub / name).read_bytes() == \
+                (_GOLDEN_EXPECT / sub / name).read_bytes(), \
+                f"drift=0 输出与黄金基准不一致: {sub}/{name}"
 
 
 def test_drift0_leaves_rng_untouched():

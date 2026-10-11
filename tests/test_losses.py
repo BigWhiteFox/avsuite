@@ -83,8 +83,12 @@ def test_weighted_distortion_gamma0_equals_complex_mse():
 
 def test_weighted_distortion_emphasizes_loud_bins():
     """同样的谱误差，落在高能量 bin 上应罚得更重（γ>0 的设计意图）。
-    两 bin 幅度 10 / 0.1，误差 0.1 只放在其中一个 bin：
-    γ=0.5 时 loud 误差的损失 ≈ (w_loud/w_quiet)² ≈ 100 倍于 quiet 误差。"""
+
+    两 bin 幅度 10 / 0.1，误差 0.1 只放在其中一个 bin；w = (|S|+eps)^γ 且
+    L = mean(w·|e|²)，即损失对 w 是 **线性**（不是 w²）：
+        ratio = (|S_loud|/|S_quiet|)^γ = (10/0.1)^0.5 = 10（实测 9.9999995）。
+    历史注释写 "(w_loud/w_quiet)² ≈ 100" 是把线性权重误当平方，已按实现更正。
+    """
     torch.manual_seed(2)
     ref = torch.zeros(1, 1, 2, dtype=torch.complex128)
     ref[..., 0] = 10.0 + 0j      # 高能量 bin
@@ -96,8 +100,9 @@ def test_weighted_distortion_emphasizes_loud_bins():
     loss_loud = weighted_distortion_loss(est_loud, ref, gamma=0.5)
     loss_quiet = weighted_distortion_loss(est_quiet, ref, gamma=0.5)
     assert loss_loud.item() > loss_quiet.item()
-    # 权重比 = sqrt(10.1/0.1) ≈ 10（power-law γ=0.5 把能量比开方）
-    assert loss_loud.item() / loss_quiet.item() > 5
+    # 权重比 = (10.1/0.1)^0.5 ≈ 10.05（power-law γ=0.5 把幅度比开方）
+    ratio = loss_loud.item() / loss_quiet.item()
+    assert ratio == pytest.approx(10.0, rel=0.05), f"权重比 {ratio:.4f} 应 ≈10"
 
 
 @pytest.mark.parametrize("loss_fn", [

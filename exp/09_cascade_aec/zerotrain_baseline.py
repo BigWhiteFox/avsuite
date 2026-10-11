@@ -72,7 +72,8 @@ def main():
     print(f"[zerotrain] ckpt={args.ckpt}")
     print(f"[zerotrain] device={device}  clips_dir={args.eval_dir}  out={args.out_dir}")
 
-    rows = list(csv.DictReader(open(args.eval_dir / "manifest.csv", encoding="utf-8")))
+    with open(args.eval_dir / "manifest.csv", encoding="utf-8") as f:
+        rows = list(csv.DictReader(f))
     if args.limit:
         rows = rows[:args.limit]
     args.out_dir.mkdir(parents=True, exist_ok=True)
@@ -98,7 +99,10 @@ def main():
             enh = enh[0].cpu().numpy().astype(np.float32)
             assert len(enh) == n, f"{name}: enh len {len(enh)} != {n}"
             assert np.isfinite(enh).all(), f"{name}: enh 有 NaN/Inf"
-            sf.write(args.out_dir / f"{name}.wav", enh, SR)
+            # V5 v3b-044：写盘子类型显式 FLOAT（与 run_cascade/precompute_cascade 一致）。
+            # 旧实现未指定 subtype → soundfile 默认 PCM_16 → 增强信号被量化，
+            # 下游 AECMOS/PESQ 吃的是量化后的 wav（实测该目录 60/60 为 PCM_16）。
+            sf.write(args.out_dir / f"{name}.wav", enh, SR, subtype="FLOAT")
 
             line = f"[{i + 1}/{len(rows)}] {name:18s} {sc:4s}"
             if sc == "fest":

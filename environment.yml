@@ -1,3 +1,35 @@
+# ============================================================================
+# avsuite 环境锁定 —— conda env export 实测重导（2026-10-11）
+# ----------------------------------------------------------------------------
+# 来源环境 : C:\Users\14805\.conda\envs\avsuite   （python 3.11.17 / Windows x64）
+# 导出命令 : & 'D:\anaconda3\conda.exe' env export -n avsuite
+# 导出后处理: 删除 conda 自动追加的 `prefix: C:\Users\14805\.conda\envs\avsuite`
+#            一行（本机绝对路径不可移植，换用户/换机器直接失效；按 WP-00 纪律删除）。
+#
+# 与旧版 diff（本次导出的核心结论）:
+#   逐行比对 = 无差异。旧版 146 行 vs 本次导出 146 行，内容逐行一致
+#   （旧版文件 md5 = 0fc46e2e000eba96edd41082de2303e5 / 3863 bytes，
+#    本次导出去掉 prefix 行后 md5 相同）。
+#   即：旧版 environment.yml 已与当前实际环境一致，环境自上次导出以来零漂移；
+#   本次改动仅为"可复现性留痕 + 重建口径补全"（补本注释块），未增删任何依赖项。
+#
+# 重建命令（Windows，新机 / 新用户）:
+#     conda env create -f environment.yml -n avsuite
+#     conda activate avsuite
+#     pip install torch --index-url https://download.pytorch.org/whl/cu124
+#     #   无 GPU / CI：--index-url https://download.pytorch.org/whl/cpu
+#     set PYTHONNOUSERSITE=1        # 必须，理由见 requirements.txt 头部
+#     python env_check.py --strict  # 关键库自检（缺失 -> 退出码 1）
+#     python -m pytest tests -q
+#
+# 说明:
+#   1) 本文件含 Windows 构建号（h*/_*），仅适用于 Windows；跨平台重建请改用
+#      `conda env export --from-history` 或 pip 侧 requirements.txt。
+#   2) 本文件是"实测快照"而非最小依赖集：conda 段 19 项 + pip 段 122 项
+#      （pip freeze 共 123 项，差额 packaging 由 conda 段管理）；
+#      项目直接依赖的口径见 requirements.txt。
+#   3) 由 conda 导出，请勿手改；环境变更后重新导出并同步更新本注释块。
+# ============================================================================
 name: avsuite
 channels:
   - defaults

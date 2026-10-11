@@ -31,15 +31,28 @@ Z = 1.96
 METRICS = ["echo_mos", "deg_mos"]
 
 # NN vs 传统基线配对（(nn_json 相对 outputs 的 key, trad_json key)）。
-# cascade 的对照基线取 eval_v3 同 60 条口径的 aecmos_trad_wp06.json。
+# V5 口径更替（2026-10-11）：全部换为 AECMOS@48k 新口径（aecmos48_v5fix/<set>/aecmos_*.json）；
+# 旧口径键（aecmos_nn_v4/aecmos_trad_wp06 等）已随 44 份旧 json 一并归档 _legacy_aecmos16k/。
 PAIRS = [
-    ("aecmos_nn_v4", "aecmos_trad_wp06"),
-    ("eval_v4_speaker_heldout/aecmos_nn_heldout", "eval_v4_speaker_heldout/aecmos_trad_heldout"),
-    ("eval_speaker_only_holdout/aecmos_nn_speakeronly", "eval_speaker_only_holdout/aecmos_trad_speakeronly"),
-    ("aecmos_nn_drift", "aecmos_trad_drift"),
-    ("aecmos_nn_driftbase", "aecmos_trad_driftbase"),
-    ("exp/09_cascade_aec/results/aecmos_cascade", "exp/07_nn_aec/outputs/aecmos_trad_wp06"),
-    ("exp/09_cascade_aec/results/aecmos_cascade_long", "exp/07_nn_aec/outputs/aecmos_trad_wp06"),
+    ("aecmos48_v5fix/eval_v3/aecmos_nn", "aecmos48_v5fix/eval_v3/aecmos_trad"),
+    ("aecmos48_v5fix/eval_v5/aecmos_nn", "aecmos48_v5fix/eval_v5/aecmos_trad"),
+    ("aecmos48_v5fix/eval_v7/aecmos_nn", "aecmos48_v5fix/eval_v7/aecmos_trad"),
+    ("aecmos48_v5fix/eval_ood_delay/aecmos_nn", "aecmos48_v5fix/eval_ood_delay/aecmos_trad"),
+    ("aecmos48_v5fix/eval_v6_realrir/aecmos_nn", "aecmos48_v5fix/eval_v6_realrir/aecmos_trad"),
+    ("aecmos48_v5fix/eval_v3_drift/aecmos_nn", "aecmos48_v5fix/eval_v3_drift/aecmos_trad"),
+    ("aecmos48_v5fix/eval_v4_speaker_heldout/aecmos_nn", "aecmos48_v5fix/eval_v4_speaker_heldout/aecmos_trad"),
+    ("aecmos48_v5fix/eval_speaker_only_holdout/aecmos_nn", "aecmos48_v5fix/eval_speaker_only_holdout/aecmos_trad"),
+    ("aecmos48_v5fix/eval_v3/aecmos_cascade", "aecmos48_v5fix/eval_v3/aecmos_nn"),
+    ("aecmos48_v5fix/eval_v5/aecmos_cascade", "aecmos48_v5fix/eval_v5/aecmos_nn"),
+    ("aecmos48_v5fix/eval_v7/aecmos_cascade", "aecmos48_v5fix/eval_v7/aecmos_nn"),
+    ("aecmos48_v5fix/eval_v6_realrir/aecmos_cascade", "aecmos48_v5fix/eval_v6_realrir/aecmos_nn"),
+    ("aecmos48_v5fix/eval_v3_drift/aecmos_cascade", "aecmos48_v5fix/eval_v3_drift/aecmos_nn"),
+    ("aecmos48_v5fix/eval_v4_speaker_heldout/aecmos_cascade", "aecmos48_v5fix/eval_v4_speaker_heldout/aecmos_nn"),
+    ("aecmos48_v5fix/eval_speaker_only_holdout/aecmos_cascade", "aecmos48_v5fix/eval_speaker_only_holdout/aecmos_nn"),
+    ("aecmos48_v5fix/eval_ood_delay/aecmos_cascade", "aecmos48_v5fix/eval_ood_delay/aecmos_nn"),
+    # 官方 48k 原生链不入 PAIRS：cascade_official 仅 summary（rows 空）、
+    # hard_official_fest 行结构为 subset/variant（无 scenario 键），与 compute_ci 行协议不兼容；
+    # 官方数字以 docs/NUMBERS.md 真实数据节 + reports/{official_aecmos,ood_real_echoes}.md 为权威。
 ]
 
 
@@ -52,14 +65,45 @@ def find_json(key: str) -> Path | None:
     return None
 
 
+# t22：口径隔离（默认排除 legacy 归档；这些目录不存在时，文件集合与过滤前**逐字节相同**）。
+#   背景：AECMOS 16k 直送错配口径的旧产物已移入 exp/07_nn_aec/outputs/_legacy_aecmos16k/
+#   （清单见该目录 MANIFEST.csv），新口径为 exp/07_nn_aec/outputs/aecmos48_v5fix/（@48k 模型
+#   协议）。若不排除，DATA_CI 会把两套口径混排。
+#   过滤规则 1：路径中任一目录名以这些前缀开头即跳过（通用；不依赖具体目录是否存在于本机）。
+EXCLUDE_DIR_PREFIXES = ("_legacy", "_archive", "_stale")
+#   过滤规则 2：**过渡期**显式跳过清单（仓内相对路径，不含 .json）。这些是 exp/09_cascade_aec/
+#   results/ 下的旧口径级联产物——该目录不在本次任务的改动范围（归 09 模块 owner 迁移），
+#   故先用显式清单挡住，避免新旧混排；待其迁移后本集合应清空。
+LEGACY_FILES = {
+    "exp/09_cascade_aec/results/aecmos_cascade",           # eval_v3 60 条旧口径
+    "exp/09_cascade_aec/results/aecmos_cascade_long",      # 旧口径（长段）
+    "exp/09_cascade_aec/results/aecmos_cascade_v5",        # eval_v5 旧口径
+    "exp/09_cascade_aec/results/aecmos_cascade_v6",        # eval_v6 旧口径
+    # 注：aecmos_cascade_official（官方 48k 原生链）**不在**此清单，属正确口径，保留。
+}
+
+
+def _is_excluded(rel: str) -> bool:
+    """t22 过滤：legacy 归档目录 / 过渡期显式清单 → True（不进入 DATA_CI）。"""
+    if any(part.startswith(EXCLUDE_DIR_PREFIXES) for part in rel.split("/")[:-1]):
+        return True
+    return rel[: -len(".json")] in LEGACY_FILES if rel.endswith(".json") else False
+
+
 def load_all() -> dict[str, dict]:
-    """返回 {label: {scenario: {metric: [values]}}}，label 为相对仓库根的显示路径。"""
+    """返回 {label: {scenario: {metric: [values]}}}，label 为相对仓库根的显示路径。
+
+    t22：按 `_is_excluded` 跳过 legacy/归档产物（无此类文件时行为与过滤前完全一致）。
+    """
     data = {}
     files = []
     for d in OUT_DIRS:
         files.extend(sorted(d.rglob("aecmos_*.json")))
     for f in files:
         rel = f.relative_to(REPO).as_posix()
+        if _is_excluded(rel):
+            print(f"[skip] legacy/归档口径: {rel}", file=sys.stderr)
+            continue
         obj = json.loads(f.read_text(encoding="utf-8"))
         rows = obj.get("rows")
         if not rows:

@@ -1,4 +1,8 @@
-"""pytest 收集辅助：exp/07_nn_aec 作用域加载（防与 03/04 的 model/train 冲突）。"""
+"""pytest 收集辅助：exp/07_nn_aec 作用域加载（防与 03/04 的 model/train 冲突）。
+
+sys.path 只在加载期临时插入（v3a-026），加载完成后移除，避免 exp/07_nn_aec
+永久留在 sys.path 上遮蔽同名模块。
+"""
 import importlib
 import sys
 from pathlib import Path
@@ -18,6 +22,8 @@ try:
     train = importlib.import_module("train")
     NNAEC = model.NNAEC
 finally:
+    if str(_DIR) in sys.path:
+        sys.path.remove(str(_DIR))
     for alias in _COLLIDING:
         mod = sys.modules.pop(alias, None)
         if mod is not None:

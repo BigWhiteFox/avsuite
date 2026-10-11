@@ -44,7 +44,8 @@ DT = "dt"
 
 
 def dt_rows(src: Path):
-    rows = list(csv.DictReader(open(src / "manifest.csv", encoding="utf-8")))
+    with open(src / "manifest.csv", encoding="utf-8") as f:
+        rows = list(csv.DictReader(f))
     dt = [r for r in rows if r["scenario"] == DT]
     return rows, dt
 

@@ -391,7 +391,8 @@ def _agg_official(rows_path, out_json):
 
 # ---------------------------------------------------------------- 各 stage
 def _manifest_rows(eval_dir):
-    return list(csv.DictReader(open(Path(eval_dir) / "manifest.csv", encoding="utf-8")))
+    with open(Path(eval_dir) / "manifest.csv", encoding="utf-8") as f:
+        return list(csv.DictReader(f))
 
 
 def _vp(variant, base, ext, suffix=""):

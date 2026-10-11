@@ -21,10 +21,43 @@ sys.path.insert(0, str(ROOT / "exp" / "05a_gtcrn_onnx"))
 
 from streaming import NNAECStreaming  # noqa: E402  (按路径直载 model，无名字冲突)
 
+# NN-AEC 权重口径：与 docs/NUMBERS.md「统一决策（2026-10-10 定版）」对齐——
+# NN-AEC 主配置 = v4（γ0.5 / w_sisnr 1.0 / DT-NST 专注 / 240ep），对外只报 v4，
+# v3 及更早（outputs_v3/...）仅作探索矩阵存档，capstone 不加载。
+# 绝对路径：D:\Project_for_Python\DSH\avsuite\exp\07_nn_aec\outputs_v4\nnaec_g0.5_j10\last.ckpt
+# 来源：exp/07_nn_aec/train.py 主配置 v4 训练产物（2026-10-11 V4 整改波次；同目录
+# best.ckpt 被 deg_mechanism.py / ood_real_echoes_eval.py 引用，last.ckpt 被
+# official_aecmos_eval.py / leadin_crop_eval.py 引用，加载口径一致）。
 NNAEC_CKPT = ROOT / "exp/07_nn_aec/outputs_v4/nnaec_g0.5_j10/last.ckpt"
 GTCRN_ONNX = ROOT / "exp/05a_gtcrn_onnx/outputs/gtcrn_dns3.sim.onnx"
 SR = 16000
 CHUNK = 320                                    # 20ms
+AECMOS_ONNX = "D:/data/repos/AEC-Challenge/AECMOS/AECMOS_local/Run_1668423760_Stage_0.onnx"
+_AECMOS_SINGLETON = {"est": None}
+
+
+def _get_aecmos():
+    """AECMOS 估计器进程内单例（t20：不做每请求重建）。"""
+    if _AECMOS_SINGLETON["est"] is None:
+        sys.path.insert(0, "D:/data/repos/AEC-Challenge/AECMOS/AECMOS_local")
+        from aecmos import AECMOSEstimator
+        _AECMOS_SINGLETON["est"] = AECMOSEstimator(AECMOS_ONNX)
+    return _AECMOS_SINGLETON["est"]
+
+
+def _resample_to_model_sr(y, sr_in, sr_out):
+    """重采样到 AECMOS 模型采样率（t20 R1 口径，与 aecmos_eval.py 同法）。
+
+    官方 AECMOS_local/aecmos.py 对 Run_1668423760 设 sampling_rate=48000，其官方入口
+    用 librosa.load(sr=sampling_rate) 统一重采样；本仓 16k 管线需显式对齐。
+    """
+    if int(sr_in) == int(sr_out):
+        return y
+    from math import gcd
+
+    from scipy.signal import resample_poly
+    g = gcd(int(sr_in), int(sr_out))
+    return resample_poly(y, int(sr_out) // g, int(sr_in) // g).astype(np.float32)
 
 
 def load_nnaec(ckpt_path=None):
@@ -88,14 +121,27 @@ class Cascade:
         nr_out = self.run_nr(aec_out)
         return {"mic": mic, "aec": aec_out, "nr": nr_out}
 
-    def aecmos_scores(self, lpb: np.ndarray, signals: dict, talk_type="dt"):
-        """三路信号的 AECMOS (echo_mos, deg_mos)——三级效果的量化演示。"""
-        sys.path.insert(0, "D:/data/repos/AEC-Challenge/AECMOS/AECMOS_local")
-        from aecmos import AECMOSEstimator
-        est = AECMOSEstimator("D:/data/repos/AEC-Challenge/AECMOS/AECMOS_local/"
-                              "Run_1668423760_Stage_0.onnx")
+    def aecmos_scores(self, lpb: np.ndarray, signals: dict, talk_type="dt", sr=SR):
+        """三路信号的 AECMOS (echo_mos, deg_mos)——三级效果的量化演示。
+
+        t20（R1）修复三点：
+        1. **mic/enh 传参**：官方签名是 `run(talk_type, lpb, mic, enh)`——`mic` 是**未处理的
+           原始 mic**（退化参照），`enh` 才是本轮输出。旧实现把同一路 sig 同时当 mic 与 enh
+           传入（`est.run(talk_type, lpb[:n], sig[:n], sig[:n])`），等于拿本级输出与自身比，
+           分阶段 deg 分数失去含义（恒等于"零处理"参照）。现显式取 `signals["mic"]` 作 mic。
+        2. **采样率对齐**：三路在送评前统一重采样到模型采样率（Run_1668423760 = 48000），
+           口径与 `exp/07_nn_aec/aecmos_eval.py::resample_to_model_sr` 一致（gcd 约简 +
+           scipy.signal.resample_poly，16k→48k 即 (3,1)）；此前 16k 直送 48k 模型会系统偏移。
+        3. **估计器单例**：AECMOSEstimator 只在进程内构造一次（不做每请求重建）。
+        """
+        est = _get_aecmos()
+        sr_model = int(getattr(est, "sampling_rate", sr))
+        mic_raw = np.asarray(signals["mic"], dtype=np.float32)   # 退化参照（未处理 mic）
         out = {}
         for name, sig in signals.items():
-            n = min(len(lpb), len(sig))
-            out[name] = est.run(talk_type, lpb[:n], sig[:n], sig[:n])
+            n = min(len(lpb), len(mic_raw), len(sig))            # 三路截齐
+            a = _resample_to_model_sr(np.asarray(lpb[:n], dtype=np.float32), sr, sr_model)
+            m = _resample_to_model_sr(mic_raw[:n], sr, sr_model)
+            e = _resample_to_model_sr(np.asarray(sig[:n], dtype=np.float32), sr, sr_model)
+            out[name] = est.run(talk_type, a, m, e)
         return out

@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
+import pytest
 import soundfile as sf
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
@@ -115,11 +116,17 @@ def _make_fixture(tmp_path):
 
 
 def test_main_manifest_and_repro(tmp_path):
-    """main() 全链路：目录结构 + manifest 字段完整 + 同 seed 输出逐字节可复现。"""
+    """main() 全链路：目录结构 + manifest 字段完整 + 同 seed 输出逐字节可复现。
+
+    --dur-sec 必须 > --dt-leadin-sec（默认 2.0s）：脚本用 `near[:lead] = 0.0` 实现
+    引导段，lead 超过片段长度时 numpy 切片会把**整段** near 清零，DT 样本静默退化
+    为 FEST（manifest 仍写 ser_db/snr_db，但近端恒 0、SER 口径失去意义）。
+    这里用 3.0s 保证引导段之外仍有近端，并显式断言 DT 近端非零作为回归守卫。
+    """
     fx = tmp_path / "fx"
     _make_fixture(fx)
     base = [sys.executable, "-s", str(Path(S.__file__)),
-            "--num", "6", "--dur-sec", "1.0",
+            "--num", "6", "--dur-sec", "3.0",
             "--near-dir", str(fx / "near"), "--far-dir", str(fx / "far"),
             "--noise-dir", str(fx / "noise"), "--seed", "0"]
     r = subprocess.run(base + ["--out-dir", str(tmp_path / "out1")],
@@ -134,6 +141,16 @@ def test_main_manifest_and_repro(tmp_path):
     for row in rows:
         assert row["scenario"] in S.SCENARIOS and row["near_file"] and row["far_file"]
         assert float(row["delay_ms"]) >= 0 and row["rir_src"] in ("dir", "sim", "exp")
+    # DT 近端不得被引导段清零：引导段内恒 0、引导段外必须非零
+    dt_rows = [r_ for r_ in rows if r_["scenario"] == "dt"]
+    assert dt_rows, "seed=0 的 6 个样本应至少含 1 条 dt，否则本守卫形同虚设"
+    for row in dt_rows:
+        near = sf.read(out1 / "nearend" / f"{row['name']}.wav", dtype="float32")[0]
+        lead = int(float(row["leadin_sec"]) * SR)
+        assert lead == 32000 and len(near) == 48000, (lead, len(near))
+        assert np.abs(near[:lead]).max() == 0, f"{row['name']}: 引导段应纯远端"
+        assert np.abs(near[lead:]).max() > 1e-4, \
+            f"{row['name']}: dt 近端被整体清零（--dur-sec 小于 dt-leadin 时会退化 FEST）"
     # 可复现：同 seed 重跑，所有 wav 一致
     subprocess.run(base + ["--out-dir", str(tmp_path / "out2")],
                    capture_output=True, text=True, timeout=300)
@@ -141,3 +158,27 @@ def test_main_manifest_and_repro(tmp_path):
         a = (out1 / "mic" / f"{row['name']}.wav").read_bytes()
         b = (tmp_path / "out2" / "mic" / f"{row['name']}.wav").read_bytes()
         assert a == b
+
+
+@pytest.mark.xfail(strict=True, reason=(
+    "aec_synth.main 未对引导段做 lead=min(lead,n) 夹取：--dur-sec 小于 "
+    "--dt-leadin-sec(2.0) 时 near[:lead]=0 会清零整段近端，dt 静默退化为 fest。"
+    "脚本本体属 R16 批次；修好后本用例转 xpass，届时删除本标记。"))
+def test_dt_leadin_longer_than_clip_keeps_nearend(tmp_path):
+    """--dur-sec 1.0 < dt-leadin 2.0：DT 近端仍应保留非零尾部（当前失败，见 xfail）。"""
+    fx = tmp_path / "fx"
+    _make_fixture(fx)
+    out = tmp_path / "out_short"
+    r = subprocess.run([sys.executable, "-s", str(Path(S.__file__)),
+                        "--num", "6", "--dur-sec", "1.0",
+                        "--near-dir", str(fx / "near"), "--far-dir", str(fx / "far"),
+                        "--noise-dir", str(fx / "noise"), "--seed", "0",
+                        "--out-dir", str(out)], capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, r.stderr[-2000:]
+    with open(out / "manifest.csv", encoding="utf-8") as f:
+        rows = list(csv.DictReader(f))
+    dt_rows = [r_ for r_ in rows if r_["scenario"] == "dt"]
+    assert dt_rows, "应含 dt 样本"
+    for row in dt_rows:
+        near = sf.read(out / "nearend" / f"{row['name']}.wav", dtype="float32")[0]
+        assert np.abs(near).max() > 1e-4, f"{row['name']}: dt 近端被整体清零（退化 FEST）"

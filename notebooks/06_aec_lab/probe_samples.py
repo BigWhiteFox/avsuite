@@ -27,8 +27,15 @@ DATA = Path("D:/data/aec-synth/eval_v3")
 def run_probe(mic, far):
     """镜像 TradAEC.process 的 MDF 分支,记录三态/γ²/ERLE EMA(无系数快照)。"""
     n = len(mic)
-    delay_ms, evidence = gcc_phat_stats(mic, far, SR)
-    echo_prior = evidence >= EVIDENCE_THR
+    # V5 R8（blocker）：同步 gcc_phat_stats 的 3 值签名（t10 加 evidence_valid）+
+    # 与 pipeline.process 同语义的失效降级（放行自适应 / 对齐量 0）。
+    delay_ms, evidence, ev_valid = gcc_phat_stats(mic, far, SR)
+    if (not ev_valid) or (not np.isfinite(evidence)):
+        delay_ms, evidence, echo_prior = 0.0, float("nan"), True
+    elif not np.isfinite(delay_ms):
+        delay_ms, echo_prior = 0.0, True
+    else:
+        echo_prior = evidence >= EVIDENCE_THR
     far_al = align_far(far, delay_ms, SR, n)
     n_blocks = int(np.ceil(n / BLOCK))
     aec = TradAEC(method="mdf", mu=MU, block=BLOCK, partitions=PARTS,
@@ -59,7 +66,8 @@ def run_probe(mic, far):
 
 
 def main():
-    rows = list(csv.DictReader(open(DATA / "manifest.csv", encoding="utf-8")))
+    with open(DATA / "manifest.csv", encoding="utf-8") as f:
+        rows = list(csv.DictReader(f))
     print(f"{'name':16s} {'sc':4s} {'ser':>5s} {'dly':>5s} {'ev':>6s} "
           f"{'st0':>5s} {'st1':>5s} {'st2':>5s} {'cohPre':>6s} {'cohPost':>7s} "
           f"{'erle@8s':>7s} {'nearAct':>7s} {'parity':>9s}")

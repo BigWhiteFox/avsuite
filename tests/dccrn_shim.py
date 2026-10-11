@@ -3,6 +3,9 @@
 exp/03_crn 与 exp/04_dccrn 都有 model.py/train.py——sys.modules 先到先得。
 本 shim 在加载 DCCRN 模块时临时弹出已注册的同名模块（CRN 版），加载完成后
 恢复；已绑定的对象引用（X.DCCRN 等）不受 sys.modules 恢复影响。
+
+sys.path 同样只在加载期临时插入（v3a-026），加载完成后移除，避免 exp/04_dccrn
+永久留在 sys.path 上遮蔽同名模块。
 """
 import importlib
 import sys
@@ -24,6 +27,8 @@ try:
     train = importlib.import_module("train")
     DCCRN = model.DCCRN
 finally:
+    if str(_DIR) in sys.path:
+        sys.path.remove(str(_DIR))
     # 恢复 CRN 版同名模块（exp03_shim / test_crn 可能依赖），DCCRN 版以别名保留
     for alias in _COLLIDING:
         mod = sys.modules.pop(alias, None)

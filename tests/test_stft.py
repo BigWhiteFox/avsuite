@@ -26,7 +26,12 @@ def _torch_stft(wav, cfg):
 
 @pytest.mark.parametrize("cfg", CONFIGS)
 def test_matches_torch_stft_f64(cfg):
-    """float64 对拍：同一路 FFT/加窗，误差应 <1e-10（满足 WORKLIST 的 <1e-5 要求）。"""
+    """float64 对拍：同一路 FFT/加窗，误差应在数值噪声级。
+
+    容差 rtol=1e-7 / atol=1e-10 是逐元素口径，对幅度 O(1) 的随机输入隐含
+    ~1e-7 相对误差；实测 max|diff| ≈ 1e-15 量级，远优于该容差，也远优于
+    WORKLIST 的 <1e-5 要求。历史注释写"误差应 <1e-10"与该 rtol 不自洽，已更正。
+    """
     torch.manual_seed(0)
     wav = torch.randn(2, cfg["N"], dtype=torch.float64)
     ours = STFT(cfg["n_fft"], cfg["hop"], cfg["window"], cfg["center"]).transform(wav)
@@ -55,11 +60,17 @@ def test_shape_and_layout():
 
 
 def test_2ch_view_roundtrip():
-    """Re/Im 双通道视图 <-> 复数谱 往返无损（网络输入布局约定）。"""
+    """Re/Im 双通道视图 <-> 复数谱 往返无损，且通道顺序钉死为 (Re, Im)。"""
     torch.manual_seed(0)
     spec = STFT().transform(torch.randn(2, 8000))
-    assert spec_to_2ch(spec).shape == (2, 257, 32, 2)
-    torch.testing.assert_close(spec_from_2ch(spec_to_2ch(spec)), spec)
+    two = spec_to_2ch(spec)
+    assert two.shape == (2, 257, 32, 2)
+    # 显式钉住布局约定：ch0 = 实部、ch1 = 虚部。只做"往返一致"不够——
+    # to_2ch/from_2ch 互为逆函数，把通道顺序整体对调（或在 from_2ch 里交换实虚）
+    # 后往返回归依然通过（历史盲点），必须逐通道对拍才能锁住网络输入约定。
+    torch.testing.assert_close(two[..., 0], spec.real)
+    torch.testing.assert_close(two[..., 1], spec.imag)
+    torch.testing.assert_close(spec_from_2ch(two), spec)
 
 
 def test_streaming_matches_offline():

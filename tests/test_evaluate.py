@@ -14,7 +14,8 @@ def _pseudo_speech(n=16000, sr=16000, f0=170.0):
     纯谐波音对 PESQ 几乎无响应（~1.0 平坦），共振峰结构才能驱动它。
     """
     t = np.arange(n) / sr
-    env = 0.4 + 0.6 * np.sin(2 * np.pi * 4.0 * t) ** 2          # 4Hz 音节包络
+    # sin²(2π·4t) 的周期是 1/(2·4)=1/8 s ⇒ 包络调制率 8Hz（不是 4Hz）
+    env = 0.4 + 0.6 * np.sin(2 * np.pi * 4.0 * t) ** 2          # 8Hz 音节包络
     phase = 2 * np.pi * f0 * t
     src = sum(np.sin(h * phase) / h ** 1.2 for h in (1, 2, 3, 4, 5, 6)).astype(np.float64)
     y = src
@@ -45,7 +46,7 @@ def _make_dirs(tmp_path):
 
 
 def test_metrics_monotonic_with_snr(tmp_path):
-    """SNR 从 20 -> -5：SI-SNR 严格单调降；PESQ/STOI 容差内单调降。"""
+    """SNR 从 20 -> -10（SNRS 列表四档）：SI-SNR 严格单调降；PESQ/STOI 容差内单调降。"""
     per_snr = _make_dirs(tmp_path)
     si = [per_snr[s]["si_snr"].mean() for s in SNRS]
     assert all(si[i] > si[i + 1] + 8 for i in range(len(SNRS) - 1))   # 每 -10dB 至少掉 8dB

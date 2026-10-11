@@ -21,8 +21,8 @@ print("eval_v3 subtype:", i2.subtype, i2.samplerate, f"{i2.duration:.2f}s")
 print("D: free GB:", round(shutil.disk_usage("D:/").free / 2**30, 1))
 
 aec = TradAEC(method="mdf", partitions=8, mu=0.7)
-rows = list(csv.DictReader(open(r"D:/data/aec-synth/eval_v3/manifest.csv",
-                                encoding="utf-8")))[:5]
+with open(r"D:/data/aec-synth/eval_v3/manifest.csv", encoding="utf-8") as f:
+    rows = list(csv.DictReader(f))[:5]
 t0 = time.perf_counter()
 for r in rows:
     name = r["name"]

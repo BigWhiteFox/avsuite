@@ -21,6 +21,8 @@ from model import CRN  # noqa: E402
 
 from core.evaluate import evaluate_dir  # noqa: E402
 
+SR = 16000      # V5：评估口径统一 16k（load16k 会把任意采样率重采样到此）
+
 
 def load_model(ckpt_path, device):
     state = torch.load(ckpt_path, map_location=device, weights_only=False)
@@ -33,6 +35,22 @@ def load_model(ckpt_path, device):
     return model
 
 
+def load16k(path):
+    """读 wav 并**统一到 16k**（V5：旧实现直接 sf.read 且不校验采样率——48k 数据会被
+    静默按 16k 处理，时延/指标全错且无告警）。单声道（多声道取均值）。"""
+    import numpy as np
+    import soundfile as sf
+    x, sr = sf.read(str(path), dtype="float32", always_2d=True)
+    x = x.mean(1)
+    if sr != SR:
+        from math import gcd
+
+        from scipy.signal import resample_poly
+        g = gcd(int(sr), SR)
+        x = resample_poly(x, SR // g, int(sr) // g).astype(np.float32)
+    return x
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--ckpt", type=Path, required=True)
@@ -42,7 +60,11 @@ def main():
     ap.add_argument("--max-files", type=int, default=0)
     args = ap.parse_args()
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    out = args.out or Path(__file__).parent / "outputs" / "eval" / args.ckpt.stem
+    # V5：默认输出目录按 ckpt **来源**区分。旧实现只用 args.ckpt.stem → 不同实验目录下
+    # 同名的 best.ckpt（如 outputs/crm_blstm/best.ckpt 与 outputs/crm_gru/best.ckpt）
+    # 会写到同一个 outputs/eval/best/ 并静默互相覆盖。
+    tag = f"{args.ckpt.parent.name}_{args.ckpt.stem}"
+    out = args.out or Path(__file__).parent / "outputs" / "eval" / tag
     out.mkdir(parents=True, exist_ok=True)
 
     model = load_model(args.ckpt, device)
@@ -50,10 +72,17 @@ def main():
     if args.max_files:
         pairs = pairs[:args.max_files]
     import soundfile as sf
+    # V5：干净参考也必须 16k——否则 evaluate_dir 的配对指标静默错位（采样率不匹配）
+    if pairs:
+        sr_ref = sf.info(str(pairs[0][1])).samplerate
+        if sr_ref != SR:
+            raise SystemExit(
+                f"[eval] clean 参考采样率 {sr_ref} != {SR}：本脚本口径要求 16k"
+                f"（请先把数据重采样到 16k，避免静默错算指标）")
     with torch.no_grad():
         for i, (noisy_p, _clean_p) in enumerate(pairs):
-            noisy, _ = sf.read(str(noisy_p), dtype="float32", always_2d=True)
-            noisy = torch.from_numpy(noisy.mean(1)).unsqueeze(0).to(device)
+            noisy = load16k(noisy_p)          # V5：统一 16k（旧实现不校验采样率）
+            noisy = torch.from_numpy(noisy).unsqueeze(0).to(device)
             enh = model.enhance_wav(noisy)[0].cpu().numpy()
             sf.write(out / noisy_p.name, enh, 16000)   # 与参考同名（分目录），配对靠文件名
             if (i + 1) % 50 == 0:

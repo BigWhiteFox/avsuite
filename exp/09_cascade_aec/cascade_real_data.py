@@ -130,7 +130,8 @@ def enum_official(subsets, limit) -> list[dict]:
 
 
 def enum_v6(limit, subsets) -> list[dict]:
-    rows = list(csv.DictReader(open(V6_ROOT / "manifest.csv", encoding="utf-8")))
+    with open(V6_ROOT / "manifest.csv", encoding="utf-8") as f:
+        rows = list(csv.DictReader(f))
     if subsets:
         rows = [r for r in rows if r["scenario"] in subsets]
     return rows[:limit] if limit else rows
@@ -249,8 +250,10 @@ def _enh_run(items, lin_root_of, enh_root_of, jsonl_path: Path, key_field: str) 
     model.load_state_dict(st["model"])
     print(f"[enh] device={device} ({torch.cuda.get_device_name(0)}) "
           f"ckpt={CKPT} val={st.get('val')}", flush=True)
+    # V5 v3b-052：cached 也算"已完成"。旧实现只把 status=="ok" 计入 done →
+    # 上一轮补记的 cached 行本轮不被承认 → 每轮都再 append 一条 cached 行，manifest 无限增长。
     done = {(r[key_field], r["name"]) for r in _load_jsonl(jsonl_path)
-            if r.get("status") == "ok" and r.get(key_field)}
+            if r.get("status") in ("ok", "cached") and r.get(key_field)}
     jsonl_path.parent.mkdir(parents=True, exist_ok=True)
     t0 = time.time()
     n_new = n_skip = 0
@@ -370,6 +373,13 @@ def score_job_v6(r: dict) -> dict:
         mic = sf.read(V6_ROOT / "mic" / f"{name}.wav", dtype="float32")[0]
         enh = sf.read(ENH6 / f"{name}.wav", dtype="float32")[0]
         n = min(len(lpb), len(mic), len(enh))
+        # V5 v3b-050：与 official 路径同款发散/爆表防护（见 score_job_official）。
+        # 旧实现 v6 路径缺这道门 → 爆表的 enh 会被直接送评，得到无意义的 AECMOS 数字
+        # 而不是显式的 failed 行。
+        if not np.all(np.isfinite(enh)) or float(np.max(np.abs(enh))) > 1e3:
+            return dict(variant="full", method="cascade", scenario=sc, name=name,
+                        status="failed", echo_mos=None, deg_mos=None, n=int(n),
+                        finite=False, error="enh_diverged: 推理列输出含非有限/爆表样本")
         echo, deg = _EST.run(OAE.TALK[sc], lpb[:n], mic[:n], enh[:n])
         return dict(variant="full", method="cascade", scenario=sc, name=name, status="ok",
                     echo_mos=float(echo), deg_mos=float(deg), n=int(n),
@@ -442,8 +452,13 @@ def agg_official() -> None:
             continue
         n, em, esd, eci = mean_sd_ci([rows[k]["echo_mos"] for k in keys])
         _, dm, dsd, dci = mean_sd_ci([rows[k]["deg_mos"] for k in keys])
-        failed = [r for r in score_rows_raw
-                  if r.get("subset") == sc and r.get("status") != "ok"]
+        # V5 v3b-051：失败统计按**最新行**口径（旧实现从原始行 score_rows_raw 统计 →
+        # 上一轮失败、本轮已成功的 clip 仍永久计为 failed，failed 数只增不减）。
+        latest = {}
+        for r in score_rows_raw:
+            if r.get("subset") == sc and r.get("name"):
+                latest[r["name"]] = r
+        failed = [r for r in latest.values() if r.get("status") != "ok"]
         summary[sc] = dict(n=n, echo_mos=round(em, 3), echo_sd=round(esd, 3),
                            echo_ci95=round(eci, 3), deg_mos=round(dm, 3), deg_sd=round(dsd, 3),
                            deg_ci95=round(dci, 3),

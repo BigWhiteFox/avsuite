@@ -27,15 +27,17 @@ def test_roundtrip_exact_f64():
     for cfg in CONFIGS:
         wav = torch.randn(2, cfg["N"], dtype=torch.float64)
         rec = _roundtrip(wav, cfg)
-        # center=True: 输出 (T-1)*hop 点（裁掉两侧 pad），与 wav 前 L 点逐元素一致
-        # center=False: 首尾窗端点处窗平方和趋零，属结构性不可重构区，比较内部
+        # center=True: 输出 (T-1)*hop 点（裁掉两侧 pad），与 wav 前 L 点逐元素一致。
+        # center=False: 无 pad，rec 与 wav 等长。hamming 端点 w=0.08 ⇒ w²=6.4e-3 ≫ eps，
+        #   WOLA 分母 Σw² 处处非零 ⇒ **全段**可精确重构（实测 max|diff|=4.2e-15）。
+        #   历史版本只对拍内部区间并声称"首尾属结构性不可重构区"——该理由对本配置
+        #   不成立（只有 hann/blackman 这类端点 w=0 的窗才会退化，不在本组 CONFIGS 中），
+        #   该豁免是纯盲区，已移除、改为全段对拍。
         if cfg["center"]:
             assert rec.shape[-1] == (wav.shape[-1] // cfg["hop"]) * cfg["hop"]
-            torch.testing.assert_close(rec, wav[..., :rec.shape[-1]], rtol=1e-7, atol=1e-10)
         else:
-            inner = rec[..., cfg["n_fft"]:-cfg["n_fft"]]
-            torch.testing.assert_close(inner, wav[..., cfg["n_fft"]:wav.shape[-1] - cfg["n_fft"]],
-                                       rtol=1e-7, atol=1e-10)
+            assert rec.shape[-1] == wav.shape[-1], "center=False 应无 pad、输出等长"
+        torch.testing.assert_close(rec, wav[..., :rec.shape[-1]], rtol=1e-7, atol=1e-10)
 
 
 def test_roundtrip_f32():

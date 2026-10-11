@@ -113,10 +113,18 @@ def main():
                 return {"mic": mic, "far": far, "near": near, "name": f"s{i}",
                         "scenario": "dt"}
         tr, va = _Syn(16, 1), _Syn(8, 999)
+        # V5 v3b-013：_Syn 是**局部类**，num_workers>0 时 DataLoader 需要 pickle 数据集
+        # （spawn/fork 子进程）→ 局部类不可 pickle，直接崩。--synthetic 一律退 0 worker。
+        if args.num_workers > 0:
+            print(f"[data] --synthetic 用局部类 _Syn（不可 pickle）→ num_workers "
+                  f"{args.num_workers}->0", flush=True)
+            args.num_workers = 0
         print("[data] SYNTHETIC")
     else:
         sc_filter = args.scenarios.split(",") if args.scenarios else None
-        tr = AecDataset(args.data, jitter_ms=args.jitter_ms, scenarios=sc_filter)
+        # V5 v3b-014：训练集也传 seed（旧实现只给验证集 seed=123 → 训练期增强不可复现）
+        tr = AecDataset(args.data, jitter_ms=args.jitter_ms, scenarios=sc_filter,
+                        seed=args.seed)
         va = AecDataset(args.val, jitter_ms=args.val_jitter_ms, seed=123)
         from collections import Counter
         print(f"[data] train {len(tr)} {dict(Counter(r['scenario'] for r in tr.rows))} "
@@ -139,7 +147,12 @@ def main():
     start_ep, best, bad, step = 1, float("inf"), 0, 0
     ckpt_path, best_path = out / "last.ckpt", out / "best.ckpt"
     loss_sig = (args.gamma, args.w_sisnr, args.scenarios)
-    if args.resume and Path(args.resume).exists():
+    if args.resume:
+        # V5 v3b-015：--resume 指向不存在的 ckpt 时**显式报错**。旧实现静默跳过 resume
+        # 从头训练并覆盖同名输出（长训任务被悄悄清零，且无任何提示）。
+        if not Path(args.resume).exists():
+            raise SystemExit(f"[resume] 指定的 ckpt 不存在：{args.resume}"
+                             "（拒绝静默从头训练并覆盖输出）")
         st = torch.load(args.resume, map_location=device, weights_only=False)
         model.load_state_dict(st["model"])
         opt.load_state_dict(st["opt"])
@@ -171,13 +184,18 @@ def main():
         mark = ""
         if val_loss < best:
             best, bad, mark = val_loss, 0, " *best*"
-            torch.save({"model": model.state_dict(), "cfg": dict(vars(args), loss_sig=loss_sig),
-                        "val": val_loss}, best_path)
+            # V5 v3b-016：best.ckpt 与 last.ckpt 存**同一组键**。旧实现 best.ckpt 缺
+            # opt/sched/epoch/bad/step → `--resume best.ckpt` 直接 KeyError。
+            torch.save({"model": model.state_dict(), "opt": opt.state_dict(),
+                        "sched": sched.state_dict(), "epoch": ep, "best": best, "bad": bad,
+                        "step": step, "val": val_loss,
+                        "cfg": dict(vars(args), loss_sig=loss_sig)}, best_path)
         else:
             bad += 1
         torch.save({"model": model.state_dict(), "opt": opt.state_dict(),
                     "sched": sched.state_dict(), "epoch": ep, "best": best, "bad": bad,
-                    "step": step, "cfg": dict(vars(args), loss_sig=loss_sig)}, ckpt_path)
+                    "step": step, "val": val_loss,
+                    "cfg": dict(vars(args), loss_sig=loss_sig)}, ckpt_path)
         (out / "history.json").write_text(json.dumps(
             {"epoch": ep, "val": val_loss, "best": best, "bad": bad, "step": step}))
         print(f"epoch {ep:3d}  val {val_loss:.5f}  ({time.perf_counter()-t0:.0f}s){mark}",

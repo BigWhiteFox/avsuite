@@ -1,0 +1,3 @@
+name,scenario,rir_src,near_file,far_file,noise_file,delay_ms,ser_db,snr_db,soft_clip,leadin_sec
+fileid_0_nst,nst,dir,near1.wav,far1.wav,noise1.wav,10.368571319590231,3.0016628491122543,18.10330168094393,0,0.0
+fileid_1_dt,dt,dir,near0.wav,far0.wav,noise1.wav,45.31837812705673,2.548695876541246,11.676144588239698,0,2.0

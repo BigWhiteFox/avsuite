@@ -53,14 +53,19 @@ def enhance(model, mic, far, device):
 
 def eval_dir(model, eval_dir, device, jitter_ms=0.0, seed=0):
     eval_dir = Path(eval_dir)
-    rows = list(csv.DictReader(open(eval_dir / "manifest.csv", encoding="utf-8")))
+    with open(eval_dir / "manifest.csv", encoding="utf-8") as f:
+        rows = list(csv.DictReader(f))
     out = []
+    # V5 v3b-012（high）：jitter RNG 必须在循环**外**创建。旧实现每轮都以同一 seed
+    # 重建 RNG → 全评估集共享同一个平移量，"±5/10/20/40ms 衰减曲线"实为单点重复
+    # （伪曲线，结论不可用）。移出后每个样本拿到独立抽样；首个样本与旧实现同值
+    # （首个抽样未变），便于与既有数字对照。
+    rng = np.random.default_rng(seed)
     for r in rows:
         mic = sf.read(eval_dir / "mic" / f"{r['name']}.wav", dtype="float32")[0]
         far = sf.read(eval_dir / "farend" / f"{r['name']}.wav", dtype="float32")[0]
         near = sf.read(eval_dir / "nearend" / f"{r['name']}.wav", dtype="float32")[0]
         if jitter_ms:
-            rng = np.random.default_rng(seed)
             far = _shift(far, int(rng.integers(-jitter_ms, jitter_ms + 1) * SR / 1000))
         enh = enhance(model, mic.astype(np.float32), far.astype(np.float32), device) \
             .astype(np.float32)
@@ -99,7 +104,9 @@ def compare_trad(eval_dir, device):
     aec = TradAEC(method="mdf", partitions=8, mu=0.7)
     eval_dir = Path(eval_dir)
     rows = []
-    for r in csv.DictReader(open(eval_dir / "manifest.csv", encoding="utf-8")):
+    with open(eval_dir / "manifest.csv", encoding="utf-8") as f:
+        manifest_rows = list(csv.DictReader(f))     # 先物化：语义与原逐行流式一致（顺序不变）
+    for r in manifest_rows:
         mic = sf.read(eval_dir / "mic" / f"{r['name']}.wav", dtype="float32")[0]
         far = sf.read(eval_dir / "farend" / f"{r['name']}.wav", dtype="float32")[0]
         near = sf.read(eval_dir / "nearend" / f"{r['name']}.wav", dtype="float32")[0]
@@ -115,6 +122,22 @@ def compare_trad(eval_dir, device):
             row["pesq_mic"] = _safe_pesq(near[:n], mic[:n])
         rows.append(row)
     return summarize(rows)
+
+
+def _json_safe(obj):
+    """递归把非有限浮点（NaN/±Inf）换成 None。
+
+    V5 终审 F11：SI-SNR 口径改为对静音/塌陷条目返回 NaN 后，`json.dumps` 默认会把
+    它们写成非标准 JSON 的 `NaN` token（严格解析器/其它语言会拒绝）。落盘前先 sanitize，
+    并配 `allow_nan=False` 让"漏网的 NaN"直接报错而不是静默写出非标文件。
+    """
+    if isinstance(obj, dict):
+        return {k: _json_safe(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_json_safe(v) for v in obj]
+    if isinstance(obj, float) and not np.isfinite(obj):
+        return None
+    return obj
 
 
 def main():
@@ -133,7 +156,8 @@ def main():
     rows = eval_dir(model, args.eval_dir, device)
     s = summarize(rows)
     print("[nn-aec]", json.dumps(s, indent=2))
-    (out / "summary.json").write_text(json.dumps(s, indent=2))
+    (out / "summary.json").write_text(
+        json.dumps(_json_safe(s), indent=2, allow_nan=False))
     import pandas as pd
     pd.DataFrame(rows).to_csv(out / "rows.csv", index=False)
 
@@ -155,7 +179,8 @@ def main():
             rj = eval_dir(model, args.eval_dir, device, jitter_ms=j, seed=7)
             sweep[f"+-{j}ms"] = summarize(rj)
             print(f"jitter ±{j}ms:", sweep[f"+-{j}ms"])
-        (out / "jitter_sweep.json").write_text(json.dumps(sweep, indent=2))
+        (out / "jitter_sweep.json").write_text(
+            json.dumps(_json_safe(sweep), indent=2, allow_nan=False))
 
 
 if __name__ == "__main__":

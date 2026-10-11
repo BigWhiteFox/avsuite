@@ -61,11 +61,13 @@ def test_complex_lstm_one_step_manual():
 
 
 def test_model_shapes_and_param_band():
-    """4s 输入：输出同长；参数量落在 3-4.5M 带（DoD：3-4M 量级）。"""
+    """4s 输入：输出同长；参数量落在 3.8-4.2M 带（实测 3.994M，DoD：3-4M 量级）。"""
     torch.manual_seed(2)
     m = DCCRN()
     n_par = sum(p.numel() for p in m.parameters())
-    assert 2.5e6 <= n_par <= 4.5e6, f"{n_par/1e6:.2f}M 超出量级带"
+    # 历史带 2.5-4.5M 与 DoD 的 3-4M 不一致（下界低到 2.5M 时 DoD 已不成立），
+    # 收窄到实测值 ±5%：既是量级断言、又能抓住默认配置被悄悄改小的回归。
+    assert 3.8e6 <= n_par <= 4.2e6, f"{n_par/1e6:.3f}M 超出 3.8-4.2M 带（实测 3.994M）"
     wav = torch.randn(2, 64000)
     enh, mask, noisy, enh_spec = m(wav)
     assert enh.shape == wav.shape
@@ -77,7 +79,7 @@ def test_model_arbitrary_length_padding():
     """非 T≡1(mod16) 的任意长度：帧数对齐逻辑不崩、输出等长。"""
     torch.manual_seed(3)
     m = DCCRN(clstm_hidden=8)
-    for n in (16000, 16001, 33333, 79999):          # T=161,161,334,800 混合奇偶
+    for n in (16000, 16001, 33333, 79999):          # hop=200 ⇒ T=81,81,167,400（混合奇偶）
         out = m(torch.randn(1, n))[0]
         assert out.shape == (1, n)
 

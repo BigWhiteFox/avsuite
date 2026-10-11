@@ -5,7 +5,10 @@
 - center=True 时两侧各 pad n_fft//2，pad_mode 默认 'reflect'（同 torch.stft）；
   流式接口无法预知未来样本，约定 pad_mode='zeros'，对拍时离线用同模式；
 - 周期窗（periodic=True），hann 50% 重叠满足 COLA；ISTFT 侧用窗平方归一（WOLA），
-  任意满足 hop<=n_fft 的窗均可精确重构（见 core/istft.py 说明）。
+  可精确重构的**精确条件**是 `hop < n_fft`，或窗端点在覆盖区内非零（Σw² > 0）。
+  `hop == n_fft` 时 hann/blackman 因端点为 0 不可逆（实测往返 maxerr 1.176），
+  hamming（端点 0.08 非零）可以——详见 core/istft.py 说明与 ISTFT 的构造告警
+  （deep_audit G6；原文档"任意满足 hop<=n_fft 的窗均可精确重构"已更正）。
 
 流式接口 StreamingSTFT：任意大小 chunk 推入、按 hop 产出已完成帧；
 cache 内存固定 O(B·n_fft) 与信号长度无关；flush() 以零右填充结算尾帧。
@@ -123,6 +126,14 @@ class StreamingSTFT:
         self._len += x.shape[-1]
 
     def _cat(self) -> torch.Tensor:
+        """拼接缓冲为单个张量。
+
+        空缓冲（从未 push 过任何 chunk）返回**零长张量**而不是抛异常——v3a 高危发现：
+        旧实现在空缓冲时落到 `torch.cat([], dim=-1)` → RuntimeError
+        （"expected a non-empty list of Tensors"），使 `flush()` 在空流上必然崩。
+        """
+        if not self._buf:
+            return torch.zeros(0)
         return self._buf[0] if len(self._buf) == 1 else torch.cat(self._buf, dim=-1)
 
     def _drain(self) -> list[torch.Tensor]:
@@ -153,10 +164,16 @@ class StreamingSTFT:
         return self._drain()
 
     def flush(self) -> list[torch.Tensor]:
-        """右填充 n_fft//2 个零结算尾帧（对应离线右 pad），之后流关闭。"""
+        """右填充 n_fft//2 个零结算尾帧（对应离线右 pad），之后流关闭。
+
+        从未 push 过的空流：直接返回**空列表**（无帧可结算）——v3a 高危发现修复，
+        旧实现在该路径抛 RuntimeError（`_cat()` 空缓冲）。
+        """
         if self._closed:
             raise RuntimeError("flush() 只能调用一次")
         self._closed = True
+        if not self._buf:
+            return []                                        # 空流：无帧可结算
         if self._pad:
             buf = self._cat()
             self._append(buf.new_zeros(buf.shape[0], self._pad))

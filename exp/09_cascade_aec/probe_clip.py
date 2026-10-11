@@ -10,8 +10,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "06_trad_aec"))
 from pipeline import TradAEC  # noqa: E402
 
-rows = list(csv.DictReader(open(r"D:/data/aec-synth/train_v1/manifest.csv",
-                                encoding="utf-8")))
+with open(r"D:/data/aec-synth/train_v1/manifest.csv", encoding="utf-8") as f:
+    rows = list(csv.DictReader(f))
 rng = np.random.default_rng(7)
 pick = [rows[i] for i in rng.choice(len(rows), 40, replace=False)]
 aec = TradAEC(method="mdf", partitions=8, mu=0.7)

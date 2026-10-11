@@ -31,6 +31,23 @@ def load16k(path) -> np.ndarray:
 
 
 def _si_snr_np(ref, est, eps=1e-8):
+    """SI-SNR（dB，numpy 版）。
+
+    口径（V5 wave-C 加固）：
+    - **入口长度对齐**：按较短者截断（此前不做对齐，长度不等时 numpy 广播会直接
+      抛 ValueError；evaluate_dir 自己先截断过，但直接调用方没有这层保护）；
+    - **静音/塌陷 -> NaN**：ref 或 est 全零（静音参考 / 增强塌陷）时返回 NaN，
+      与 PESQ 的 NaN 协议一致。修正前 est 全零会得到 **0.0dB** 的假"完美"分
+      （proj=0、noise=0，分子分母同时被 eps 兜底 ⇒ 比值 1）。
+    """
+    ref = np.asarray(ref, dtype=np.float64).ravel()
+    est = np.asarray(est, dtype=np.float64).ravel()
+    n = min(len(ref), len(est))
+    if n == 0:
+        return float("nan")
+    ref, est = ref[:n], est[:n]
+    if not np.any(ref) or not np.any(est):
+        return float("nan")
     ref = ref - ref.mean()
     est = est - est.mean()
     ref_e = max(np.sum(ref ** 2), eps)

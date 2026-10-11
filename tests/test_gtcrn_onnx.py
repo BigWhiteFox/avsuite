@@ -46,8 +46,10 @@ def test_ckpt_loads_and_enhances_official_wav():
 
 def test_onnx_parity_dod():
     """PyTorch vs ONNXRuntime max|diff| < 1e-4（WORKLIST DoD）。"""
-    if not ONNX_SIM.exists():
-        pytest.skip("先跑 onnx_export.py")
+    # 两个前置产物都要判：只判 ONNX_SIM 时，缺官方权重的机器会在下一行
+    # load_model(CKPT_DNS3) 上直接 ERROR（CKPT_DNS3 是本机绝对路径），而不是 skip。
+    if not (ONNX_SIM.exists() and CKPT_DNS3.exists()):
+        pytest.skip("先跑 onnx_export.py，且需要本机 DNS3 官方权重")
     import onnxruntime as ort
     model = load_model(CKPT_DNS3)
     torch.manual_seed(0)

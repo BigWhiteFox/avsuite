@@ -7,7 +7,9 @@ name = "avsuite"
 version = "1.0.0"
 description = "车载语音前端全链路：语音增强 / AEC / 端侧部署（求职技术攻关 monorepo）"
 readme = "README.md"
-requires-python = ">=3.10"
+# 收紧为 >=3.11：实测依赖 pandas 3.0.6 / scipy 1.17.1 已不再支持 3.10
+# （environment.yml 锁定 python=3.11.17；ruff target-version 同为 py311）
+requires-python = ">=3.11"
 license = { text = "MIT" }
 
 [tool.setuptools]

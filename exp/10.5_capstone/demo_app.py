@@ -36,20 +36,36 @@ def load16k(x):
     return y.astype("float32")
 
 
+def _fmt_score(v):
+    """AECMOS 分数格式化（t20 加固）。
+
+    正常返回 (echo_mos, deg_mos) 二元组；但若上游返回标量/长度不足，
+    旧写法 `v[0]` 会抛 "float is not subscriptable" 并被外层 except 吞掉，
+    连三级音频一起丢掉（v3b-054 描述的失败模式）。这里显式容错：
+    只有拿得到二元组才格式化成 echo/deg，否则原样显示。
+    """
+    if isinstance(v, (tuple, list)) and len(v) >= 2:
+        return f"echo {float(v[0]):.3f} / deg {float(v[1]):.3f}"
+    return f"{v}"
+
+
 def process(mic_audio, far_audio):
     if mic_audio is None or far_audio is None:
         return None, None, None, "请上传 mic 与 far（远端参考）两个音频"
+    # 阶段 1：三级处理——失败则确实没有音频可返回
     try:
         mic = load16k(mic_audio)
         far = load16k(far_audio)
         n = min(len(mic), len(far))
         sigs = get_cascade().process(mic[:n], far[:n])
-        scores = get_cascade().aecmos_scores(far[:n], sigs, talk_type="dt")
-        txt = "\n".join(
-            f"{k}: echo {v[0]:.3f} / deg {v[1]:.3f}"
-            for k, v in scores.items())
     except Exception as e:
         return None, None, None, f"处理失败：{e}"
+    # 阶段 2：AECMOS 评分——失败只降级文本，三级音频照常返回（t20 加固）
+    try:
+        scores = get_cascade().aecmos_scores(far[:n], sigs, talk_type="dt")
+        txt = "\n".join(f"{k}: {_fmt_score(v)}" for k, v in scores.items())
+    except Exception as e:
+        txt = f"音频已处理，但 AECMOS 评分失败：{type(e).__name__}: {e}"
     return ((SR, sigs["mic"]), (SR, sigs["aec"]), (SR, sigs["nr"]), txt)
 
 

@@ -155,19 +155,21 @@ def main():
             add(f"| 传统 AEC (WP-06 同集) | {t6.get('fest_erle_db')} | "
                 f"{t6.get('dt_pesq')} | {t6.get('dt_stoi')} | {t6.get('nst_pesq')} |")
         add("")
-    trad_aecmos = jload(ROOT / "exp/07_nn_aec/outputs/aecmos_trad_wp06.json")
-    nn_aecmos = jload(ROOT / "exp/07_nn_aec/outputs/aecmos_nn_v4.json") or \
-        jload(ROOT / "exp/07_nn_aec/outputs/aecmos_nn_night.json")
-    raw = jload(ROOT / "exp/07_nn_aec/outputs/aecmos_rawmic_floor.json")
+    # V5 t22：AECMOS 全部按 48k 口径重评（旧 16k 产物已移入 outputs/_legacy_aecmos16k/）。
+    # 新产物目录 outputs/aecmos48_v5fix/<set>/，本报告取 eval_v3（n=14 DT / 26 FEST / 20 NST）。
+    _aec = ROOT / "exp/07_nn_aec/outputs/aecmos48_v5fix/eval_v3"
+    trad_aecmos = jload(_aec / "aecmos_trad.json")
+    nn_aecmos = jload(_aec / "aecmos_nn.json")
+    raw = jload(_aec / "aecmos_mic.json")
     if trad_aecmos and nn_aecmos:
         te = jpick(trad_aecmos, "summary", "dt", "echo_mos")
         ne = jpick(nn_aecmos, "summary", "dt", "echo_mos")
         nd = jpick(nn_aecmos, "summary", "dt", "deg_mos")
         td = jpick(trad_aecmos, "summary", "dt", "deg_mos")
-        add(f"- DT echo_mos：原始 mic {jpick(raw, 'dt', 'echo_mos')} → 传统 {te} → "
+        add(f"- DT echo_mos：原始 mic {jpick(raw, 'summary', 'dt', 'echo_mos')} → 传统 {te} → "
             f"**NN {ne}**（Δ vs 传统 {round(ne-te,3) if isinstance(ne,float) and isinstance(te,float) else '—'}，"
             f"DoD +0.3 {'✅' if isinstance(ne,float) and isinstance(te,float) and ne-te >= 0.3 else '⚠️'}）")
-        add(f"- DT deg_mos：原始 mic {jpick(raw, 'dt', 'deg_mos')} → 传统 {td} → NN {nd}"
+        add(f"- DT deg_mos：原始 mic {jpick(raw, 'summary', 'dt', 'deg_mos')} → 传统 {td} → NN {nd}"
             f"{'（近端保真 ⚠️ 结构性瓶颈（非欠训，五变体探索矩阵见 exp/07 README 与 docs/adr/））' if isinstance(nd,float) and isinstance(td,float) and nd < td else ' ✅'}")
     else:
         add("- 待生成")

@@ -127,8 +127,8 @@ def sfm_mean(x, mask):
 # ------------------------------------------------------------------ regen
 def regen(args):
     import csv as _csv
-    rows = [r for r in _csv.DictReader(open(EVAL_DIR / "manifest.csv", encoding="utf-8"))
-            if r["scenario"] in NEED_SC]
+    with open(EVAL_DIR / "manifest.csv", encoding="utf-8") as f:
+        rows = [r for r in _csv.DictReader(f) if r["scenario"] in NEED_SC]
     for key in ("trad", "nn"):
         METHODS[key].mkdir(parents=True, exist_ok=True)
 
@@ -182,10 +182,10 @@ def regen(args):
 def validate():
     """重建 enh 与 v5 存档逐条指标核对：PESQ(nearend, enh) vs 存档 pesq/pesq_out。"""
     from core.evaluate import _safe_pesq
-    stored_nn = {r["name"]: r for r in csv.DictReader(
-        open(HERE / "outputs/eval_v5_dt300/nn_metrics_v5.json/rows.csv", encoding="utf-8"))}
-    stored_tr = {r["name"]: r for r in csv.DictReader(
-        open(HERE / "outputs/eval_v5_dt300/trad_metrics_v5.json", encoding="utf-8"))}
+    with open(HERE / "outputs/eval_v5_dt300/nn_metrics_v5.json/rows.csv", encoding="utf-8") as f:
+        stored_nn = {r["name"]: r for r in csv.DictReader(f)}
+    with open(HERE / "outputs/eval_v5_dt300/trad_metrics_v5.json", encoding="utf-8") as f:
+        stored_tr = {r["name"]: r for r in csv.DictReader(f)}
     res = {"sample": VAL_NAMES, "trad": [], "nn": []}
     for nm in VAL_NAMES:
         near = sf.read(EVAL_DIR / "nearend" / f"{nm}.wav", dtype="float32")[0]
@@ -253,7 +253,8 @@ def pct(vals):
 
 
 def measure():
-    rows_in = list(csv.DictReader(open(EVAL_DIR / "manifest.csv", encoding="utf-8")))
+    with open(EVAL_DIR / "manifest.csv", encoding="utf-8") as f:
+        rows_in = list(csv.DictReader(f))
     out_rows, missing, errors = [], [], []
     for r in rows_in:
         if r["scenario"] not in NEED_SC:
@@ -303,7 +304,8 @@ def measure():
                    ("nn", HERE / "outputs/eval_v5_dt300/aecmos_nn_v4.json"),
                    ("cascade", AVROOT / "exp/09_cascade_aec/results/aecmos_cascade_v5.json")):
         try:
-            j = json.load(open(p, encoding="utf-8"))
+            with open(p, encoding="utf-8") as f:
+                j = json.load(f)
             aecmos_ref[tag] = j.get("summary", {}).get("dt", {})
         except Exception as ex:                                  # noqa: BLE001
             aecmos_ref[tag] = {"error": str(ex)}
@@ -327,8 +329,8 @@ def measure():
         "aecmos_ref_dt": aecmos_ref,
         "summary": summ,
     }
-    json.dump(summary, open(OUT / "summary.json", "w", encoding="utf-8"),
-              indent=2, ensure_ascii=False)
+    with open(OUT / "summary.json", "w", encoding="utf-8") as f:
+        json.dump(summary, f, indent=2, ensure_ascii=False)
     print(f"[measure] {len(out_rows)} rows -> {OUT/'rows.csv'} ; summary -> {OUT/'summary.json'}")
     if missing:
         print(f"[measure] WARNING missing enh: {missing[:10]}{' ...' if len(missing) > 10 else ''}")

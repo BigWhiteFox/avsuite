@@ -23,7 +23,8 @@ class AecDataset(Dataset):
     def __init__(self, synth_dir, jitter_ms: float = 10.0, scenarios=None, seed=None):
         synth_dir = Path(synth_dir)
         import csv
-        rows = list(csv.DictReader(open(synth_dir / "manifest.csv", encoding="utf-8")))
+        with open(synth_dir / "manifest.csv", encoding="utf-8") as f:
+            rows = list(csv.DictReader(f))
         if scenarios:
             rows = [r for r in rows if r["scenario"] in scenarios]
         self.dir = synth_dir

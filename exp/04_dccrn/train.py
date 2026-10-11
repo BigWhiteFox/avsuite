@@ -101,6 +101,12 @@ def main():
                 noisy = clean + 0.05 * torch.randn(64000, generator=g)
                 return {"noisy": noisy, "clean": clean, "name": f"s{i}"}
         tr, va = _Syn(args.epoch_len, 1), _Syn(args.val_len, 999)
+        # V5 v3a-045 族：_Syn 是**局部类**，num_workers>0 时 DataLoader 需 pickle 数据集
+        # → 局部类不可 pickle，直接崩。--synthetic 一律退 0 worker。
+        if args.num_workers > 0:
+            print(f"[data] --synthetic 用局部类 _Syn（不可 pickle）→ num_workers "
+                  f"{args.num_workers}->0", flush=True)
+            args.num_workers = 0
         print("[data] SYNTHETIC")
     elif args.no_dm:
         tr = StaticPairs(n_pairs=args.epoch_len, seg_sec=args.seg_sec, seed=args.seed)
@@ -126,7 +132,12 @@ def main():
 
     start_ep, best, bad, step = 1, float("inf"), 0, 0
     ckpt_path, best_path = out / "last.ckpt", out / "best.ckpt"
-    if args.resume and Path(args.resume).exists():
+    if args.resume:
+        # V5 v3b-015 族：--resume 指向不存在的 ckpt 时显式报错（旧实现静默从头训练
+        # 并覆盖同名输出）
+        if not Path(args.resume).exists():
+            raise SystemExit(f"[resume] 指定的 ckpt 不存在：{args.resume}"
+                             "（拒绝静默从头训练并覆盖输出）")
         st = torch.load(args.resume, map_location=device, weights_only=False)
         model.load_state_dict(st["model"])
         opt.load_state_dict(st["opt"])
@@ -153,13 +164,16 @@ def main():
         mark = ""
         if val_loss < best:
             best, bad, mark = val_loss, 0, " *best*"
-            torch.save({"model": model.state_dict(), "cfg": vars(args), "val": val_loss},
-                       best_path)
+            # V5 v3b-016 族：best.ckpt 与 last.ckpt 存**同一组键**（旧实现 best.ckpt
+            # 缺 opt/sched/epoch/bad/step → `--resume best.ckpt` 直接 KeyError）
+            torch.save({"model": model.state_dict(), "opt": opt.state_dict(),
+                        "sched": sched.state_dict(), "epoch": ep, "best": best, "bad": bad,
+                        "step": step, "val": val_loss, "cfg": vars(args)}, best_path)
         else:
             bad += 1
         torch.save({"model": model.state_dict(), "opt": opt.state_dict(),
                     "sched": sched.state_dict(), "epoch": ep, "best": best, "bad": bad,
-                    "step": step, "cfg": vars(args)}, ckpt_path)
+                    "step": step, "val": val_loss, "cfg": vars(args)}, ckpt_path)
         (out / "history.json").write_text(json.dumps(
             {"epoch": ep, "val": val_loss, "best": best, "bad": bad, "step": step}))
         print(f"epoch {ep:3d}  val {val_loss:.5f}  ({time.perf_counter()-t0:.0f}s){mark}",
