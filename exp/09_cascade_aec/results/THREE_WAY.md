@@ -1,5 +1,8 @@
 # P1-1 三方对照表:传统 WP-06 / 全 NN v4 / 级联(线性 MDF→NN 残差)
 
+> ⚠️ 2026-10-11 eval_v5 扩样修正（n=154）：DT echo 级联−NN Δ 由 +0.17 缩至 **+0.02（噪声级）**，
+> 本文"三方最高"为 eval_v3 n=14 时点记录，结论以 [ADR 0005 附记](../../docs/adr/0005-cascade-verified.md) 为准。
+
 - 日期:2026-10-11 · 评估集:D:/data/aec-synth/eval_v3,60 条(fest 26 / dt 14 / nst 20)
 - 口径:AECMOS 官方 ONNX(`aecmos_eval.py`),三方同集同口径;eval_v3 为 8s 短片段全段送评
   (与官方绝对值有口径差,三方对比不受影响,见 exp/07_nn_aec/aecmos_eval.py 头注)

@@ -23,6 +23,6 @@ graph LR
 | 降噪（VoiceBank PESQ） | 1.97 noisy | **2.53** | 824 对测试集 |
 | 端侧推理（CPU RTF） | — | **0.0084** | GTCRN 23.67K |
 | 流式逐帧对齐 | — | **<1e-5** | 单测锁死 |
-| 单元测试 | — | **80 passed** | `pytest tests -q` |
+| 单元测试 | — | **93 passed** | `pytest tests -q` |
 
 > 数字权威口径 → [NUMBERS.md](NUMBERS.md)；90 秒项目叙事 → [STORY.md](STORY.md)。

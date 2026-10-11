@@ -10,8 +10,13 @@
 | [INTERVIEW-WP06-tradAEC.md](INTERVIEW-WP06-tradAEC.md) | 模块6 传统 AEC | 自适应滤波 + DTD 三态状态机：车载 AEC 的地基与 NN-AEC 的输入 |
 | [INTERVIEW-WP04-DCCRN.md](INTERVIEW-WP04-DCCRN.md) | 模块4 DCCRN | 复数域卷积/LSTM + Dynamic Mixing：从 CRN 到 GTCRN 的技术演进主线 |
 | [INTERVIEW-WP05a-GTCRN-ONNX.md](INTERVIEW-WP05a-GTCRN-ONNX.md) | 模块5a GTCRN/ONNX/INT8 | ERB 轻量化折中 + PTQ/QAT 定点化：端侧部署全链路（含静态量化崩坏负面结果） |
-| [INTERVIEW-WP07-NNAEC.md](INTERVIEW-WP07-NNAEC.md) | 模块7 NN-AEC（简历核心） | 双输入因果 CRN + 时延鲁棒训练：全 NN 路线 vs 传统基线的同口径对决 |
+| [INTERVIEW-WP07-NNAEC.md](INTERVIEW-WP07-NNAEC.md) | 模块7 NN-AEC（简历核心） | 双输入因果 CRN + 时延鲁棒训练：全 NN 路线 vs 传统基线的同口径对决（V4 扩充：级联三方、官方真实集、时延 OOD 判别实验） |
 | [INTERVIEW-WP10.5-capstone.md](INTERVIEW-WP10.5-capstone.md) | 模块10.5 Capstone | AEC→NR 级联：车载语音链的完整形态与三级量化叙事 |
+
+> **V4 扩充弹药（2026-10-11 晚）**：[ADR 0005](adr/0005-cascade-verified.md)（级联三方对照+附记）、
+> [ADR 0006](adr/0006-kalman-vs-mdf-boundary.md)（Kalman 结论边界）、
+> `reports/{official_aecmos,realrir_domain,ood_real_echoes,delay_ood_probe,deg_mechanism}.md`
+> （官方真实集 / 真实车厢 RIR / 漂移 OOD 判别 / deg 机理测量）——每个都挂着自己的实测数字。
 
 ## 复习顺序建议
 1. 先过 STFT（一切的地基，追问密度最高）

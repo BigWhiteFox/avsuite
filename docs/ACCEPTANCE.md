@@ -61,6 +61,6 @@
 
 ## 总账
 
-- 单元测试：80 passed, 1 warning in 24.77s
+- 单元测试：93 passed, 0 failed（`pytest tests -q`，~35s）
 - 工作包：WP-00~10 主线全部完成；选做 WP-08/WP-10.5/WP-11 待定
 - 面试文档：docs/INTERVIEW*.md ×10（提纲+追问预案，含实测数据）

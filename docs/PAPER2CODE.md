@@ -32,7 +32,7 @@
 - **CRN**（Tan & Wang, Interspeech 2018）：卷积编码 + BLSTM + 对称解码 + cRM 的端到端频域增强开山之作。
   本仓 `exp/03_crn/`（模型 `exp/03_crn/model.py:37`）——【复现过 + 做过消融】：mask_type(cRM/IRM)、rnn_type(双向/单向)消融开关在 `exp/03_crn/model.py:12-14`，消融脚本 `exp/03_crn/ablation.py`，结果 `exp/03_crn/outputs/ablation/ablation_short.md`；实测 cRM+BLSTM PESQ 2.5288 / IRM 2.8428 / cRM+单向 2.4999（VoiceBank-DEMAND 824 对，`docs/NUMBERS.md:17-22`）；论文口径 ≈2.74（`docs/INTERVIEW-WP02E-eval.md:22`），本仓小模型 2.53 量级合理（`exp/03_crn/README.md:59`）。
 - **DCCRN**（Hu et al., Interspeech 2020）：复数卷积/复数 LSTM 显式建模相位，DNS Challenge 2020 冠军方案；论文 PESQ 2.68（WB，DNS 合成测试，`docs/INTERVIEW-WP04-DCCRN.md:10`）。
-  本仓 `exp/04_dccrn/`（模型 `exp/04_dccrn/model.py:41`）——【复现过 + 做过消融】：`outputs_abl/dccrn_nodm`（去动态混合）与 `outputs_abl/dccrn_realconv`（实数卷积）两组消融 checkpoint 实存；实测主配置 2.1811 / nodm 2.0151 / realconv 2.1898（DNS devtest 150 条，`docs/NUMBERS.md:27-29`）；「实数卷积 ≥ 复数且参数 2×」的反直觉发现归因见 `docs/adr/0004-dccrn-real-vs-complex.md`（`docs/NUMBERS.md:32-33`）。
+  本仓 `exp/04_dccrn/`（模型 `exp/04_dccrn/model.py:41`）——【复现过 + 做过消融】：`outputs_abl/dccrn_nodm`（去动态混合）与 `outputs_abl/dccrn_realconv`（实数卷积）两组消融 checkpoint 实存；实测主配置 2.1811 / nodm 2.0151 / realconv 2.1898（DNS devtest 150 条，`docs/NUMBERS.md:27-29`）；「实数卷积与复数性能相当（Δ0.009 噪声级，不称反超）且参数 2×」的反直觉发现归因见 `docs/adr/0004-dccrn-real-vs-complex.md`（`docs/NUMBERS.md:32-33`）。
   - 注（如实）：会议口径仓内不一致——`exp/04_dccrn/model.py:1` 写「ICASSP 2020」，`docs/adr/0004-dccrn-real-vs-complex.md:9` 写「Interspeech 2020」；论文实际发表于 Interspeech 2020，本表按 ADR 0004 口径（红线不改既有文件，仅在此注明）。
 - **DPCRN**（Le et al., Interspeech 2021，arXiv:2107.05429）：全带 2D 卷积 + 逐子带双路径 RNN，用极小算力逼近大模型——CRN 到 GTCRN 之间「降算力」路线的中间节点。
   本仓：无模块（全仓 grep 'DPCRN' 0 命中，2026-10-11 核实）——【读过】，如实标注，不做复现/消融宣称。
@@ -42,7 +42,7 @@
 ### B2 AEC 线：WebRTC AEC → AEC-Challenge 2021/2022 冠军（级联形态）→ 深度自适应滤波方向
 
 - **WebRTC AEC（传统 DSP 栈：自适应滤波 + DTD + 抑制器）**：NLMS/分区频域（MDF）自适应滤波消线性回声，双讲检测保近端，后置抑制器兜底。
-  本仓锚点 `exp/06_trad_aec/`——【读过】：NLMS `exp/06_trad_aec/nlms.py:11`、MDF `exp/06_trad_aec/mdf.py:19`、DTD `exp/06_trad_aec/dtd.py:18`（mic-vs-y_echo 后置相干，WebRTC 同款思路 `exp/06_trad_aec/dtd.py:65`、`docs/adr/0001-dtd-mic-vs-yecho-coherence.md:30`）、单 pass 在线状态机 `exp/06_trad_aec/pipeline.py:7`（TradAEC `:53`）、残余抑制 `exp/06_trad_aec/res.py:14`；实测 FEST ERLE 20.55 dB、DT 近端 PESQ 1.687（AEC-Challenge 合成，eval_v3 60 条，`docs/NUMBERS.md:50-51`）。
+  本仓锚点 `exp/06_trad_aec/`——【读过】：NLMS `exp/06_trad_aec/nlms.py:11`、MDF `exp/06_trad_aec/mdf.py:19`、DTD `exp/06_trad_aec/dtd.py:18`（mic-vs-y_echo 后置相干，WebRTC 同款思路 `exp/06_trad_aec/dtd.py:65`、`docs/adr/0001-dtd-mic-vs-yecho-coherence.md:30`）、单 pass 在线状态机 `exp/06_trad_aec/pipeline.py:7`（TradAEC `:53`）、残余抑制 `exp/06_trad_aec/res.py:14`；实测 FEST ERLE 20.55 dB（eval_aec.py 口径；同一 eval_v3 上 eval.py 口径 20.37，脚本间 0.18dB 口径差，见 `docs/NUMBERS.md` WP-06 口径注）、DT 近端 PESQ 1.687（eval_v3 60 条，`docs/NUMBERS.md:50-51`）。
   - 如实注：仓内引用均为「WebRTC AEC suppressor 同款思路」，全文未出现「AEC3」字样（全仓 grep 'AEC3|aec3' 0 命中，2026-10-11 核实）。
 - **AEC-Challenge 2021/2022 冠军（级联形态：线性 AEC 保底 + NN 消残余/非线性）**：微软主导的赛事把「级联」定为工业主流——收敛稳、可解释、近端保真有底（`docs/adr/0002-fullnn-vs-cascade-aec.md:11`）。
   本仓锚点：【复现过(级联形态已实测:`exp/09_cascade_aec/`,ADR 0005)】全 NN 对照主线 `exp/07_nn_aec/`（0.638M 因果双输入 CRN，对标 AEC-Challenge 2022+ 规格，`exp/07_nn_aec/model.py:3`；官方 AECMOS 评估 `exp/07_nn_aec/aecmos_eval.py:28-29`）；级联实现 `exp/08_nl_aec/`（Ivry 2021 结构，v2 级联 ERLE 5.78→6.06/+0.28，`docs/NUMBERS.md:74`）与 `exp/09_cascade_aec/precompute_cascade.py:1-11`（「级联=换输入对」：y_echo 当 far 参考、e_lin 当 mic 输入，与 WP-06/WP-08 完全同款线性级）；ADR 0002 的实测对照（echo 赢 / deg 输）与 fallback 结论在 `docs/adr/0002-fullnn-vs-cascade-aec.md:26-41`。全 NN v4 实测：DT echo_mos 3.754 vs 传统 2.467（echo 赢），deg_mos 1.743 vs 2.401（近端输，结构性瓶颈，`docs/NUMBERS.md:57-64`）——用自己的对照实验复现并解释了「为什么冠军都选级联」。
@@ -57,7 +57,7 @@
 | CRN | ≈2.74（更大模型） | 2.5288（cRM+BLSTM，VoiceBank-DEMAND 824 对；IRM 2.8428） | `docs/NUMBERS.md:19-20`、`docs/INTERVIEW-WP02E-eval.md:22` |
 | DCCRN | 2.68（WB，DNS 合成） | 2.1811（DNS devtest 150 条；nodm 2.0151 / realconv 2.1898） | `docs/NUMBERS.md:27-29`、`docs/INTERVIEW-WP04-DCCRN.md:10` |
 | GTCRN | PESQ 2.87 / DNSMOS OVRL 2.70 | fp32 1.869（自混 held-out，更难）；INT8 dynamic 1.803（−0.067）；对拍 6.32e-06 | `docs/NUMBERS.md:38,41,43`、`docs/INTERVIEW-WP05a-GTCRN-ONNX.md:8` |
-| 传统 AEC | — | FEST ERLE 20.55 dB；DT 近端 PESQ 1.687 | `docs/NUMBERS.md:50-51` |
+| 传统 AEC | — | FEST ERLE 20.55 dB（eval_aec 口径；eval.py 口径 20.37，同一 eval_v3）；DT 近端 PESQ 1.687 | `docs/NUMBERS.md:50-51` |
 | 全 NN AEC v4 | —（对照实验） | DT echo_mos 3.754（vs 传统 2.467）；deg_mos 1.743（结构性瓶颈） | `docs/NUMBERS.md:62-63` |
 | 级联非线性 AEC v2 | — | ERLE 5.78→6.06（+0.28，1s 段）；v1 裸 GRU 0 dB | `docs/NUMBERS.md:73-74` |
 | 流式部署 | — | 流式 vs 非流式 <1e-5（实测 ~1e-7）；C++ vs Python 3.4e-5 | `docs/NUMBERS.md:80-81` |

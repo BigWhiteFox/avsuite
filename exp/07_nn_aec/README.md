@@ -2,7 +2,7 @@
 
 双输入（mic + far 复数谱）压缩 CRN，**0.638M 参数（<1M 约束）**，时间维严格因果
 （单测锁死），20ms 帧率。对手是 WP-06 传统 AEC——同评估集直接对比。
-6 项单测全绿；全仓 80/80。
+6 项单测全绿；全仓 93/93。
 
 ## 结构
 
@@ -38,8 +38,8 @@ python eval.py --ckpt outputs/nnaec_g0.5_j10/best.ckpt --compare-trad   # + WP-0
 python eval.py --ckpt ... --jitter-sweep                                # 时延鲁棒性
 ```
 
-损失：`weighted_distortion(enh谱, near谱, γ=0.5) + 0.1×SI-SNR`（core/losses 复用；
-γ 消融开关即 WORKLIST 要求的"γ 消融"）。
+损失：`weighted_distortion(enh谱, near谱, γ=0.5) + w_sisnr×SI-SNR`（默认 w_sisnr=0.1，
+**主配置 v4 为 w_sisnr=1.0**；core/losses 复用，γ 消融开关即 WORKLIST 要求的"γ 消融"）。
 
 ## AECMOS 官方口径（已集成，`aecmos_eval.py`；模型 AECMOS_local/Run_1668423760）
 
@@ -120,10 +120,14 @@ python ../../scripts/aec_synth.py --num 3000 --dur-sec 4 \
   与 2022 规格（20ms 无前瞻）之间；严格无前瞻需 win=320 非 2 次幂 FFT，留作改进
 - 流式推理 = WP-05b cache 化（conv 时间 cache + LSTM state）；架构已因果，
   等价性测试模式复用 WP-05b 的流式 vs 非流式逐帧对齐
-- AECMOS 集成延后（降级路径已按 WORKLIST 授权）；非线性回声（soft-clip 15% 样本
+- AECMOS 官方口径已集成（见上节 `aecmos_eval.py`）；非线性回声（soft-clip 15% 样本
   在训练集里）NN 天然能学一部分——WP-08 的对照组
+- 全部合成评估集（eval_v3/v5/v6）soft-clip 概率均为 0，而训练集为 0.15——非线性回声
+  维度在主结果表无检验面（官方真实集除外，其回声为真实录制）
 - train/eval 同用 28 说话人池（同池不同句），未见说话人泛化此前未单独评估——
-  已补全全未见说话人（DNS clean 素材）重评：exp/07_nn_aec/outputs/eval_v4_speaker_heldout/summary.md
+  已补全全未见说话人（DNS clean 素材）重评：exp/07_nn_aec/outputs/eval_v4_speaker_heldout/summary.md；
+  真实分布稳健性证据：`reports/eval_v5_dt300.md`（DT 扩样 154 条）、`reports/ood_real_echoes.md`
+  （ICASSP2022 真实回声）、`reports/realrir_domain.md`（IR64-CAR 真实车厢 RIR）
 
 ## 流式推理（WP-05b 模式已实现，`streaming.py`）
 

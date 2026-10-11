@@ -1,5 +1,9 @@
 # P1-1 止损基线:零训练级联(WP-06 线性输出直送现成 v4 NN 推断)
 
+> ⚠️ 2026-10-11 eval_v5 扩样修正：DT echo 级联−NN Δ +0.02（噪声级），级联 echo 优势的
+> eval_v3 证据（n=14）已按 [ADR 0005 附记](../../docs/adr/0005-cascade-verified.md) 收回；
+> 本基线的方法学与读数保留为历史记录。
+
 - 时间:2026-10-11 01:06–01:25 · 设备:CPU(避让并行训练)· Python:`C:\Users\14805\.conda\envs\avsuite\python.exe`
 - 数据:D:/data/aec-synth/eval_v3,60 条(fest 26 / dt 14 / nst 20),与 trad / v4 对照同集同口径
 - 执行件:`avsuite/exp/09_cascade_aec/zerotrain_baseline.py` · 执行日志:`reports/rectification/exec/P1-1-baseline.md`

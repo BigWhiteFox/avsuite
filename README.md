@@ -4,7 +4,7 @@
 > 求职技术攻关代码仓（12 周规划，生成队列见 `../WORKLIST.md`）。
 
 [![ci](https://github.com/BigWhiteFox/Avsuite/actions/workflows/ci.yml/badge.svg)](.github/workflows/ci.yml)
-[![tests](https://img.shields.io/badge/tests-80%20passed-brightgreen)](tests)
+[![tests](https://img.shields.io/badge/tests-93%20passed-brightgreen)](tests)
 [![python](https://img.shields.io/badge/python-3.11-blue)](requirements.txt)
 [![RTF](https://img.shields.io/badge/CPU%20RTF-0.0084-success)](exp/05a_gtcrn_onnx)
 [![GTCRN](https://img.shields.io/badge/GTCRN-23.67K%20params-orange)](exp/05a_gtcrn_onnx)
@@ -33,7 +33,7 @@ graph LR
 
 | 能力 | 传统基线 | 本仓 NN | 证据 |
 |---|---|---|---|
-| 回声抑制（DT echo_mos） | 2.47 | **3.75** | AECMOS 官方口径 |
+| 回声抑制（DT echo_mos） | 2.47±0.31 | **3.75**±0.31 | AECMOS 官方口径（eval_v3 60 条）；官方真实集 ICASSP2022 800 段：3.256±0.124 vs 2.305±0.100（Δ+0.951±0.137） |
 | 降噪（VoiceBank PESQ） | 1.97 noisy | **2.53** | 824 对测试集 |
 | 端侧推理（CPU RTF） | — | **0.0084** | GTCRN 23.67K |
 | 流式逐帧对齐 | — | **<1e-5** | 单测锁死 |
@@ -68,7 +68,7 @@ graph LR
 | WP-07D AEC 数据合成 | ✅ 批次2 | `scripts/aec_synth.py`：RIR/时延/soft-clip/三场景/DT lead-in，manifest 可复现 |
 | WP-06 传统 AEC | ✅ 批次3 | `exp/06_trad_aec/`：GCC+MDF/NLMS+DTD三态+RES；**FEST ERLE 20.55dB DoD 通过**，纯 numpy 零 GPU |
 | WP-04 DCCRN | ✅ 批次4 | `exp/04_dccrn/`：3.99M 复数 CRN + Dynamic Mixing，代码/单测全绿；devtest PESQ **2.181**（DoD 2.6 走降级路径），消融 --no-dm 2.015 / --real-conv 2.190（反直觉发现见 ADR 0004） |
-| WP-05a GTCRN+ONNX+INT8 | ✅ 批次5 | `exp/05a_gtcrn_onnx/`：官方权重移植，对拍 6.3e-6 / RTF 0.0084 / 单帧 0.67ms / INT8 动态 PTQ -0.067 PESQ（静态 QDQ 崩坏，负面结果留档） |
+| WP-05a GTCRN+ONNX+INT8 | ✅ 批次5 | `exp/05a_gtcrn_onnx/`：官方权重移植，对拍 6.3e-6 / RTF 0.0084 / 单帧 0.67ms / INT8 动态 PTQ Δ0.053 PESQ（held-out 200 条口径；静态 QDQ 崩坏，负面结果留档） |
 | WP-07 NN-AEC | ✅ 批次6 | `exp/07_nn_aec/`：0.638M 因果双输入 CRN；主配置 v4 **DT echo_mos 3.75 vs 传统 2.47（DoD 双倍达标）**；近端保真 deg 1.74 为结构性瓶颈（探索矩阵+归因见 README 与 `docs/adr/`）；AECMOS 官方口径已集成 |
 | WP-05b 流式推理 | ✅ 批次5 尽力项 | `exp/07_nn_aec/streaming.py`：conv cache+LSTM state，**流式 vs 非流式对齐 <1e-5**；core 新增 StreamingISTFT |
 | WP-05c C++ demo | ✅ 批次5 选做 | `exp/05c_cpp_demo/`：MSVC 构建通过，**C++ vs Python 对拍 3.4e-5**，RTF 0.0094 |
@@ -76,6 +76,9 @@ graph LR
 | WP-10 Gradio demo | ✅ 批次7 | `exp/10_demo/app.py`：GTCRN 增强 + A/B 对比 + DNSMOS；HF Spaces 部署说明在 README |
 | WP-10.5 Capstone | ✅ 选做 | `exp/10.5_capstone/`：NN-AEC(20ms流式)→GTCRN 级联，三路 A/B + AECMOS 逐级分数，2 单测绿 |
 | WP-08 非线性 AEC | 🔵 训练中 | `exp/08_nl_aec/`：GRU 功放建模 0.15M，soft-clip 数据集已备，GPU 训练进行中（验收：较线性基线 ERLE +5dB） |
+| 级联 AEC（P1-1，exp/09） | ✅ | `exp/09_cascade_aec/`：MDF→NN 级联 + 零训练基线，三方对照（传统/NN/级联，eval_v5 DT n=154）；DT echo 3.741±0.11 与纯 NN 3.721±0.12 打平（Δ+0.02 噪声级），FEST echo 4.589±0.05 三方最高，deg 1.851±0.05 未治（≈NN 1.811±0.05）——纯级联不治 deg，见 ADR 0005 附记 |
+| 官方集/OOD/真实 RIR/漂移评估 | ✅ | 官方真实集（ICASSP2022 800 段）DT echo 3.256±0.124 vs 传统 2.305±0.100（Δ+0.951±0.137）；真实车厢 RIR（IR64-CAR，eval_v6 DT n=42）NN−传统 Δecho +1.20→+0.57；漂移 σ=5.0 ms/s：NN 几乎不退（Δecho −0.19±0.29）、drift 重训负结果留档；详见 `reports/` 与 `docs/NUMBERS.md` |
+| Kalman 对照 | ✅ | `exp/06_trad_aec/kalman.py`：线性 AEC 另一流派对照（NLMS/MDF 之外），取舍结论见 ADR 0006 |
 | WP-11 TSE | ⬜ 选做 | INTERVIEW 文档已备（三流派一句话+追问）；demo 本体待定（外源模型下载） |
 
 ## 快速开始（Windows + Git Bash）
@@ -87,7 +90,7 @@ export PYTHONNOUSERSITE=1        # 重要：隔离用户级 site-packages（本�
 conda activate avsuite
 
 python env_check.py              # 环境自检报告（GPU/库/数据目录）
-python -m pytest tests -q        # 80 项单测
+python -m pytest tests -q        # 93 项单测
 python scripts/verify_data.py    # 数据集就绪度报告
 ```
 

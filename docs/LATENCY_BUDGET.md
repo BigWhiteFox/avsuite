@@ -79,3 +79,56 @@ GTCRN RTF(e2e) 0.0083(实测,与 exp/05a README 既有 0.0084 互证;低负载�
   字段为 ASCII,无歧义)
 
 - 低负载复测(验收 S3):2026-10-11T02:12:26(+08:00);背景负载 psutil cpu_percent 1.7%(测前)/ 2.3%(测后);同工具同参数重跑(tools/latency_bench.py),JSON 数值字段存档于 reports/rectification/exec/P2-7.md 复测记录(临时 JSON:%TEMP%\p27_retest_latency.json)。计算项 mean 偏差超 ±10%(AEC 单线程 -12.7%),#4/#9/#11、合计表、G.114 与补充行已按「低负载复测@02:12」更新并保留首测原值对照。
+
+## 附记(V4:级联 MDF→NN 行)
+
+> 生产推荐形态 exp/09_cascade_aec(mic ──MDF──> e_lin/y_echo ──NN──> enh,
+> run_cascade.py L45 `TradAEC(method="mdf", partitions=8, mu=0.7)`,block 取
+> pipeline.py L57 默认 256)此前未入账:MDF 级的算法时延与计算耗时。本附记
+> 补账;既有 13 行预算表(NN-AEC+NR 两级链)不动。
+
+| # | 级 | 项 | 数值 | 标注 | 来源 / 口径 |
+|---|---|---|---|---|---|
+| V4-1 | MDF | 算法块粒度时延 | 16 ms | 推算 | B=256@16k,块进块出,块内最早样本最坏等整块到齐(exp/06_trad_aec/mdf.py L20 block=256 默认、L63 逐 B 样本分块循环);MDF 因果无 lookahead;P×B=2048 taps=128 ms 是回声路径建模长度(滤波器记忆,mdf.py L5),非时延项,勿混同窗长 |
+| V4-2 | MDF | 单块计算 mean / p99 | 0.27 / 0.61 ms | 实测 | MDF(256, 8, 0.7) 逐块 process(256) ×1000(预热 50 块,=16 s 音频),float64 合成噪声,纯 numpy 1.26.4 pocketfft(无线程可配);RTF(块) ≈0.017;p99 距 16 ms 块预算余量 >26× |
+| V4-3 | 全链 | **级联合计(流式口径)mean / p99** | **50.9 / 52.4 ms** | V4-1+#3+V4-2+本轮 NN 计算 | MDF 16 + NN 窗 32 + 两级计算实测和(0.27+2.67)/(0.61+3.82,同轮实测单线程,条件见下);NN 计算若取 #4 低负载复测@02:12 值(1.98 / 2.95)则 50.3 / 51.6 ms;p99 为两级 p99 之和(保守,两级峰值不同时发生) |
+| V4-4 | 全链 | G.114 对标 | 150 ms → 余量 ≈2.9× | 同 #13 | 按 p99 52.4 ms;400 ms 可接受上界 → ≈7.6× |
+
+口径与实现决策(逐块喂 process):
+
+- MDF.process 为整段接口(内部按 B 分块,mdf.py L53-63);逐块等价 = 构造实例后
+  每次调用 process 传一个 256 样本块,实例状态(xhist/X/W/span_ph)跨调用延续。
+- 一致性验证:150 块逐块 vs 整段同输入,max\|d\|=0.00e+00、逐位相等(bitwise,
+  MDF 确定性过程;段长取 B 整数倍,整段路径无尾部补零差异)。
+- 计时含 process 入口簿记(pad/scales/输出缓冲分配,O(B)),即部署形态逐次调用
+  的真实成本,非内联内核耗时;计时段 gc 关闭,同既有口径。
+- 未入账:流式部署下 MDF 256 块与 NN 320 hop 的重缓冲对齐(80 ms 周期
+  {192,128,64,0} 样本,最坏 +12 ms / 均值 +6 ms;exp/09 离线路径整段衔接无
+  此项)。入账则最坏 ≈62.9 / 64.4 ms,仍 <150 ms(余量 ≈2.3×)。
+
+与既有 66.5 / 67.8 ms 两级链(#11,AEC-NN+NR)的关系:
+
+- 共用 NN-AEC 级(窗 32 ms + 计算实测);差异在另一级——两级链为 NR(窗 32 ms),
+  级联链为 MDF(块粒度 16 ms,线性滤波无窗、无 lookahead)→ 算法时延少 16 ms,
+  合计低 ≈15.6 / 15.4 ms(66.5−50.9 / 67.8−52.4)。
+- 级联链**不含** NR 级;若其后另串 NR(流式口径,+32 ms 窗 + 0.48-1.03 ms 计算)
+  → ≈83.5 / 85.5 ms,仍 <150 ms(余量 ≈1.8×)。
+- 并列口径:66.5 / 67.8 = 「NN 单级 AEC + NR」;50.9 / 52.4 = 「MDF 线性 AEC +
+  NN 残差级(exp/09 生产推荐)」——传统线性级前置的级联形态时延账反而更低。
+
+测量条件(V4 附记轮):
+
+- 时间:2026-10-11T14:39:08+08:00
+- CPU:AMD Ryzen 7 8845H w/ Radeon 780M Graphics(8C/16T)
+- 负载:背景弥散负载(无单一 ≥3% 进程可指认);psutil cpu_percent 采样 21.7%(全轮
+  测前)/ 23.1% / 23.5%(MDF 段前/后)/ 23.1%(全轮测后)——高于首测 10.4% 与复测
+  1.7-2.3%,本轮 AEC 单线程 2.67 / 3.82 ms(对 #4 的 1.98 / 2.95)偏高按此解读;
+  MDF p99 0.61 ms 距块预算余量 >26×,结论不受负载影响
+- 软件:Python 3.11.17(conda env `avsuite`)/ numpy 1.26.4(pocketfft)/
+  torch 2.6.0+cu124 / onnxruntime 1.30.0
+- 方法:tools/latency_bench.py 扩展 MDF 段(其余基准未动):预热 50 块后连续
+  1000 块逐块 perf_counter,同一实例状态跨块延续(部署形态);输入 float64
+  合成噪声(级联部署口径:TradAEC.process 内转 float64)
+- 原始 JSON:exp/06_trad_aec/outputs/mdf_block_latency.json(全轮结果:mdf_block /
+  mdf_blockwise_vs_segment 及既有各级本轮数值;与 exp/06 既有基准 JSON
+  kalman_vs_mdf.json 同目录存档)

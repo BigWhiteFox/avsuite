@@ -28,7 +28,11 @@
 ERLE = 10log10( Σ mic² / Σ err² )，在远端单独说话段统计——衡量"回声被消掉多少"。双讲段 mic 里混着近端语音，直接算 ERLE 会把近端当残余回声，数字无意义。双讲段要用 PESQ/AECMOS 评近端保真。
 
 **Q4 AECMOS 是什么？**
-微软 AEC-Challenge 的 MOS 预测模型（2021），三分量：SIG（近端语音质量）/ BAK（背景舒适度）/ ECM（回声抑制质量）。对双讲场景的评估比 ERLE+PESQ 组合更贴近听感。官方脚本就在 AEC-Challenge 仓库里（本机已克隆）。
+微软 AEC-Challenge 的 MOS 预测模型（2021）。注意别与 DNSMOS 混：本地官方 ONNX 只输出
+**echo_mos（回声抑制）/ deg_mos（近端退化）两路**——SIG/BAK/OVRL 三分量是 DNSMOS（降噪侧）
+的输出，AECMOS 没有这三路。双讲场景两路分开看：echo 管"回声漏没漏"、deg 管"近端损没损"，
+比 ERLE+PESQ 组合更贴近听感。官方协议对送评段有裁剪（FEST 只送后半段、DT 只送收敛后的
+后 (len−15)/2 秒、NST 全段；适配见 `exp/07_nn_aec/official_aecmos_eval.py` 头注）。
 
 **Q5 这些指标会打架吗？举个例子。**
 会，我实测过：经典谱减在 5dB 噪声下 SI-SNR 4.95→14.02（大涨）但 STOI 0.573→0.483（反降）——SNR 指标看到"噪声能量少了"，STOI 看到"音乐噪声伤了包络结构"。结论：指标必须成组看，且以感知指标（PESQ/STOI）为主。
@@ -43,6 +47,6 @@ ERLE = 10log10( Σ mic² / Σ err² )，在远端单独说话段统计——衡�
 按说话人切分 train/test（VoiceBank 自带说话人不相交；DNS 子集要自己保证）；报告按说话人/噪声环境分组的指标模板——WP-09 的 evaluate_full 会做成 CSV + 分组透视。
 
 ## 本机已验证的数字（面试弹药）
-- 80 项单测全绿；vs torch.stft float64 对拍 <1e-10
+- 93 项单测全绿；vs torch.stft float64 对拍 <1e-10
 - SNR 20→-10dB 扫描：SI-SNR 19.0→-6.0 严格单调；STOI 0.59→0.18；PESQ 1.03→1.02（合成信号上 PESQ 平坦是预期行为，见 Q6）
 - 谱减 demo：SI-SNR +9dB / STOI −0.09（指标打架的活例子）
