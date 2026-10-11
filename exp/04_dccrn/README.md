@@ -83,7 +83,7 @@ val loss（复数谱 MSE + 0.1×SI-SNR）：-1.269（epoch ~94 best，全程无�
 |---|---|---|
 | DCCRN+DM（默认，主） | **2.1811** | 已测（源 `outputs/eval/dccrn/summary_devtest.json`） |
 | 静态混合 --no-dm | 2.0151 | 已测；DM 价值 ≈ +0.17 PESQ |
-| 实数卷积 --real-conv | 2.1898 | 已测；反直觉：实数 ≥ 复数（参数约 2×），归因见 `docs/adr/0004-dccrn-real-vs-complex.md` |
+| 实数卷积 --real-conv | 2.1898 | 已测；反直觉：实数与复数性能相当（Δ0.009 噪声级，不称反超；参数约 2×），归因见 `docs/adr/0004-dccrn-real-vs-complex.md` |
 
 ## 降级路径（WORKLIST 预案）
 PESQ 2.4-2.5 → 固定测试集趋势复现 + 完整消融 + 差距分析（DM 细节/训练时长/

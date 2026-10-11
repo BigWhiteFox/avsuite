@@ -47,7 +47,7 @@ graph LR
 - **跑**：`python exp/04_dccrn/param_check.py`
 - **应看到**：复数乘法 (a+bi)(c+di) 的 Re/Im 两路线性组合；参数量 3.99M
 - **自检**：① 复数卷积为什么要 4 次实卷积；② Dynamic Mixing 的 SNR 公式；③ **为什么 real-conv
-  反超复数**（ADR 0004，面试必问）。
+  与复数性能相当仍选复数**（Δ0.009 噪声级、复数赢在参数效率，ADR 0004，面试必问）。
 
 ## Day 5 — GTCRN：端侧轻量化的艺术
 - **读**：`exp/05a_gtcrn_onnx/gtcrn.py`、`README.md`、`docs/INTERVIEW-WP05a-GTCRN-ONNX.md`
