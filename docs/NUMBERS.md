@@ -15,6 +15,11 @@
 - 全仓 DCCRN real-conv 表述统一为"与复数性能相当（Δ0.009 噪声级），复数赢在参数效率"，不称"反超"（ADR 0004）。
 - 所有 DT 场景 AECMOS 对外引用须带 95%CI（工具 `tools/compute_ci.py`，汇总 `reports/DATA_CI.md`）。
 
+**统一决策（2026-10-11 V4 整改第四波增补）**：
+- 传统 AEC 漂移崩塌主导机制改判 = **块内路径移动 × 块级自适应的跟踪代价**（"零余量对齐→非因果泄漏"被 S10 消融证伪；官方集发散条这一真·实现缺陷已由 S1 发散防护治愈）。
+- 级联 MDF→NN 的真实数据定位（S11）：echo 增益≈NN 且显著优于传统（官方集 + eval_v6）；deg 交易结构照旧；**级联拒评 2/800 须随"生产推荐"话术一并披露**。
+- NN deg 差的机理（S5）= **高频带选择性损伤 + 谱平坦化**（非宽带能量压低、非单纯过度抑制）。
+
 ---
 
 ## 1. 语音增强（enhancement）
@@ -68,6 +73,9 @@
 > 口径）是**同一 eval_v3 上两个评估脚本的 0.18dB 口径差**（两者同为跳 2s / RES 后 out 口径，
 > 差异来自实现细节，未逐一归因）；两口径均 ≥20，DoD 判定不变；echo_mos / deg_mos 行为
 > eval_v3 60 条口径。早先「20.55 出自 WP-06 自建受控集、原表头误标 eval_v3」的勘误表述不准确，以本注为准。</sub>
+> <sub>Kalman 边界指针（2026-10-11，ADR 0006）：固定 q/r Kalman 外壳在本仓受控对照中输于 MDF 的结论
+> **成立但不外推**完整 FKF（三本质件未装）；L3"不确定"裁决如实披露，复测前置条件与面试稿见
+> `docs/adr/0006-kalman-vs-mdf-boundary.md`。</sub>
 
 ### WP-07 NN-AEC（主配置 v4，eval_v3 60 条，16k；vs 传统基线）
 | 指标 | 原始 mic | 传统 AEC | **NN-AEC v4** | 95%CI |
@@ -84,6 +92,17 @@
 > **FEST ERLE 口径**：NN 输出经 cRM 掩码门控近似静音 → ERLE=P(mic)/P(≈0) 数值虚高，
 > **不可与线性 AEC 的 ERLE 直接比**。对外表述统一为"FEST 段输出≈静音，echo_mos 4.0+
 > 才是有效抑制证据"。
+
+### NN deg 机理直接量化（V4-S5，2026-10-11；"过度抑制 vs 伪影"一锤定音）
+| 项 | 测量结论 |
+|---|---|
+| DT 近端短板机制 | **高频带选择性损伤**（4–8 kHz 频带 NLA 中位 **−2.41 dB**）+ **谱平坦化**，**非宽带能量压低** |
+| 传统 deg 优势来源 | 冻结/透传 NLA（**+0.07 dB**，≈无损）——传统列"不动近端"是机制性的 |
+| 自检 | 重建 6/6 逐位 PASS、复算 15/15 PASS |
+
+> <sub>回答复评"NN 的 deg 差是过度抑制还是伪影"：两者都不是宽带压低——是高频带选择性损伤 + 谱平坦化（伪影类）；
+> 传统列的 deg 优势来自冻结透传 NLA 近乎无损，非"抑制更强"。三方（NLA/lead-in 回声抑制/分频带）主表与 5 条手工抽查见
+> `reports/deg_mechanism.md`；驱动 `exp/07_nn_aec/deg_mechanism.py`；数据 `exp/07_nn_aec/outputs/deg_mechanism/`。</sub>
 
 ### eval_v5 DT 扩样对照（2026-10-11；300 条同配方合成 **DT 154**/NST 76/FEST 70，seed 20261011，官方 ONNX AECMOS 全段口径）
 | 方法 | DT echo_mos | DT deg_mos |
@@ -115,9 +134,14 @@
 > （DT −1.45 / FEST −2.47 vs v4，FEST ERLE 仅 3.9dB）——读数成立（"漂移重训不收复"仍真），但其
 > 机制解释（"对齐-滤波目标内在歧义"）待重审（覆盖性视角下的替代解释：帧级标签噪声/插值副产物未排除）；
 > ③线性 AEC 非天然稳态：drift 下 FEST 35/36、DT 17/18 条系统性下降（配对 ΔFEST −1.892±1.237；
-> V4 定位：零余量一次对齐 + DTD 误冻正反馈的实现缺陷，非 MDF 本质——修复重跑见 V4 附记）。
+> **V4 修复重跑（S10）已定论**：S1 四件套（margin=25ms + reestimate=2s + 发散防护）落地且旧配置
+> 逐位复现校验通过后，加固列 FEST echo 2.119→**1.787±0.267**（配对 Δ−0.332±0.209，未回升反略降；
+> 仅 margin 2.023 / 仅 reest 1.958，均 n.s.）——**"零余量对齐→非因果泄漏"被证伪为主导机制，
+> 崩塌主导改判为"块内路径移动 × 块级自适应"的跟踪代价**（91 次/60 条再对齐复位的暖机损失为净负项；
+> DTD 误冻/插值副产物为次要候选未单独消融）。真·实现缺陷（官方集发散条 float64 溢出 1/800）已被
+> 发散防护治愈——加固列 300/300 非有限 0 条，见下 S10 节）。
 > drift 下 DT echo 排序：v4 > 重训 > 线性。训练 26min（best val@ep34，后 190ep 真收敛平台）。
-> 详见 `reports/drift_retrain.md`、`reports/delay_ood_probe.md`、`reports/drift_sweep.md`。</sub>
+> 详见 `reports/drift_retrain.md`、`reports/delay_ood_probe.md`、`reports/drift_sweep.md`、`reports/trad_hardening_rerun.md`。</sub>
 
 ### 时延 OOD 判别探针（V4，2026-10-11；"结构性 vs 覆盖性"一锤定音）
 | 条件 | DT echo_mos | DT deg_mos | FEST echo_mos |
@@ -130,6 +154,20 @@
 > 对 mic 地板的 echo 余量 +2.18→+0.29（抑制能力损失 ≈87%）。**结论：NN 的时延稳健是分布覆盖性的，
 > 不是结构性的**——"逐帧复谱映射不依赖对齐"的宣称不成立，NN-AEC 前置粗对齐必须保留。
 > 详见 `reports/delay_ood_probe.md`；数据 `D:/data/aec-synth/eval_ood_delay`。</sub>
+
+### V4 管道加固重跑（S10，2026-10-11；margin=25ms + reestimate=2s + 发散防护，partitions=8/mu=0.7 不变）
+| 受污染 headline | 旧值 | 加固重跑 | 结论 |
+|---|---|---|---|
+| 漂移集 FEST echo（60 条） | 2.119±0.37 | **1.787±0.267**（Δ−0.332 显著略降；仅 margin 2.023/仅 reest 1.958，均 n.s.） | 崩塌未翻转，主因=跟踪代价（见上节③改写） |
+| 官方集 FEST echo（proto 300 条） | 2.725±0.126（n=299，1 条发散拒评） | **2.759±0.129（n=300，0 非有限）**；同 299 条配对 +0.028±0.067 n.s. | 均值中性；发散条 failed→**echo 4.64**（防护复位 6 次/再对齐 5 次） |
+| eval_v6 FEST ERLE（34 条） | 7.948 dB | **10.296±2.304 dB**（配对 +2.347±1.594 显著，19/34 改善；仅 margin +2.115/仅 reest +0.059） | 崩落 12.2 dB 中对齐余量贡献 ≈2.1–2.3 dB（**≈19%**），其余为真实 RIR 域差本征 |
+| eval_v6 AECMOS（FEST/DT echo） | 3.301 / 2.000 | 3.310 / 1.979（均 n.s.） | ERLE 收益不伤近端（DT PESQ 1.525→1.540） |
+
+> <sub>口径校验：旧配置复跑逐位复现旧 json（max|Δ|=4.9e-05，AECMOS 浮点噪声级）；所有对比带配对 CI；
+> 消融分解证明 v6 ERLE 回收几乎全部来自 align_margin_ms。周期重估对慢游走（±10ms/8s）是净负项
+> （再对齐复位暖机代价 > 对齐收益），生产化需更保守触发（Δ≥10ms 或确认窗，后续工作）。
+> 详见 `reports/trad_hardening_rerun.md`；驱动 `exp/07_nn_aec/hardening_rerun.py`；
+> 数据 `exp/07_nn_aec/outputs/hardening_rerun/`（官方列 enh wav 仓外 `D:/data/aec-synth/official_stage/enh_trad_hard/`）。</sub>
 
 ### 真实数据 OOD（domain gap，2026-10-11 补测；数据侧"真实录音"缺口以公开数据集替代闭环）
 
@@ -154,6 +192,28 @@
 > <sub>结论：仿真 RIR 系统性高估回波抑制能力（短混响/强早反射是主因）；近端指标基本不变。
 > 后续：真实 RIR 数据增强/微调。详见 `reports/realrir_domain.md`；局限：单一车型单一布置。</sub>
 
+### 级联 MDF→NN 真实数据首验（V4-S11，2026-10-11；官方 ICASSP2022 800 段 proto 口径 + eval_v6 100 条）
+| 集·指标 | 传统 AEC | NN v4 | **级联（新）** | 级联−传统 | 级联−NN |
+|---|---|---|---|---|---|
+| 官方 FEST echo | 2.725±0.126 (n=299) | 3.143±0.151 (n=300) | **3.096±0.135** (n=299) | **+0.371 [+0.295,+0.448] 显著** | −0.052 n.s. |
+| 官方 DT echo | 2.305±0.100 (n=300) | 3.256±0.124 (n=300) | **3.233±0.122** (n=299) | **+0.932 [+0.847,+1.016] 显著** | −0.027 n.s. |
+| 官方 DT deg | 3.692±0.088 | 3.097±0.118 | **2.947±0.103** | −0.751 [−0.830,−0.676] 显著（更差） | −0.151 [−0.262,−0.043] 显著（略差） |
+| 官方 NST deg | 4.183±0.046 | 3.759±0.119 | **3.947±0.083** (n=200) | −0.235 显著 | **+0.188 显著（优于 NN）** |
+| v6 DT echo | 2.000±0.15 | 2.565±0.23 | **2.627±0.241** | **+0.628 [+0.407,+0.858] 显著** | +0.062 n.s. |
+| v6 DT deg | 2.518±0.15 | 2.044±0.12 | **1.842±0.090** | −0.676 显著（更差） | −0.202 显著（略差） |
+| v6 FEST echo | 3.301±0.43 | 3.718±0.45 | **3.406±0.428** (n=34) | +0.105 n.s.（CI 宽） | −0.313 [−0.692,+0.081] n.s. |
+
+> <sub>**第一份真实数据级联证据**（线性级逐位复刻训练分布：TradAEC(mdf,8,0.7) 全链、e_lin=mic−y_echo
+> float64→float32、margin/reestimate 不开、发散防护开；NN=`exp/09_cascade_aec/outputs/nnaec_g0.5_j10/best.ckpt`）：
+> 级联在真实分布上完整保住 NN 的 echo 增益（与 NN 差均不显著，"级联≈NN"——"级联 echo 优于纯 NN"仍不成立，
+> 与 eval_v5 修正一致）；deg 交易结构照旧（以 deg 换 echo，级联坐 NN 端）；v6 DT deg 1.842 与合成 v5 级联
+> 1.851 同档（真实 RIR 只打 echo 不动 deg）。配对 bootstrap B=2000 seed=777（tools/compute_ci.py 约定）。
+> **披露**：级联拒评 **2/800**（传统 1/800、NN 0/800）——wufNfJIb…movement 线性级靠 S1 防护保持有限
+> （8 次复位）但 NN 端峰值 4821.5 过 1e3 防线拒送评（with-movement 失败模式从线性级 inf 后移至 NN 级）；
+> GSJyjeKff…movement（DT）新增拒评。病条根治仍靠线性级 margin/reestimate（S10 方向）。
+> 详见 `reports/cascade_real_data.md`；驱动 `exp/09_cascade_aec/cascade_real_data.py`；
+> 数据 `exp/09_cascade_aec/results/aecmos_cascade_{official,v6}.json`（rows 兼容 compute_ci 口径）。</sub>
+
 ### WP-08 非线性 AEC（选做，DoD 较线性 +5dB → 走降级）
 | 版本 | 结果 |
 |---|---|
@@ -166,7 +226,7 @@
 |---|---|
 | WP-05b 流式 vs 非流式对齐 | **<1e-5**（实测 ~1e-7，单测锁死） |
 | WP-05c C++ vs Python 对拍 | **3.4e-5**；RTF 0.0094（端侧**整段**推理，非逐帧流式） |
-| 单元测试 | **93 passed, 0 failed**（`pytest tests -q`，~35s） |
+| 单元测试 | **124 passed, 0 failed**（`pytest tests -q`；93 基线 + S1 管道加固 +7 + S2 评估工具 +24；含 torch/ONNX 用例，全程数分钟） |
 
 ---
 *生成/维护：本表随每次验收更新；历史改动见 git log。*

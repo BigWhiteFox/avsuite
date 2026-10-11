@@ -106,10 +106,10 @@
 | S5 deg 机理 | ✅ 验收通过（Lead 收尾验收） | reports/deg_mechanism.md（高频带选择性损伤 −2.41dB@4-8k + 谱平坦化，非宽带能量压低；重建自检 6/6 逐位 PASS、复算 15/15 PASS） |
 | S9 残留清理 | ✅ Lead 补完验收（S9 完成任务 1/2/部分3 后夭折，Lead 完成 Q6/Q7/Q8/Q10、09 README、THREE_WAY/ZEROTRAIN 横幅、drift 双附记、INTERVIEW 索引） | 见 git 批次③ |
 | S1 管道加固 | ✅ **Lead 亲自实现并验收**（两次代理夭折零残留后） | pipeline.py（margin/reestimate/新字段）、mdf.py（w_abs_cap+发散防护）、dtd.py（reset）、tests/test_trad_aec_hardening.py（7 项全绿）、06 README 附记；**全仓 100 passed/0 failed** |
-| S2 评估工具测试 | ❌ 代理夭折零残留 → 任务书移交新会话（§6.0） | （未开始） |
-| S10 修复版重跑 | ❌ 待新会话发（S1 已就绪，任务书 §6.1） | 含 S1 单测发现的归因注意事项（§6.1 末尾） |
-| S11 级联真实数据 | ❌ 待新会话发（任务书 §6.2） | |
-| S12 整合+git+终报 | 🔶 git 已完成（5 批提交 205cfeb→05d0c8e，工作树干净）；NUMBERS 已更新 OOD/漂移修正（deg 机理/加固重跑数字待入）；FINAL.md 待新会话在 S10/S11 后写 | 提交清单见 §10 |
+| S2 评估工具测试 | ✅ 验收通过（Lead 复核：24 例全绿、单文件 ≤1.8s、零 D:/data/网络依赖、compute_ci.py 未动；发现不修：compute_ci.paired_bootstrap 形参未用已留档 docstring） | tests/test_official_protocol.py / test_compute_ci.py / test_precompute_semantics.py |
+| S10 修复版重跑 | ✅ 验收通过（Lead 独立复算逐项吻合：漂移 2.119→1.787 未回升——主因改判"块内路径移动×块级自适应跟踪代价"；官方发散条治愈 failed→4.64、300/300 非有限 0 条；v6 ERLE 7.948→10.296（+2.347 显著，19/34；对齐余量 ≈19% 崩落）） | reports/trad_hardening_rerun.md + exp/07_nn_aec/outputs/hardening_rerun/（enh wav 在 outputs/ 全局忽略规则下不入库） |
+| S11 级联真实数据 | ✅ 验收通过（Lead 从 rows 复算逐位一致：官方集 FEST 3.096/DT 3.233 显著优于传统、≈NN 不显著；v6 DT 2.627/deg 1.842；拒评 2/800 与 5 条复位 13 次如实披露） | reports/cascade_real_data.md + exp/09_cascade_aec/results/aecmos_cascade_{official,v6}.json（+scores jsonl） |
+| S12 整合+git+终报 | ✅ Lead 完成（NUMBERS 回填 6 处：V4 统一决策块/S5 机理节/S10 加固重跑节/S11 级联真实数据节/Kalman→ADR0006 指针/漂移③主因改写/单测 93→124；.gitignore 核查无需追加——outputs/ 全局规则已覆盖本波 enh wav；全仓 pytest **124 passed/0 failed**（Lead 复跑 exit 0 + 收集 124 确认）；git 3 批本地提交（§10 增补）；FINAL.md 交付） | reports/v4_rectification/FINAL.md + docs/NUMBERS.md + git log |
 
 ## 6. 未启动任务的完整任务书（可直接复制给子代理；发前按 §7 澄清路径）
 
@@ -255,6 +255,7 @@ margin/reestimate 一律不开。NN 用 exp/09_cascade_aec/outputs/nnaec_g0.5_j1
 | e1b43e7 | [V4整改] 文档双层真相止血（权威层+ADR0005附记+ADR0006+面试层全套） |
 | 68060c3 | [V4整改] 报告与台账（HANDOFF/PLAN、deg 机理、时延 OOD 探针、drift_sweep 附记） |
 | 05d0c8e 附近 | [V4整改] 补录 deg_mechanism.py 脚本（最新一笔，`git log` 为准） |
+| （第四波增补 2026-10-11，3 笔本地） | [V4整改] ①代码+测试（hardening_rerun/cascade_real_data 驱动 + S2 24 例单测）②NUMBERS 回填 6 处+HANDOFF 收口 ③报告与 JSON+FINAL.md（hash 以 `git log` 为准） |
 
 ## 11. 新会话开工清单（压缩版）
 
