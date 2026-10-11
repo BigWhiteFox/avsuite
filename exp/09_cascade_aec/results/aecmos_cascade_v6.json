@@ -1,0 +1,832 @@
+{
+  "tag": "cascade_v6_full",
+  "pipeline": "TradAEC(mdf,8,0.7)→(e_lin,y_echo)→NNAEC g0.5_j10 best.ckpt（发散防护开,margin/reestimate 关）",
+  "ckpt": "D:\\Project_for_Python\\DSH\\avsuite\\exp\\09_cascade_aec\\outputs\\nnaec_g0.5_j10\\best.ckpt",
+  "scoring": "aecmos_eval.py 口径（16k 全段 AECMOSEstimator,无 trim）",
+  "summary": {
+    "fest": {
+      "n": 34,
+      "echo_mos": 3.406,
+      "echo_sd": 1.273,
+      "echo_ci95": 0.428,
+      "deg_mos": 5.0,
+      "deg_sd": 0.0,
+      "deg_ci95": 0.0
+    },
+    "dt": {
+      "n": 42,
+      "echo_mos": 2.627,
+      "echo_sd": 0.798,
+      "echo_ci95": 0.241,
+      "deg_mos": 1.842,
+      "deg_sd": 0.299,
+      "deg_ci95": 0.09
+    },
+    "nst": {
+      "n": 24,
+      "echo_mos": 5.0,
+      "echo_sd": 0.0,
+      "echo_ci95": 0.0,
+      "deg_mos": 2.068,
+      "deg_sd": 0.361,
+      "deg_ci95": 0.145
+    }
+  },
+  "paired": {
+    "trad": {
+      "fest": {
+        "echo_mos": {
+          "n": 34,
+          "delta": 0.1051,
+          "lo": -0.2004,
+          "hi": 0.3961
+        },
+        "deg_mos": {
+          "n": 34,
+          "delta": -0.0002,
+          "lo": -0.0004,
+          "hi": -0.0
+        }
+      },
+      "dt": {
+        "echo_mos": {
+          "n": 42,
+          "delta": 0.6275,
+          "lo": 0.4072,
+          "hi": 0.8584
+        },
+        "deg_mos": {
+          "n": 42,
+          "delta": -0.6758,
+          "lo": -0.8295,
+          "hi": -0.5223
+        }
+      },
+      "nst": {
+        "echo_mos": {
+          "n": 24,
+          "delta": -0.0002,
+          "lo": -0.0004,
+          "hi": -0.0
+        },
+        "deg_mos": {
+          "n": 24,
+          "delta": -0.5208,
+          "lo": -0.6598,
+          "hi": -0.3949
+        }
+      }
+    },
+    "nn": {
+      "fest": {
+        "echo_mos": {
+          "n": 34,
+          "delta": -0.3128,
+          "lo": -0.6924,
+          "hi": 0.0812
+        },
+        "deg_mos": {
+          "n": 34,
+          "delta": 0.0,
+          "lo": -0.0002,
+          "hi": 0.0003
+        }
+      },
+      "dt": {
+        "echo_mos": {
+          "n": 42,
+          "delta": 0.0623,
+          "lo": -0.2301,
+          "hi": 0.3311
+        },
+        "deg_mos": {
+          "n": 42,
+          "delta": -0.202,
+          "lo": -0.2956,
+          "hi": -0.1161
+        }
+      },
+      "nst": {
+        "echo_mos": {
+          "n": 24,
+          "delta": 0.0003,
+          "lo": 0.0001,
+          "hi": 0.0005
+        },
+        "deg_mos": {
+          "n": 24,
+          "delta": 0.0162,
+          "lo": -0.0726,
+          "hi": 0.1167
+        }
+      }
+    }
+  },
+  "divergence": {
+    "n_clips_with_resets": 0,
+    "total_resets": 0,
+    "clips": []
+  },
+  "rows": [
+    {
+      "name": "fileid_0_dt",
+      "scenario": "dt",
+      "echo_mos": 4.084667205810547,
+      "deg_mos": 2.244321823120117,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_10_dt",
+      "scenario": "dt",
+      "echo_mos": 2.137211322784424,
+      "deg_mos": 1.669326901435852,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_11_dt",
+      "scenario": "dt",
+      "echo_mos": 2.2939748764038086,
+      "deg_mos": 1.495902419090271,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_12_dt",
+      "scenario": "dt",
+      "echo_mos": 2.7347400188446045,
+      "deg_mos": 1.5606005191802979,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_17_dt",
+      "scenario": "dt",
+      "echo_mos": 1.945774793624878,
+      "deg_mos": 1.6891124248504639,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_18_dt",
+      "scenario": "dt",
+      "echo_mos": 2.076566219329834,
+      "deg_mos": 2.022197723388672,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_19_dt",
+      "scenario": "dt",
+      "echo_mos": 1.8383764028549194,
+      "deg_mos": 1.7572380304336548,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_23_dt",
+      "scenario": "dt",
+      "echo_mos": 1.8700346946716309,
+      "deg_mos": 1.7236416339874268,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_25_dt",
+      "scenario": "dt",
+      "echo_mos": 3.890279769897461,
+      "deg_mos": 1.7510477304458618,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_27_dt",
+      "scenario": "dt",
+      "echo_mos": 1.9612054824829102,
+      "deg_mos": 2.045983076095581,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_28_dt",
+      "scenario": "dt",
+      "echo_mos": 1.8849432468414307,
+      "deg_mos": 1.6629767417907715,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_30_dt",
+      "scenario": "dt",
+      "echo_mos": 1.9501724243164062,
+      "deg_mos": 1.6234833002090454,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_34_dt",
+      "scenario": "dt",
+      "echo_mos": 1.904072880744934,
+      "deg_mos": 1.8243186473846436,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_37_dt",
+      "scenario": "dt",
+      "echo_mos": 3.3388137817382812,
+      "deg_mos": 2.095585823059082,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_3_dt",
+      "scenario": "dt",
+      "echo_mos": 2.22560715675354,
+      "deg_mos": 1.7215628623962402,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_40_dt",
+      "scenario": "dt",
+      "echo_mos": 1.7156342267990112,
+      "deg_mos": 1.7646734714508057,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_43_dt",
+      "scenario": "dt",
+      "echo_mos": 2.507962703704834,
+      "deg_mos": 1.6900180578231812,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_44_dt",
+      "scenario": "dt",
+      "echo_mos": 4.166553497314453,
+      "deg_mos": 1.756866693496704,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_45_dt",
+      "scenario": "dt",
+      "echo_mos": 2.0105719566345215,
+      "deg_mos": 1.9638986587524414,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_46_dt",
+      "scenario": "dt",
+      "echo_mos": 4.213533878326416,
+      "deg_mos": 2.01639461517334,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_50_dt",
+      "scenario": "dt",
+      "echo_mos": 2.8821160793304443,
+      "deg_mos": 1.7124567031860352,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_52_dt",
+      "scenario": "dt",
+      "echo_mos": 2.6249890327453613,
+      "deg_mos": 2.141047239303589,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_5_dt",
+      "scenario": "dt",
+      "echo_mos": 2.2569122314453125,
+      "deg_mos": 2.225846529006958,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_61_dt",
+      "scenario": "dt",
+      "echo_mos": 1.9008983373641968,
+      "deg_mos": 1.7044789791107178,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_63_dt",
+      "scenario": "dt",
+      "echo_mos": 2.4713149070739746,
+      "deg_mos": 1.6245189905166626,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_67_dt",
+      "scenario": "dt",
+      "echo_mos": 3.869995355606079,
+      "deg_mos": 1.6722370386123657,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_70_dt",
+      "scenario": "dt",
+      "echo_mos": 2.6463260650634766,
+      "deg_mos": 1.6124521493911743,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_72_dt",
+      "scenario": "dt",
+      "echo_mos": 1.830824613571167,
+      "deg_mos": 1.6869438886642456,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_75_dt",
+      "scenario": "dt",
+      "echo_mos": 4.169167995452881,
+      "deg_mos": 1.4915975332260132,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_78_dt",
+      "scenario": "dt",
+      "echo_mos": 3.8182027339935303,
+      "deg_mos": 2.9192421436309814,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_7_dt",
+      "scenario": "dt",
+      "echo_mos": 2.5875511169433594,
+      "deg_mos": 1.9565503597259521,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_80_dt",
+      "scenario": "dt",
+      "echo_mos": 2.0352561473846436,
+      "deg_mos": 2.152474880218506,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_82_dt",
+      "scenario": "dt",
+      "echo_mos": 3.30249285697937,
+      "deg_mos": 1.5645077228546143,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_84_dt",
+      "scenario": "dt",
+      "echo_mos": 2.634742498397827,
+      "deg_mos": 2.198972225189209,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_86_dt",
+      "scenario": "dt",
+      "echo_mos": 2.5817275047302246,
+      "deg_mos": 1.5228376388549805,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_89_dt",
+      "scenario": "dt",
+      "echo_mos": 2.0806705951690674,
+      "deg_mos": 2.1188578605651855,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_90_dt",
+      "scenario": "dt",
+      "echo_mos": 2.626387119293213,
+      "deg_mos": 1.6227608919143677,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_91_dt",
+      "scenario": "dt",
+      "echo_mos": 2.655902862548828,
+      "deg_mos": 1.7560501098632812,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_97_dt",
+      "scenario": "dt",
+      "echo_mos": 2.3052639961242676,
+      "deg_mos": 1.6695352792739868,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_98_dt",
+      "scenario": "dt",
+      "echo_mos": 4.242867469787598,
+      "deg_mos": 2.5628151893615723,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_99_dt",
+      "scenario": "dt",
+      "echo_mos": 2.2123489379882812,
+      "deg_mos": 1.5392656326293945,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_9_dt",
+      "scenario": "dt",
+      "echo_mos": 1.8499643802642822,
+      "deg_mos": 1.8330435752868652,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_13_fest",
+      "scenario": "fest",
+      "echo_mos": 4.5442938804626465,
+      "deg_mos": 4.999447345733643,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_15_fest",
+      "scenario": "fest",
+      "echo_mos": 4.796031951904297,
+      "deg_mos": 4.999273777008057,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_16_fest",
+      "scenario": "fest",
+      "echo_mos": 4.662412643432617,
+      "deg_mos": 4.999422073364258,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_1_fest",
+      "scenario": "fest",
+      "echo_mos": 1.816057562828064,
+      "deg_mos": 4.999996662139893,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_22_fest",
+      "scenario": "fest",
+      "echo_mos": 2.9480819702148438,
+      "deg_mos": 4.999494552612305,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_26_fest",
+      "scenario": "fest",
+      "echo_mos": 4.799200057983398,
+      "deg_mos": 4.999519348144531,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_2_fest",
+      "scenario": "fest",
+      "echo_mos": 1.8188942670822144,
+      "deg_mos": 4.999999046325684,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_35_fest",
+      "scenario": "fest",
+      "echo_mos": 4.6123270988464355,
+      "deg_mos": 4.999724864959717,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_38_fest",
+      "scenario": "fest",
+      "echo_mos": 4.051229476928711,
+      "deg_mos": 4.9997944831848145,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_39_fest",
+      "scenario": "fest",
+      "echo_mos": 4.067004680633545,
+      "deg_mos": 4.999395370483398,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_41_fest",
+      "scenario": "fest",
+      "echo_mos": 2.430481195449829,
+      "deg_mos": 4.999902725219727,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_42_fest",
+      "scenario": "fest",
+      "echo_mos": 4.145085334777832,
+      "deg_mos": 4.999551773071289,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_49_fest",
+      "scenario": "fest",
+      "echo_mos": 4.784641742706299,
+      "deg_mos": 4.999045372009277,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_4_fest",
+      "scenario": "fest",
+      "echo_mos": 3.9634928703308105,
+      "deg_mos": 4.999427318572998,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_51_fest",
+      "scenario": "fest",
+      "echo_mos": 4.438467025756836,
+      "deg_mos": 4.99951696395874,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_54_fest",
+      "scenario": "fest",
+      "echo_mos": 1.4077197313308716,
+      "deg_mos": 4.999999046325684,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_55_fest",
+      "scenario": "fest",
+      "echo_mos": 4.721421718597412,
+      "deg_mos": 4.99909782409668,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_56_fest",
+      "scenario": "fest",
+      "echo_mos": 1.7662347555160522,
+      "deg_mos": 4.999997138977051,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_57_fest",
+      "scenario": "fest",
+      "echo_mos": 4.722254276275635,
+      "deg_mos": 4.998126029968262,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_58_fest",
+      "scenario": "fest",
+      "echo_mos": 2.2123966217041016,
+      "deg_mos": 4.999904632568359,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_59_fest",
+      "scenario": "fest",
+      "echo_mos": 4.500520706176758,
+      "deg_mos": 4.998718738555908,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_60_fest",
+      "scenario": "fest",
+      "echo_mos": 2.0130624771118164,
+      "deg_mos": 4.999997615814209,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_64_fest",
+      "scenario": "fest",
+      "echo_mos": 3.1729490756988525,
+      "deg_mos": 4.999350547790527,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_68_fest",
+      "scenario": "fest",
+      "echo_mos": 1.3982818126678467,
+      "deg_mos": 4.999999046325684,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_69_fest",
+      "scenario": "fest",
+      "echo_mos": 1.5304789543151855,
+      "deg_mos": 4.999997138977051,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_73_fest",
+      "scenario": "fest",
+      "echo_mos": 2.828758716583252,
+      "deg_mos": 4.9998674392700195,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_74_fest",
+      "scenario": "fest",
+      "echo_mos": 1.6160409450531006,
+      "deg_mos": 4.999997615814209,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_77_fest",
+      "scenario": "fest",
+      "echo_mos": 2.681999444961548,
+      "deg_mos": 4.9999566078186035,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_79_fest",
+      "scenario": "fest",
+      "echo_mos": 3.5204296112060547,
+      "deg_mos": 4.998790740966797,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_83_fest",
+      "scenario": "fest",
+      "echo_mos": 1.7131062746047974,
+      "deg_mos": 4.999998092651367,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_88_fest",
+      "scenario": "fest",
+      "echo_mos": 4.564762115478516,
+      "deg_mos": 4.999703407287598,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_93_fest",
+      "scenario": "fest",
+      "echo_mos": 4.694977760314941,
+      "deg_mos": 4.99958610534668,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_94_fest",
+      "scenario": "fest",
+      "echo_mos": 4.562437534332275,
+      "deg_mos": 4.99980354309082,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_96_fest",
+      "scenario": "fest",
+      "echo_mos": 4.285733699798584,
+      "deg_mos": 4.999502658843994,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_14_nst",
+      "scenario": "nst",
+      "echo_mos": 4.999761581420898,
+      "deg_mos": 2.00848126411438,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_20_nst",
+      "scenario": "nst",
+      "echo_mos": 4.999744892120361,
+      "deg_mos": 2.1045989990234375,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_21_nst",
+      "scenario": "nst",
+      "echo_mos": 4.999963760375977,
+      "deg_mos": 1.992983341217041,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_24_nst",
+      "scenario": "nst",
+      "echo_mos": 4.999900817871094,
+      "deg_mos": 2.046811580657959,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_29_nst",
+      "scenario": "nst",
+      "echo_mos": 4.999906539916992,
+      "deg_mos": 1.5608394145965576,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_31_nst",
+      "scenario": "nst",
+      "echo_mos": 4.999998569488525,
+      "deg_mos": 1.685947060585022,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_32_nst",
+      "scenario": "nst",
+      "echo_mos": 4.999997138977051,
+      "deg_mos": 2.6086134910583496,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_33_nst",
+      "scenario": "nst",
+      "echo_mos": 4.997780799865723,
+      "deg_mos": 1.9591673612594604,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_36_nst",
+      "scenario": "nst",
+      "echo_mos": 4.999980449676514,
+      "deg_mos": 1.985647439956665,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_47_nst",
+      "scenario": "nst",
+      "echo_mos": 4.999995708465576,
+      "deg_mos": 1.8179733753204346,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_48_nst",
+      "scenario": "nst",
+      "echo_mos": 4.999709129333496,
+      "deg_mos": 2.495347261428833,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_53_nst",
+      "scenario": "nst",
+      "echo_mos": 4.999646186828613,
+      "deg_mos": 1.7558631896972656,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_62_nst",
+      "scenario": "nst",
+      "echo_mos": 4.999839782714844,
+      "deg_mos": 3.1358234882354736,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_65_nst",
+      "scenario": "nst",
+      "echo_mos": 4.999997615814209,
+      "deg_mos": 1.7585684061050415,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_66_nst",
+      "scenario": "nst",
+      "echo_mos": 4.99990701675415,
+      "deg_mos": 2.605147361755371,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_6_nst",
+      "scenario": "nst",
+      "echo_mos": 4.999993324279785,
+      "deg_mos": 1.692717432975769,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_71_nst",
+      "scenario": "nst",
+      "echo_mos": 4.999998092651367,
+      "deg_mos": 1.9090324640274048,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_76_nst",
+      "scenario": "nst",
+      "echo_mos": 4.999992370605469,
+      "deg_mos": 1.8853042125701904,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_81_nst",
+      "scenario": "nst",
+      "echo_mos": 4.999416351318359,
+      "deg_mos": 2.2519288063049316,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_85_nst",
+      "scenario": "nst",
+      "echo_mos": 4.999049663543701,
+      "deg_mos": 1.8484212160110474,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_87_nst",
+      "scenario": "nst",
+      "echo_mos": 4.999972343444824,
+      "deg_mos": 1.8757622241973877,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_8_nst",
+      "scenario": "nst",
+      "echo_mos": 4.9997758865356445,
+      "deg_mos": 2.0933127403259277,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_92_nst",
+      "scenario": "nst",
+      "echo_mos": 4.9994707107543945,
+      "deg_mos": 2.199525833129883,
+      "n_div": 0
+    },
+    {
+      "name": "fileid_95_nst",
+      "scenario": "nst",
+      "echo_mos": 4.999351978302002,
+      "deg_mos": 2.345627546310425,
+      "n_div": 0
+    }
+  ]
+}
