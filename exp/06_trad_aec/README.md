@@ -1,7 +1,7 @@
 # exp/06_trad_aec — 传统 AEC（WP-06 / 模块6，纯 numpy，零 GPU）
 
 GCC-PHAT 时延估计 → MDF/NLMS 自适应滤波（在线 DTD 三态冻结）→ RES 残余抑制。
-**DoD 验收通过**：受控合成集 FEST ERLE 20.55dB（≥20 目标）、双讲近端 PESQ +0.27、
+**DoD 验收通过**：eval_v3（60 条受控合成集）FEST ERLE 20.55dB（≥20 目标）、双讲近端 PESQ +0.27、
 近端单讲完全透传。7 项单测全绿（FIR 辨识/时延/三场景/端到端）。
 
 ## 结构与用法
@@ -119,3 +119,75 @@ vs 插值副产物）必须靠真实语音+RIR 的重跑定位**（V4 任务 S10
 官方集/真实 RIR 三列重跑数字以 S10 报告为准。
 
 回归：全仓 pytest **100 passed / 0 failed**（93 + 7 新增）。
+
+> 后续增补（Wave V5, 2026-10-11）：S2 评估工具 +24 单测后，全仓一度 = **124 passed / 0 failed**；
+> V5 收口时全仓 = **261 项 = 257 passed + 4 xfailed / 0 failed**
+> （`docs/NUMBERS.md` §3）；上述「93 / 100 passed」为本附记时点快照。
+
+## 附记（V5 语义加固：非有限输入 / DTD 闩锁 / 跨文件状态 / GCC 证据口径，2026-10-11 深夜）
+
+来源：`reports/refactor_wave5/deep_audit.md`（T4 深度审计，G1/G22/G23/G24/G7/G14）。
+**默认有限输入路径逐位不变**（对拍指纹见 `reports/refactor_wave5/_t10_before.json` 与
+`_t10_probe.py` 的 before/after）；本次只改"先前静默劣化"的输入与文档口径。
+
+1. **G1 非有限输入显式降级**（`pipeline.process` / `gcc.gcc_phat_stats`）：
+   far（参考端）含 NaN/Inf 时，旧行为是 FFT 把非有限值扩散到整条频带 →
+   `peak_ratio=nan` → `nan >= 14` 为 False → `echo_prior=False` → DTD **整段硬冻结**
+   （输出退化为直通、ERLE≈0dB，且全程无告警）；若 `delay_ms` 变 NaN，`align_far` 还会
+   抛 `ValueError: cannot convert float NaN to integer` 直接崩。
+   现在：`gcc_phat_stats` 返回 `(delay_ms, peak_ratio, evidence_valid)`，`evidence_valid=False`
+   表示参考端被污染、证据不可用；`pipeline` 显式降级为「一次性 RuntimeWarning +
+   `AECResult.n_gcc_fallback` 计数 + 按'可能有回声'放行自适应」，并跳过非有限对齐量。
+   mic 侧含 NaN 仍照常给证据（丢失几个 mic 样本不影响参考端），保证真实回声链路的
+   ERLE 不受影响（硬化用例实测 32.5dB 不变）。
+2. **G22 DTD 闩锁双向化**（`dtd.py`）：`converged` 闩锁现在可**失锁**——判据刻意保守到只
+   覆盖"回声估计本身塌掉"这一种病态：① 曾经真收敛过（`run` 累计 ≥ `reunlatch_blocks`，
+   默认 30 块 ≈0.5s，挡住冷启动）；② `rms(y) < y_collapse_ratio·rms(mic)`（默认 0.05，
+   即滤波器输出已塌缩——"系数被复位/估计彻底错误"的特征）；③ ERLE EMA 掉到
+   `erle_thr − unlatch_hyst_db`（默认 3dB）以下；④ mic 有能量。失锁即重新暖机（`nb=0`）
+   并把 `n_unlatched` 加一。
+   修复前实测：收敛后把 `y` 置 0（回声估计彻底错误）连喂 10+ 块仍全部返回 0（全速自适应）；
+   修复后同样输入在约 16 块内失锁并回到硬冻结。
+   为什么不用"Geigel 未触发 + 相干低"当失锁条件：实测真实语音**单讲**块也会触发 Geigel
+   （回声衰减 6dB 时 |mic| 峰值≈0.5·|far| 峰值，正好压在阈值上），用它会漏掉该修的病态；
+   而"真双讲"时 `y`（回声估计）仍然强、`rms(y)` 与 `rms(mic)` 同量级，`y_collapsed` 不成立，
+   故该判据天然不会在双讲/路径漂移时误解锁——**实测三条默认指标路径（有限输入）的输出
+   指纹逐位不变**（对拍脚本与证据：`reports/refactor_wave5/_t10_probe.py`、`_t10_before.json`
+   与 `_t10_after_final.json`）。
+3. **G22 暖机计数的取舍（如实记录）**：`nb`（块序号，含远端静默块）仍是暖机判据用的计数器，
+   **保持与 HEAD 逐位一致**；另外单独维护 `n_warm`（仅远端活跃块）作为可观测项。审计建议的
+   "改用 `n_warm` 做暖机判据"实测会改变默认路径（`finite_static` 的 `dt_frac` 0.0400→0.0453、
+   输出指纹全变），与本任务"默认有限输入逐位不变"的纪律冲突，故**未采用**；需要该语义的
+   调用方可读 `n_warm` 自行门控，或在会话边界显式 `reset()`。
+   代价（已知）：前置静默块会占用 `warm_blocks` 窗口（`nb` 也被静默块推进），极端情况下
+   冷启动暖机缩短；由于该分支只在 `echo_prior` 为 False 时才影响冻结时长，
+   而当前所有调用点都传 bool，实际暴露面很小。
+4. **G23 跨文件状态继承陷阱**（`dtd.py` docstring + `kalman_eval.run_kalman`）：
+   `far_rms_max`（每块只衰减 0.9995，≈35s 才降一半）、`far_peaks`、`converged` 都是
+   跨调用持久状态。**一个 `DTDStreaming` 实例只服务一个文件**；逐文件循环的调用方
+   （评估脚本）必须在换文件前显式 `reset()`，否则会继承上一文件的历史峰值 →
+   `far_active` 长期 False → 整文件硬冻结。`kalman_eval.run_kalman` 已在返回前 reset。
+5. **G24 `echo_prior=None` 自动判据删除**（`dtd.py`）：该回退靠"mic·far 块内积累积相关"
+   判断有没有回声，实测**两个方向都不成立**——含 40ms 时延回声时 `corr_cum=0.0023`
+   （< 0.1 门槛，真实回声被误判为无回声）；无回声且近端主导时 `corr_cum=0.80`
+   （> 0.1 门槛，会全速自适应去学近端，正是它声称要防的场景）。现 `echo_prior`
+   默认 `True`、传 `None` 直接 `ValueError`；`corr_cum` 仅留作诊断属性。
+6. **G7 GCC 证据的尺度依赖（阈值 14 的适用范围）**：`peak_ratio = 相关峰/|旁瓣|中位数`
+   **随分析窗长单调增大**（本机合成：0.1s→404、1s→1328、2s→2141、4s→2262、10s→2423、
+   20s→2490；无回声型 0.1s→5.6~7.5、≥1s→4.2~6.2）。阈值 14 只在原标定窗长下有效；
+   换窗长（统一 10s/整段/极小片段）须重新标定，短段（≤0.1s）无回声侧已实测到 7.5。
+   本次**不改阈值**（会动 headline 口径），只在 `gcc.gcc_phat_stats` docstring 与
+   `pipeline.EVIDENCE_THR` 注释披露。
+7. **G14 RES 最小长度**：`residual_suppress` 要求 `len > n_fft`（默认 512）——短输入时
+   scipy 会先把 `nperseg` 降到输入长度，使 `noverlap = nperseg - hop` 非法，抛
+   `ValueError: noverlap must be less than nperseg`（看不出根因）。现在 `res.py` 与
+   `pipeline.process` 都在入口给出含最小长度与原因的明确错误。
+8. **API 变更：`gcc_phat_stats` 返回值由 2 元组变 3 元组**
+   （`(delay_ms, peak_ratio, evidence_valid)`）。本目录内调用点已全部同步：
+   `pipeline.py`（首段判决 + 周期重估两处）、`kalman_eval.run_kalman`、`ablation.py`；
+   `gcc_phat_delay` 取 `[0]` 不受影响。**范围外仍待同步**（本任务 inScope 不含它们，
+   仅记录）：`notebooks/06_aec_lab/06_aec_lab_run.py:181`、`notebooks/06_aec_lab/probe_samples.py:30`
+   仍是 2 值解包 ⇒ 独立运行会 `ValueError`；`06_aec_lab.ipynb` 内嵌同款代码亦同。
+   测试套件不覆盖这三个入口，故 CI 不会暴露。
+
+

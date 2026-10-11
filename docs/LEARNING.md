@@ -78,12 +78,12 @@ graph LR
 ## Day 9 — 量化与部署：负面结果最值钱
 - **读**：`exp/05a_gtcrn_onnx/quantize.py`、`docs/adr/0003-gtcrn-static-int8-collapse.md`、`exp/05c_cpp_demo`
 - **跑**：`python exp/05a_gtcrn_onnx/quantize.py --mode dynamic`（若已配置）
-- **应看到**：dynamic -0.067 可用 / static -0.75 崩坏
+- **应看到**：dynamic -0.053 可用（200 条扩样口径；旧 50 条口径 -0.067）/ static -0.75 崩坏
 - **自检**：① 静态 QDQ 为什么崩（三要素）；② PTQ vs QAT；③ C++ 端侧推理的 FFT/reflect 填充坑。
 
 ## Day 10 — 全链路复盘（输出倒逼输入）
 - **做**：① 合上代码，白板画出 AEC→NR 级联全流程；② 背 [`docs/STORY.md`](STORY.md) 90 秒版；
-  ③ 扫 [`docs/CHEATSHEET.md`](CHEATSHEET.md)；④ 把 4 篇 ADR 的"面试标准答案"各讲一遍。
+  ③ 扫 [`docs/CHEATSHEET.md`](CHEATSHEET.md)；④ 把 6 篇 ADR 的"面试标准答案"各讲一遍。
 - **自检**：能否不看代码讲清"一个带回声带噪的 mic 信号，怎么一步步变成干净近端"。
 
 ---

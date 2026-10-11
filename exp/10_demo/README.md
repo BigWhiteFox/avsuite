@@ -36,5 +36,13 @@ python app.py          # http://127.0.0.1:7860，同局域网手机可访问（0
 
 ## 已验证
 
-- `process()`：合成带噪音频 → 增强 + DNSMOS（ovr 2.93 @4s SNR~5dB 样本）✅
+- `process()`：合成带噪音频 → 增强 + DNSMOS ✅
+  - 复现口径（2026-10-11 重取，`tools/dnsmos.py` 官方 polyfit 校准版）：
+    `common.synth_noisy(n=SR*4, snr_db=5.0, seed=0)` → `gtcrn_dns3.sim.onnx`（app.py 同链）
+    - 增强后：**ovr 1.924**（sig 2.255 / bak 3.677，raw ovr 1.904）
+    - 带噪输入对照：ovr 1.173（sig 1.425 / bak 1.158）⇒ 有参考意义的信号是 **+0.75 的提升**，
+      而不是绝对值（DNSMOS 在自合成 16k 分布上绝对值偏低，不可与 DNS-Challenge 榜面直接比）
+  - ⚠️ 口径更替：本文旧记的 **ovr 2.93** 是**未校准 raw 时代**、样本构成未留记录的值，**已作废**
+    （若按官方 polyfit 反推，raw 2.93 ≈ 校准 2.733，与本次实测 1.924 也不同源）；
+    新口径见 `tools/dnsmos.py`（官方 SIG/BAK/OVR 三条 polyfit + 短片段重复自身补齐）。
 - UI 服务器：HTTP 200，端口 7860 ✅

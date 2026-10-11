@@ -13,7 +13,17 @@ GTCRN（Rong et al., ICASSP 2024）：23.67K 可训练参数、33 MMACs 的超�
 | CPU 单帧（T=1，16ms 帧移） | <3ms | **0.673ms** | ✅（帧预算余量 23.8×） |
 | INT8 PTQ 精度损失 | 报告 | 见下表 | ✅ |
 
-INT8 量化对比（50 条 DNS 自混 held-out，seed 777，SNR U(-5,15)）：
+INT8 量化对比（DNS 自混 held-out，seed 777，SNR U(-5,15)）：
+
+**主口径 = 200 条扩样（2026-10-11 重评，`reports/gtcrn_heldout200.md`；前 50 条与旧集逐位一致）**：
+
+| 方案 | PESQ（95%CI） | Δ PESQ（95%CI） | 结论 |
+|---|---|---|---|
+| fp32（sim 版） | **1.897**（[1.820, 1.975]） | — | 基线；旧 50 条口径 1.869 落在新 CI 内 |
+| **dynamic PTQ (QInt8)** | **1.845**（[1.770, 1.920]） | **0.053**（[0.028, 0.077]） | **可用**；240KB（旧 50 条 Δ 0.067，CI 含 0） |
+| static QDQ PTQ | 1.120 | — | **崩坏，弃用**；**旧 50 条口径，未随 200 条重评** |
+
+旧 50 条口径明细（历史对照，`quant_report_{dynamic,static}.json`）：
 
 | 方案 | PESQ | STOI | SI-SNR | 单帧 | 结论 |
 |---|---|---|---|---|---|
@@ -32,14 +42,22 @@ fp32），故精度损失小，但提速也小（8%）——小模型瓶颈在 C
 ```bash
 python onnx_export.py --check        # 导出 fp32 ONNX（动态 T 轴）+ onnxsim 简化 + 对拍
 python bench.py                      # CPU RTF / 单帧时延 / RSS
-python quantize.py --mode dynamic    # INT8 动态 PTQ + 50 条精度报告
+python quantize.py --mode dynamic    # INT8 动态 PTQ（旧 50 条精度报告）
 python quantize.py --mode static     # 静态 QDQ（复现崩坏结果用，教学对照）
+python eval_heldout200.py            # 200 条主口径重评（fp32 vs INT8 dynamic，含 95%CI）
 python infer_demo.py                 # 官方 mix.wav + DNS 自混 -> 增强 wav + 指标
 ```
 
-产物：`outputs/gtcrn_dns3.onnx`（0.40MB）/ `gtcrn_dns3.sim.onnx`（0.29MB，1484→455 节点）/
-`gtcrn_dns3.int8.onnx`（240KB）/ `gtcrn_dns3.int8_static_BAD.onnx`（崩坏对照，留档）/
-`quant_report_{dynamic,static}.json` / `quant_accuracy_rows.csv`（逐条明细）。
+产物按量化模式分文件（追溯性：dynamic / static 互不覆盖）：
+`outputs/gtcrn_dns3.onnx`（0.40MB）/ `gtcrn_dns3.sim.onnx`（0.29MB，1484→455 节点）/
+`gtcrn_dns3.int8.onnx`（dynamic PTQ 主产物，240KB）/
+`gtcrn_dns3.int8_static_BAD.onnx`（static QDQ 崩坏对照，留档）/
+`quant_report_{dynamic,static}.json` / `quant_accuracy_rows_{dynamic,static}.csv`（逐条明细）。
+历史遗留 `outputs/quant_accuracy_rows.csv`（旧 static 跑逐条明细，曾把 dynamic 明细覆盖掉）
+原样保留为存档；`quant_accuracy_rows_static.csv` 是该存档的逐位副本（SHA256 一致，使 static
+侧也有模式专属文件名），`quant_accuracy_rows_dynamic.csv` 为 2026-10-11 本机重跑
+（summary 与旧 `quant_report_dynamic.json` 逐位一致：PESQ 1.8694→1.8025 / SI-SNR 11.541→11.283）。
+新跑只写模式专属文件名，不再出现"dynamic 明细被 static 覆盖"的追溯性缺口。
 
 ## 结构与移植说明
 

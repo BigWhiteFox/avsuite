@@ -55,3 +55,15 @@ static QDQ 输出接近噪声（SI-SNR 从 +11.5 → -20.8，STOI 0.877→0.197�
 python quantize.py --mode dynamic   # 可用，quant_report_dynamic.json
 python quantize.py --mode static    # 复现崩坏（教学对照，gtcrn_dns3.int8_static_BAD.onnx）
 ```
+
+## 附记（Wave V5, 2026-10-11 · GTCRN held-out 扩样至 200 条）
+
+> 依据 `reports/gtcrn_heldout200.md`（驱动 `exp/05a_gtcrn_onnx/eval_heldout200.py`）。
+> 本文「实测（DNS 自混 held-out 50 条）」为时点记录，**保留不删**；扩样重评后：
+
+- fp32 基线 1.869 → **1.897**（95%CI [1.820, 1.975]）；dynamic PTQ 1.803 → **1.845**
+  （[1.770, 1.920]）；量化损耗 Δ0.067 → **Δ0.053（95%CI [0.028, 0.077]，显著但 <0.06）**。
+  旧 50 条点估计全部落在新 CI 内——**「dynamic 可用」结论不变**。
+- **static QDQ 1.120 仍为旧 50 条口径**（NUMBERS §1 明示未随 200 条重评）——本文的崩坏
+  结论与三要素归因不受扩样影响。
+- 决策不变：PTQ 只可用 dynamic；静态崩坏仍是本 WP 最有价值的负面结果。

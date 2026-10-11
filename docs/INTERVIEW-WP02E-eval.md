@@ -47,6 +47,6 @@ ERLE = 10log10( Σ mic² / Σ err² )，在远端单独说话段统计——衡�
 按说话人切分 train/test（VoiceBank 自带说话人不相交；DNS 子集要自己保证）；报告按说话人/噪声环境分组的指标模板——WP-09 的 evaluate_full 会做成 CSV + 分组透视。
 
 ## 本机已验证的数字（面试弹药）
-- 93 项单测全绿；vs torch.stft float64 对拍 <1e-10
+- 261 项单测 = 257 passed + 4 xfailed（全仓）；vs torch.stft float64 对拍 <1e-10
 - SNR 20→-10dB 扫描：SI-SNR 19.0→-6.0 严格单调；STOI 0.59→0.18；PESQ 1.03→1.02（合成信号上 PESQ 平坦是预期行为，见 Q6）
 - 谱减 demo：SI-SNR +9dB / STOI −0.09（指标打架的活例子）

@@ -45,7 +45,7 @@
   本仓锚点 `exp/06_trad_aec/`——【读过】：NLMS `exp/06_trad_aec/nlms.py:11`、MDF `exp/06_trad_aec/mdf.py:19`、DTD `exp/06_trad_aec/dtd.py:18`（mic-vs-y_echo 后置相干，WebRTC 同款思路 `exp/06_trad_aec/dtd.py:65`、`docs/adr/0001-dtd-mic-vs-yecho-coherence.md:30`）、单 pass 在线状态机 `exp/06_trad_aec/pipeline.py:7`（TradAEC `:53`）、残余抑制 `exp/06_trad_aec/res.py:14`；实测 FEST ERLE 20.55 dB（eval_aec.py 口径；同一 eval_v3 上 eval.py 口径 20.37，脚本间 0.18dB 口径差，见 `docs/NUMBERS.md` WP-06 口径注）、DT 近端 PESQ 1.687（eval_v3 60 条，`docs/NUMBERS.md:50-51`）。
   - 如实注：仓内引用均为「WebRTC AEC suppressor 同款思路」，全文未出现「AEC3」字样（全仓 grep 'AEC3|aec3' 0 命中，2026-10-11 核实）。
 - **AEC-Challenge 2021/2022 冠军（级联形态：线性 AEC 保底 + NN 消残余/非线性）**：微软主导的赛事把「级联」定为工业主流——收敛稳、可解释、近端保真有底（`docs/adr/0002-fullnn-vs-cascade-aec.md:11`）。
-  本仓锚点：【复现过(级联形态已实测:`exp/09_cascade_aec/`,ADR 0005)】全 NN 对照主线 `exp/07_nn_aec/`（0.638M 因果双输入 CRN，对标 AEC-Challenge 2022+ 规格，`exp/07_nn_aec/model.py:3`；官方 AECMOS 评估 `exp/07_nn_aec/aecmos_eval.py:28-29`）；级联实现 `exp/08_nl_aec/`（Ivry 2021 结构，v2 级联 ERLE 5.78→6.06/+0.28，`docs/NUMBERS.md:74`）与 `exp/09_cascade_aec/precompute_cascade.py:1-11`（「级联=换输入对」：y_echo 当 far 参考、e_lin 当 mic 输入，与 WP-06/WP-08 完全同款线性级）；ADR 0002 的实测对照（echo 赢 / deg 输）与 fallback 结论在 `docs/adr/0002-fullnn-vs-cascade-aec.md:26-41`。全 NN v4 实测：DT echo_mos 3.754 vs 传统 2.467（echo 赢），deg_mos 1.743 vs 2.401（近端输，结构性瓶颈，`docs/NUMBERS.md:57-64`）——用自己的对照实验复现并解释了「为什么冠军都选级联」。
+  本仓锚点：【复现过(级联形态已实测:`exp/09_cascade_aec/`,ADR 0005)】全 NN 对照主线 `exp/07_nn_aec/`（0.638M 因果双输入 CRN，对标 AEC-Challenge 2022+ 规格，`exp/07_nn_aec/model.py:3`；官方 AECMOS 评估 `exp/07_nn_aec/aecmos_eval.py:28-29`）；级联实现 `exp/08_nl_aec/`（Ivry 2021 结构，v2 级联 ERLE 5.78→6.06/+0.28，`docs/NUMBERS.md:74`）与 `exp/09_cascade_aec/precompute_cascade.py:1-11`（「级联=换输入对」：y_echo 当 far 参考、e_lin 当 mic 输入，与 WP-06/WP-08 完全同款线性级）；ADR 0002 的实测对照（echo 赢 / deg 输）与 fallback 结论在 `docs/adr/0002-fullnn-vs-cascade-aec.md:26-41`（**正文数字为 16k 直送旧口径，见该 ADR 文末口径警示附记**）。全 NN v4 实测（**AECMOS@48k 模型协议**）：DT echo_mos **4.175** vs 传统 **3.494**（Δ+0.681±0.212，echo 赢），deg_mos **3.237** vs 3.598（近端输，Δ−0.361±0.169，**落后仅存在于 DT 段**；NST 段 3.941 vs 3.842 不再落后），机理=高频带选择性损伤+谱平坦化（`docs/NUMBERS.md` §WP-07 与顶部决策条）。
 - **深度自适应滤波方向（NN 估自适应滤波器状态/Kalman 协方差，把收敛动态学进网络）**：把步长/协方差/正则交给 NN 估、自适应滤波器负责线性主径；Ivry 2021 的「线性级 + NN 联合」是该方向的早期形态（`docs/INTERVIEW-WP06-tradAEC.md:88`「线性滤波联合训练（Ivry 2021）」）。
   本仓：【读过/方向，未实现】——全仓 grep 'Kalman' 0 命中（2026-10-11 核实），如实不宣称；最近的本仓锚点是级联 v2 的「线性级消记忆、NN 消非线性」分工（`exp/08_nl_aec/model.py:4-6`）与 ADR 0002 的生产级联建议（`docs/adr/0002-fullnn-vs-cascade-aec.md:37-41`）。
   - 任务书偏差注：任务给的本仓锚点含「ADR 0005」；仓内 `docs/adr/` 仅有 0001–0004（`docs/adr/README.md:8-11`），ADR 0005 不存在——本表如实改用 ADR 0002（辅以 0001/0003）并在此注明，未虚构锚点。
@@ -58,7 +58,7 @@
 | DCCRN | 2.68（WB，DNS 合成） | 2.1811（DNS devtest 150 条；nodm 2.0151 / realconv 2.1898） | `docs/NUMBERS.md:27-29`、`docs/INTERVIEW-WP04-DCCRN.md:10` |
 | GTCRN | PESQ 2.87 / DNSMOS OVRL 2.70 | fp32 1.869（自混 held-out，更难）；INT8 dynamic 1.803（−0.067）；对拍 6.32e-06 | `docs/NUMBERS.md:38,41,43`、`docs/INTERVIEW-WP05a-GTCRN-ONNX.md:8` |
 | 传统 AEC | — | FEST ERLE 20.55 dB（eval_aec 口径；eval.py 口径 20.37，同一 eval_v3）；DT 近端 PESQ 1.687 | `docs/NUMBERS.md:50-51` |
-| 全 NN AEC v4 | —（对照实验） | DT echo_mos 3.754（vs 传统 2.467）；deg_mos 1.743（结构性瓶颈） | `docs/NUMBERS.md:62-63` |
+| 全 NN AEC v4 | —（对照实验） | DT echo_mos **4.175**（vs 传统 **3.494**，Δ+0.681±0.212）；deg **3.237** vs 3.598（**仅 DT 段**落后；NST 不再落后）——AECMOS@48k 口径 | `docs/NUMBERS.md` §WP-07 |
 | 级联非线性 AEC v2 | — | ERLE 5.78→6.06（+0.28，1s 段）；v1 裸 GRU 0 dB | `docs/NUMBERS.md:73-74` |
 | 流式部署 | — | 流式 vs 非流式 <1e-5（实测 ~1e-7）；C++ vs Python 3.4e-5 | `docs/NUMBERS.md:80-81` |
 
@@ -74,3 +74,29 @@ B2 节两处陈述为**落笔时点事实**（2026-10-11 上午核实），此�
 2. B2「任务书偏差注」处「仓内 `docs/adr/` 仅有 0001–0004，ADR 0005 不存在」——此后新增 `docs/adr/0005-cascade-verified.md`（P1-1 交付），ADR 0005 现已存在。
 
 以本补注为准；上述原文按整改决策保留原样，作为时点快照。
+
+## 附记（Wave V5, 2026-10-11）
+
+> 本节为文档一致性审计补充；上文正文与「时新性补注」均保留不删。
+
+1. **`docs/NUMBERS.md` 行号锚点已失效**：本文多处按 NUMBERS **旧版**行号引用（如 `:17-22`
+   CRN、`:27-29` DCCRN、`:32-33`、`:38` 对拍、`:41-42` INT8、`:43` fp32、`:50-51` WP-06、
+   `:57-64` WP-07、`:62-63`、`:73-74` WP-08、`:80-81` 部署）。NUMBERS 经 V4 整改波次扩写后
+   这些行号已指向无关内容。**现行行号（2026-10-11 17:30 复核）**：CRN 表 `:27-33`、DCCRN 表
+   `:35-41`（real-conv 注 `:43-45`）、GTCRN 表 `:47-55`（对拍 `:50`、fp32 `:53`、
+   INT8 `:54-55`）、WP-06 表 `:61-68`（口径注 `:71-78`）、WP-07 表 `:80-88`（其后新增
+   **v4 checkpoint 口径** `:96-101`，钉死 best.ckpt/last.ckpt 各自适用面）、
+   eval_v5 `:114-127`、WP-08 `:224-229`、部署 `:231-236`。
+   ⚠ **行号随 NUMBERS 增补持续漂移**（本波次内 eval_v5 已由 `:107-120` 漂到 `:114-127`，
+   WP-08/部署同步 +7）——**引用请以章节名检索为准**，本映射仅作时点快照。
+2. **GTCRN 数字口径更新**：B3 表「fp32 1.869 / INT8 dynamic 1.803（−0.067）」为**旧 50 条
+   口径**；NUMBERS 现行主口径 = held-out **200 条**：fp32 **1.897**、dynamic **1.845**
+   （**Δ0.053**，95%CI [0.028, 0.077]），static 1.120 仍为旧 50 条口径
+   （`reports/gtcrn_heldout200.md`）。
+3. **仓内测试计数已从 93 → 124 → 259**（93 基线 + S1 管道加固 +7、S2 评估工具 +24、
+   V5 波次扩容 +137，见 NUMBERS §3）；本文未直接引用该数字，此处仅作口径同步记录。
+   另：**261 项 = 257 passed + 4 xfailed 为本地全量**，
+   **CI 实跑会少于本地（数据/产物依赖用例 skipif）**，见 `reports/refactor_wave5/test_gap.md` §1.3
+   与 `docs/ACCEPTANCE.md` 附记 7。
+4. **代码行号锚点（`exp/**`、`core/**`、`tests/**`）本次未复核**：V5 波次存在代码改动，
+   行号可能漂移，如需引用请重新 `grep -n` 核实。

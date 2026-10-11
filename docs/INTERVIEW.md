@@ -1,4 +1,4 @@
-# INTERVIEW 索引（批次1-3 覆盖模块）
+# INTERVIEW 索引（批次1–7 覆盖模块 + 选做）
 
 | 文件 | 模块 | 3 分钟主题 |
 |---|---|---|
@@ -12,6 +12,7 @@
 | [INTERVIEW-WP05a-GTCRN-ONNX.md](INTERVIEW-WP05a-GTCRN-ONNX.md) | 模块5a GTCRN/ONNX/INT8 | ERB 轻量化折中 + PTQ/QAT 定点化：端侧部署全链路（含静态量化崩坏负面结果） |
 | [INTERVIEW-WP07-NNAEC.md](INTERVIEW-WP07-NNAEC.md) | 模块7 NN-AEC（简历核心） | 双输入因果 CRN + 时延鲁棒训练：全 NN 路线 vs 传统基线的同口径对决（V4 扩充：级联三方、官方真实集、时延 OOD 判别实验） |
 | [INTERVIEW-WP10.5-capstone.md](INTERVIEW-WP10.5-capstone.md) | 模块10.5 Capstone | AEC→NR 级联：车载语音链的完整形态与三级量化叙事 |
+| [INTERVIEW-WP11-TSE.md](INTERVIEW-WP11-TSE.md) | 模块11 TSE（选做） | 目标说话人提取三流派（Conv-TasNet/DPRNN/SepFormer）+ TSE vs 纯分离：demo 本体未落地，先备追问预案 |
 
 > **V4 扩充弹药（2026-10-11 晚）**：[ADR 0005](adr/0005-cascade-verified.md)（级联三方对照+附记）、
 > [ADR 0006](adr/0006-kalman-vs-mdf-boundary.md)（Kalman 结论边界）、
