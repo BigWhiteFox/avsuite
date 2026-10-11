@@ -28,3 +28,12 @@ build/
 
 # 文档站构建产物（mkdocs）
 site/
+
+# 整改重产物(2026-10-11):音频增强产物/长训输出/冒烟输出/事件流不入库
+exp/09_cascade_aec/results/enh/
+exp/09_cascade_aec/results/enh_long/
+exp/09_cascade_aec/results/zerotrain_enh/
+exp/09_cascade_aec/outputs_long/
+exp/09_cascade_aec/outputs_smoke/
+*.tfevents.*
+

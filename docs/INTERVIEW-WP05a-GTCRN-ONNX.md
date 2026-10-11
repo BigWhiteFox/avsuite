@@ -5,7 +5,7 @@
 **第 1 分钟：为什么是 GTCRN——端侧增强的约束三角**
 - 车载/DSP 部署三约束：算力（<1 GMACs/帧级预算）、内存（KB 级权重）、时延（20ms 帧）
 - GTCRN 答案：23.67K 可训练参数、33 MMACs、时间因果——比 DCCRN(3.7M) 小 150 倍
-  还能打（DNS 测试集 PESQ 官方 ~3.2），靠三个设计：ERB 频带压缩、分组卷积/GRU、
+  还能打（论文 VCTK-DEMAND PESQ 2.87 / DNS3 盲测 DNSMOS OVRL 2.70），靠三个设计：ERB 频带压缩、分组卷积/GRU、
   双路 RNN 只在压缩域跑
 - 我完成了官方权重移植 → ONNX 导出（对拍 6.3e-6）→ CPU 基准（RTF 0.0084、
   单帧 0.67ms）→ INT8 PTQ 全链路
@@ -50,7 +50,7 @@ ERB 滤波器组是固定查表（requires_grad=False），不学习、可折进
 （可训练 23669 / 总 48245），防止口径混淆。
 
 **Q4 GTCRN vs DCCRN 精度差多少？什么时候选谁？**
-DNS 基准：DCCRN ~2.68（论文），GTCRN ~3.2（2024，训练配方也新了 4 年）——
+DNS 基准：DCCRN ~2.68（论文），GTCRN 论文 VCTK-DEMAND PESQ 2.87 / DNS3 盲测 DNSMOS OVRL 2.70（2024，训练配方也新了 4 年），自仓 fp32 实测 1.869（自混 held-out，更难）——
 GTCRN 不是"牺牲精度换大小"，是架构+配方双进步。选型叙事：云端离线修复用
 大模型（MP-SENet 级），端侧实时用 GTCRN 级；中间地带（车机 SoC 有 NPU）可以
 上 DCCRN 量化版。我们仓库两个都有、指标都可复现，这是讲谱系的最好素材。
