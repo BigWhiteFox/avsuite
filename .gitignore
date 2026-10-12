@@ -1,4 +1,4 @@
-# python
+﻿# python
 __pycache__/
 *.py[cod]
 *.egg-info/
@@ -9,6 +9,7 @@ __pycache__/
 # 训练与中间产物
 runs/
 outputs/
+exp/**/outputs*/
 *.pt
 *.pth
 *.ckpt
@@ -37,7 +38,9 @@ exp/09_cascade_aec/outputs_long/
 exp/09_cascade_aec/outputs_smoke/
 exp/07_nn_aec/outputs_v4_drift/
 exp/07_nn_aec/outputs_v4_drift_full/
-exp/07_nn_aec/outputs/deg_mechanism/enh_wavs/
-exp/06_trad_aec/outputs/hardening_rerun_enh/
+exp/07_nn_aec/outputs/
+exp/**/outputs*/deg_mechanism/enh_wavs/
+exp/06_trad_aec/outputs/
+exp/**/outputs*/hardening_rerun_enh/
 *.tfevents.*
 

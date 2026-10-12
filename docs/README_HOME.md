@@ -25,4 +25,5 @@ graph LR
 | 流式逐帧对齐 | — | **<1e-5** | 单测锁死 |
 | 单元测试 | — | **261 项 = 257 passed + 4 xfailed** | `pytest tests -q`（约 56s） |
 
-> 数字权威口径 → [NUMBERS.md](NUMBERS.md)；90 秒项目叙事 → [STORY.md](STORY.md)。
+> 数字权威口径 → [NUMBERS.md](NUMBERS.md)；90 秒项目叙事 → [STORY.md](STORY.md)；
+> 评估报告索引（哪份是当前结论）→ [reports/README.md](../reports/README.md)。
