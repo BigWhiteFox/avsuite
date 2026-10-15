@@ -74,6 +74,7 @@ def stats_ms(samples) -> dict:
 def load_aec():
     """同 exp/10.5_capstone/cascade.py::load_nnaec + NNAECStreaming 用法。"""
     import importlib.util
+
     import torch
     spec = importlib.util.spec_from_file_location(
         "p27_nnaec_model", ROOT / "exp/07_nn_aec/model.py")
@@ -149,8 +150,8 @@ def bench_gtcrn_frame(iters: int = N_ITERS) -> dict:
 
 def bench_gtcrn_batch(dur: float = 4.0, reps: int = 5) -> dict:
     """GTCRN 整段批处理（capstone run_nr 的实际口径）：4s 音频 stft+模型+istft。"""
-    import torch
     import onnxruntime as ort
+    import torch
     opts = ort.SessionOptions()
     opts.intra_op_num_threads = 1
     opts.inter_op_num_threads = 1
@@ -258,9 +259,9 @@ def main():
     ap.add_argument("--json", type=Path, default=None, help="JSON 落盘路径（默认仅 stdout）")
     args = ap.parse_args()
 
-    import torch
-    import psutil
     import onnxruntime
+    import psutil
+    import torch
 
     meta = {
         "task": "P2-7 端到端时延账本实测",

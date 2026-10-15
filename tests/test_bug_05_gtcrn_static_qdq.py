@@ -50,6 +50,7 @@ def test_bug05_static_qdq_si_snr_collapse():
         pytest.skip("缺少 exp/05a 产物(gtcrn_dns3.sim.onnx / int8_static_BAD.onnx)")
     import numpy as np
     import onnxruntime as ort
+
     from core.evaluate import _si_snr_np
 
     sys.path.insert(0, str(HERE.parents[1] / "exp" / "04_dccrn"))

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """compute_ci.py — 为 AECMOS 评估结果补算 95% 置信区间。
 
 读 exp/07_nn_aec/outputs/（含 eval_v4_speaker_heldout、eval_speaker_only_holdout、
@@ -212,7 +211,7 @@ def main() -> None:
         "# DATA_CI.md — AECMOS 指标 95% 置信区间（自动生成）",
         "",
         f"- 生成日期：{GENERATE_DATE}",
-        f"- 生成命令：`python tools/compute_ci.py`（仓库根 avsuite/ 下）",
+        "- 生成命令：`python tools/compute_ci.py`（仓库根 avsuite/ 下）",
         f"- 方法：解析法 95%CI = mean ± 1.96·sd/√n；配对差值用 bootstrap 95%CI（B={B_BOOT}，seed={SEED}，百分位法）",
         "- 数据源：`exp/07_nn_aec/outputs/**/aecmos_*.json`、`exp/09_cascade_aec/results/aecmos_*.json` 的逐文件 rows",
         "",

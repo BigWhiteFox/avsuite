@@ -30,7 +30,6 @@ import sys
 import time
 from pathlib import Path
 
-import numpy as np
 import soundfile as sf
 
 HERE = Path(__file__).resolve().parent
@@ -234,7 +233,7 @@ def write_result(grid, base_sum, base_rows, per_clip, run_notes):
         lines.append(f"| {g['t']} | {g['n']} | {g['echo_mos']:.3f} | "
                      f"{g['deg_mos']:.3f} | {g['d_deg_vs_t0']:+.3f} | "
                      f"{g['d_echo_vs_t0']:+.3f} | {mean} |")
-    lines += ["", f"![deg vs t](curve.png)", "",
+    lines += ["", "![deg vs t](curve.png)", "",
               "## 结论", ""]
     if delta is not None:
         lines.append(f"- **Δdeg(t=2 − t=0) = {delta:+.3f}** "
@@ -273,10 +272,10 @@ def write_result(grid, base_sum, base_rows, per_clip, run_notes):
         lines.append(f"{{ $PY }} leadin_crop_eval.py --t {g['t']}   "
                      f"# crop->infer->score,写 eval_v3_dt_crop_t{g['t']}s/ 与 "
                      f"outputs/aecmos_leadincrop/aecmos_dt_crop_t{g['t']}s.json")
-    lines += [f"{{ $PY }} leadin_crop_eval.py --agg-only      # 只重出 rows/curve/RESULT",
+    lines += ["{ $PY } leadin_crop_eval.py --agg-only      # 只重出 rows/curve/RESULT",
               "# 单格打分等价于:",
-              f"#   {{ $PY }} aecmos_eval.py --eval-dir D:/data/aec-synth/eval_v3_dt_crop_t{{t}}s \\",
-              f"#     --enh-dir D:/data/aec-synth/eval_v3_dt_crop_t{{t}}s/enh \\",
+              "#   { $PY } aecmos_eval.py --eval-dir D:/data/aec-synth/eval_v3_dt_crop_t{t}s \\",
+              "#     --enh-dir D:/data/aec-synth/eval_v3_dt_crop_t{t}s/enh \\",
               "#     --out outputs/aecmos_leadincrop/aecmos_dt_crop_t{t}s.json",
               "```",
               "",

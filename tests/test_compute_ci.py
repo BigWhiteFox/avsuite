@@ -148,7 +148,7 @@ def test_paired_bootstrap_fixed_seed_small_sample(monkeypatch, tmp_path):
     _write_pair(tmp_path)
 
     lines = ci.paired_bootstrap({})
-    rows = [l for l in lines if l.startswith("| aecmos_nn_v4.json vs aecmos_trad_wp06.json |")]
+    rows = [ln for ln in lines if ln.startswith("| aecmos_nn_v4.json vs aecmos_trad_wp06.json |")]
     assert len(rows) == 2                                           # echo_mos + deg_mos
     r_e, r_d = _cells(rows[0]), _cells(rows[1])
 
@@ -179,4 +179,4 @@ def test_paired_bootstrap_missing_files(monkeypatch, tmp_path):
     monkeypatch.setattr(ci, "OUT_DIRS", [tmp_path / "outputs"])
     monkeypatch.setattr(ci, "PAIRS", [("nope_nn", "nope_trad")])
     lines = ci.paired_bootstrap({})
-    assert any("文件缺失" in l for l in lines)                      # 记缺不抛异常
+    assert any("文件缺失" in ln for ln in lines)                      # 记缺不抛异常

@@ -43,11 +43,17 @@ AVROOT = HERE.parents[1]
 sys.path.insert(0, str(HERE))                                # aecmos_eval / official_aecmos_eval
 sys.path.insert(0, str(HERE.parents[0] / "06_trad_aec"))     # WP-06 pipeline
 
-from official_aecmos_eval import (  # noqa: E402
-    AECMOS_DIR, AECMOS_MODEL, CachedAECMOS, enumerate_clips, load16, trim_for)
 from aecmos_eval import TALK  # noqa: E402
-from pipeline import TradAEC  # noqa: E402
 from eval_aec import erle_db, pesq_safe  # noqa: E402
+from official_aecmos_eval import (  # noqa: E402
+    AECMOS_DIR,
+    AECMOS_MODEL,
+    CachedAECMOS,
+    enumerate_clips,
+    load16,
+    trim_for,
+)
+from pipeline import TradAEC  # noqa: E402
 
 SR = 16000
 OUT = HERE / "outputs" / "hardening_rerun"

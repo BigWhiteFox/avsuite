@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """S11（V4 整改第四波）: 级联 MDF→NN 上真实数据 —— 官方 ICASSP2022 集 800 段 + eval_v6_realrir 100 条。
 
 线性级逐位复刻训练分布（= exp/09_cascade_aec/precompute_cascade.py 同款路径）:
@@ -163,7 +162,7 @@ def _run_pool(jobs, job_fn, init_fn, jsonl_path: Path, label: str, workers: int)
 
 
 # ---------------------------------------------------------------- 线性级（MDF）
-_LIN_AEC: "TradAEC | None" = None
+_LIN_AEC: TradAEC | None = None
 
 
 def _lin_init():
@@ -172,7 +171,7 @@ def _lin_init():
     _LIN_AEC = TradAEC(method="mdf", partitions=8, mu=0.7)
 
 
-def _lin_run(mic: np.ndarray, far: np.ndarray, p_e: Path, p_y: Path) -> "tuple[int, object]":
+def _lin_run(mic: np.ndarray, far: np.ndarray, p_e: Path, p_y: Path) -> tuple[int, object]:
     """precompute_cascade.py 逐位同款: float64 全链 → y_echo/e_lin(float32) → FLOAT wav。"""
     n = min(len(mic), len(far))
     mic, far = mic[:n], far[:n]
@@ -551,6 +550,7 @@ def main():
 
     if args.stage == "env":
         import shutil
+
         import torch
         print("cuda:", torch.cuda.is_available(),
               torch.cuda.get_device_name(0) if torch.cuda.is_available() else "")

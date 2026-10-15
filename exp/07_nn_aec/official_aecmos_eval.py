@@ -184,7 +184,9 @@ def stage_infer_nn(clips, ckpt, vram_floor_gib=1.5):
                 try:
                     enh = model.enhance(mic_t, far_t)[0].cpu().numpy()
                 except torch.cuda.OutOfMemoryError:
-                    model = model.to("cpu"); dev = "cpu"; torch.cuda.empty_cache()
+                    model = model.to("cpu")
+                    dev = "cpu"
+                    torch.cuda.empty_cache()
                     note.append(f"clip#{i} OOM -> CPU")
                     enh = model.enhance(mic_t.cpu(), far_t.cpu())[0].cpu().numpy()
                 assert len(enh) == len(m16), f"{clip['name']}: enh {len(enh)} != mic {len(m16)}"

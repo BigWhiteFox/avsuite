@@ -21,6 +21,7 @@ sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(HERE.parents[1]))
 
 from common import stft_convention  # noqa: E402
+
 from core.evaluate import _safe_pesq, _safe_stoi, _si_snr_np  # noqa: E402
 
 sys.path.insert(0, str(HERE.parents[1] / "exp" / "04_dccrn"))

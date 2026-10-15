@@ -66,4 +66,4 @@ def test_bug06_center_reflect_per_chunk_shifts_whole_chain():
     a = y_ref[2000:2000 + seg] - y_ref[2000:2000 + seg].mean()
     c = np.correlate(y_bad[2000:2000 + seg + 600], a, mode="valid")
     lag = int(np.argmax(np.abs(c)))
-    assert lag != 0, f"互相关峰应偏离 0 滞后(实测 145 样本),否则不是偏移型失败"
+    assert lag != 0, "互相关峰应偏离 0 滞后(实测 145 样本),否则不是偏移型失败"

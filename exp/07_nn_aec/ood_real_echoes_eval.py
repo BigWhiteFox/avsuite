@@ -30,15 +30,21 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 
 import numpy as np
-from scipy.signal import resample_poly
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(HERE.parents[0] / "06_trad_aec"))
 
-from official_aecmos_eval import (AECMOS_DIR, AECMOS_MODEL, SR_PROC,  # noqa: E402
-                                  CachedAECMOS, TALK, enumerate_clips, load16,
-                                  trim_for)
+from official_aecmos_eval import (  # noqa: E402
+    AECMOS_DIR,
+    AECMOS_MODEL,
+    SR_PROC,
+    TALK,
+    CachedAECMOS,
+    enumerate_clips,
+    load16,
+    trim_for,
+)
 
 OUT = HERE / "outputs" / "ood_real_echoes"          # 新目录，不覆盖既有产物
 STAGE = OUT / "stage"
@@ -90,8 +96,8 @@ def stage_infer_trad(clips, workers):
 
 # ---------------------------------------------------------------- NN 列推理
 def stage_infer_nn(clips, ckpt):
-    import torch
     import soundfile as sf
+    import torch
     torch.set_num_threads(min(16, os.cpu_count() or 16))
     from model import NNAEC
     device = "cuda" if torch.cuda.is_available() else "cpu"

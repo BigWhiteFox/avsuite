@@ -84,7 +84,8 @@ def main() -> int:
     for t in targets:
         s = span(t)
         if not s:
-            print(f"  {t}: 无有效记录"); continue
+            print(f"  {t}: 无有效记录")
+            continue
         total += s["hours"]
         print(f"  {t.parent.parent.name if t.parent.name else t.parent.name:24s} "
               f"{time.strftime('%m-%d %H:%M', time.localtime(s['start']))} → "

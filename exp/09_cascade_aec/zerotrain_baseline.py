@@ -37,8 +37,8 @@ sys.path.insert(0, str(ROOT))                           # model.py 的 core.* �
 sys.path.insert(0, str(ROOT / "exp" / "06_trad_aec"))   # pipeline/mdf
 sys.path.insert(0, str(ROOT / "exp" / "07_nn_aec"))     # model(NNAEC)
 
-from pipeline import TradAEC  # noqa: E402
 from model import NNAEC  # noqa: E402
+from pipeline import TradAEC  # noqa: E402
 
 SR = 16000
 SKIP_S = 2.0                                            # ERLE 跳收敛瞬态(与 eval.py 同口径)
