@@ -1,4 +1,4 @@
-﻿name: ci
+name: ci
 
 on:
   push:
@@ -34,15 +34,17 @@ jobs:
 
       - name: Pytest (shard 1/2, test_[a-m]*.py)
         run: |
-          python -m pytest tests/test_[a-m]*.py -q --tb=short --forked 2>&1 | tee pytest_out_1.txt || true
-          echo "PYTEST_EXIT=$?" >> "$GITHUB_STEP_SUMMARY"
-          grep -iE "killed|oom|out of memory|Segmentation" /var/log/syslog 2>/dev/null | tail -3 >> "$GITHUB_STEP_SUMMARY" || true
-          free -m >> "$GITHUB_STEP_SUMMARY" || true
-          tail -n 25 pytest_out_1.txt | while IFS= read -r line; do echo "::error::s1 ${line}"; done || true
-          grep -qE "[0-9]+ passed" pytest_out_1.txt && ! grep -qE "[1-9][0-9]* failed" pytest_out_1.txt || exit 1
+          python -m pytest tests/test_[a-m]*.py -q --tb=short --forked 2>&1 | tee pytest_out_1.txt
+          exit ${PIPESTATUS[0]}
 
       - name: Pytest (shard 2/2, test_[n-z]*.py)
         run: |
-          python -m pytest tests/test_[n-z]*.py -q --tb=short --forked 2>&1 | tee pytest_out_2.txt || true
-          tail -n 25 pytest_out_2.txt | while IFS= read -r line; do echo "::error::s2 ${line}"; done || true
-          grep -qE "[0-9]+ passed" pytest_out_2.txt && ! grep -qE "[1-9][0-9]* failed" pytest_out_2.txt || exit 1
+          python -m pytest tests/test_[n-z]*.py -q --tb=short --forked 2>&1 | tee pytest_out_2.txt
+          exit ${PIPESTATUS[0]}
+
+      - name: Diagnose (on failure)
+        if: failure()
+        run: |
+          for f in pytest_out_1.txt pytest_out_2.txt; do
+            [ -f "$f" ] && tail -n 30 "$f" | while IFS= read -r line; do echo "::error::${f}: ${line}"; done || true
+          done
