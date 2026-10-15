@@ -282,16 +282,22 @@ def test_default_matches_prechange_golden_baseline(tmp_path):
     rr = _run(fx / "near", fx / "far", fx / "noise", out, _GOLDEN / "rir",
               num=_G_NUM, dur=str(_G_DUR), seed=_G_SEED)
     assert rr.returncode == 0, rr.stderr.decode("utf-8", "replace")[-2000:]
-    # 平台换行归一化：Windows 文本模式写出 CRLF、Linux 写出 LF（wav 仍严格 bytes 比较）
+    # 平台换行归一化：Windows 文本模式写出 CRLF、Linux 写出 LF
     def _norm(p):
         return p.read_bytes().replace(b"\r\n", b"\n")
     assert _norm(out / "manifest.csv") == _norm(expect / "manifest.csv")
     names = sorted(p.name for p in (expect / "mic").glob("*.wav"))
     assert len(names) == _G_NUM
+    # wav 数值容差比较（跨平台 libm ULP 差异，见 test_delay_drift 同款注释）
+    import soundfile as _sf
+
+    def _close_wav(a, b):
+        return np.allclose(_sf.read(a, dtype="float32")[0],
+                           _sf.read(b, dtype="float32")[0], atol=1e-5)
     for sub in SUBS:
         for name in names:
-            assert (out / sub / name).read_bytes() == (expect / sub / name).read_bytes(), \
-                f"默认路径输出与改动前基准不一致：{sub}/{name}"
+            assert _close_wav(out / sub / name, expect / sub / name), \
+                f"默认路径输出与改动前基准不一致(数值)：{sub}/{name}"
 
 
 def test_explicit_off_equals_default_bytes(tmp_path):

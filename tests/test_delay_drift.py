@@ -163,19 +163,25 @@ def test_drift0_matches_golden_baseline(tmp_path):
     out = _run_golden_synth(tmp_path / "out", fx, _GOLDEN_RIR_DIR)
 
     # 平台换行归一化：Windows 文本模式写出 CRLF、Linux 写出 LF，行内容逐位一致即可
-    # （wav 仍为严格 bytes 比较——wav 是二进制格式，无换行翻译问题）
     def _norm_manifest(p):
         return p.read_bytes().replace(b"\r\n", b"\n")
 
     assert _norm_manifest(out / "manifest.csv") == \
         _norm_manifest(_GOLDEN_EXPECT / "manifest.csv"), "manifest.csv 与黄金基准不一致"
+    # wav 数值容差比较：Windows(生成 golden) 与 Linux(CI) 的 libm/SIMD 浮点存在
+    # ULP 级差异，逐样本合成会放大到字节级——跨平台只保证数值一致（回归保护
+    # 强度足够：合成逻辑任何实际改动都会远超 1e-5）。bytes 级比较仅在同平台复验有效。
+    import soundfile as _sf
+
+    def _close_wav(a, b):
+        return np.allclose(_sf.read(a, dtype="float32")[0],
+                           _sf.read(b, dtype="float32")[0], atol=1e-5)
     names = sorted(p.name for p in (_GOLDEN_EXPECT / "mic").glob("*.wav"))
     assert len(names) == _GOLDEN_NUM, f"基准内 mic wav 数 {len(names)} != {_GOLDEN_NUM}"
     for sub in _GOLDEN_SUBS:
         for name in names:
-            assert (out / sub / name).read_bytes() == \
-                (_GOLDEN_EXPECT / sub / name).read_bytes(), \
-                f"drift=0 输出与黄金基准不一致: {sub}/{name}"
+            assert _close_wav(out / sub / name, _GOLDEN_EXPECT / sub / name), \
+                f"drift=0 输出与黄金基准不一致(数值): {sub}/{name}"
 
 
 def test_drift0_leaves_rng_untouched():
