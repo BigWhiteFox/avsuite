@@ -35,14 +35,14 @@ jobs:
           pip install ruff==0.17.0
           ruff check core exp tools scripts tests
 
-      - name: Pytest (shard 1/2, A-M)
+      - name: Pytest (shard 1/2, test_[a-m]*.py)
         run: |
-          python -m pytest tests -q --tb=short -k "test_[a-m]" 2>&1 | tee pytest_out_1.txt || true
+          python -m pytest tests/test_[a-m]*.py -q --tb=short 2>&1 | tee pytest_out_1.txt || true
           tail -n 25 pytest_out_1.txt | while IFS= read -r line; do echo "::error::s1 ${line}"; done || true
           grep -qE "[0-9]+ passed" pytest_out_1.txt && ! grep -qE "[1-9][0-9]* failed" pytest_out_1.txt || exit 1
 
-      - name: Pytest (shard 2/2, N-Z)
+      - name: Pytest (shard 2/2, test_[n-z]*.py)
         run: |
-          python -m pytest tests -q --tb=short -k "test_[n-z]" 2>&1 | tee pytest_out_2.txt || true
+          python -m pytest tests/test_[n-z]*.py -q --tb=short 2>&1 | tee pytest_out_2.txt || true
           tail -n 25 pytest_out_2.txt | while IFS= read -r line; do echo "::error::s2 ${line}"; done || true
           grep -qE "[0-9]+ passed" pytest_out_2.txt && ! grep -qE "[1-9][0-9]* failed" pytest_out_2.txt || exit 1
