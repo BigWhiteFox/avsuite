@@ -147,7 +147,7 @@ def test_single_source_matches_v5_golden(tmp_path):
                 w = it[key].numpy()
                 rms = math.sqrt(float((w * w).mean()))
                 assert rms > 1e-6, f"idx {ref['idx']}/{key} 波形塌陷"
-                assert math.isfinite(float(w.abs().max())), f"idx {ref['idx']}/{key} 非有限值"
+                assert math.isfinite(float(np.abs(w).max())), f"idx {ref['idx']}/{key} 非有限值"
     prov = ds.provenance()
     assert prov["sampling_scheme"] == "single_source"
     assert prov["split_lists"]["near"]["n"] == 3            # v5 形状保持
