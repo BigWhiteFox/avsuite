@@ -19,8 +19,14 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           # CPU 版 torch（CI 无 GPU，模型单测均用随机小输入在 CPU 跑）
-          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          # torch/numpy/scipy/soundfile 按 environment.yml 实测版钉死：golden 波形
+          # sha256 逐位基准对 float 合成依赖版本敏感（见 tests/golden/），不钉版会在
+          # CI 新版本上产生 ULP 级漂移导致假失败（2026-10-15 run#16 实证）
+          pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu
+          pip install numpy==1.26.4 scipy==1.17.1 soundfile==0.14.0
           pip install -r requirements.txt
+          # 兜底：requirements 的宽松下界可能再次抬升已钉版本，重申一遍
+          pip install numpy==1.26.4 scipy==1.17.1 soundfile==0.14.0
 
       - name: Ruff lint
         run: |
