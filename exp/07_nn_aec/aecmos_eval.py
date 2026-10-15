@@ -31,6 +31,8 @@ AECMOS_DIR = Path("D:/data/repos/AEC-Challenge/AECMOS/AECMOS_local")
 AECMOS_MODEL = AECMOS_DIR / "Run_1668423760_Stage_0.onnx"      # 最新版（v2 有单讲 bug）
 TALK = {"fest": "st", "dt": "dt", "nst": "nst"}
 
+from ckpt_compat import load_ckpt  # noqa: E402 - 服务器 ckpt 含 PosixPath，须打桩加载
+
 # ---------------------------------------------------------------- 采样率对齐（t20 / R1）
 # 官方 AECMOS_local/aecmos.py:45-50 对 Run_1668423760_Stage_0.onnx 设 sampling_rate=48000，
 # 其官方入口 read_and_process_audio_files 用 librosa.load(path, sr=sampling_rate) 统一重采样；
@@ -129,7 +131,7 @@ def main():
         import torch
         from model import NNAEC
         device = "cuda" if torch.cuda.is_available() else "cpu"
-        st = torch.load(args.nn_ckpt, map_location=device, weights_only=False)
+        st = load_ckpt(args.nn_ckpt, map_location=device)   # PosixPath 打桩在 ckpt_compat 内
         model = NNAEC().to(device).eval()
         model.load_state_dict(st["model"])
         pairs = []

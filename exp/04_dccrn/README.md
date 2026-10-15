@@ -4,6 +4,58 @@ Deep Complex CRN（Hu et al., ICASSP 2020，DNS Challenge 2020 冠军方案）�
 **参数量 3.99M**（论文 3.71M 同量级，`python param_check.py` 校验）、4s 前向 ≈ 17 GMACs。
 9 项单测全绿（复数代数手算对拍 / CLSTM 单步手算 / 参数量带 / 任意长度 / DM 精度 / 过拟合）。
 
+## 阶段1：共享 DM（清单圈定，P1-5a，2026-10-13）
+
+**为什么改**：旧数据接口 `DNSDynamicMix` 把池写死在
+`D:/data/dns-challenge-mirror/datasets/{clean,noise}`，**绕过 `split_lists/` 的分割清单**
+⇒ 训练会吃掉 holdout15 reader 与 noise_eval15（隔离性失效、泄漏风险，t12 发现）。
+`--dynamic-mixing` 让 04 与 07 一样**清单圈定**：三池 + 三清单显式给，入口做
+near/far 互斥与 noise∩speech 校验，清单版本号/池规模/配比进 `train_manifest.json`。
+
+**语义（必须同页写）**：数据 = **AEC 合成三元组**（`exp/07_nn_aec/dm_dataset.AecDynamicMix`
+经 `dccrn_dm.DccrnDynamicMix` 适配），投影成 04 的 Dataset 契约：
+**`noisy = mic`**（含回声 + 噪声的麦克风信号）、**`clean = near`**（近端目标），`far` 一并
+返回但 DCCRN 不消费（`data.key_map` 留痕）。⇒ 阶段1 的 DCCRN = "复数谱掩码模型在**同一条
+新数据轴**上做回声+噪声抑制"，与 NN-AEC/级联**同一供给、同一 rng 流、同一 val、同一配比
+口径**，三者可比（t11 的吞吐表也按同一供给折算）。
+
+> ⚠️ 这**不是** 04 历史的 DNS 去噪任务：已有读数（devtest PESQ **2.1811**、`--no-dm`
+> 2.0151、`--real-conv` 2.1898）仍属 DNS 口径，**两套口径不混比**。要回到 DNS 去噪任务
+> 需要另一条数据轴（干净语音池 × 噪声池 = 03/04 的 enhancement 轴），不在本任务范围。
+
+**口径（与 07 同构；实现在 `core/train_protocol.py` + `dm_dataset.py`，单一来源）**：
+
+| 项 | 取值 |
+|---|---|
+| epoch 方案(a) | **等效更新步数对齐 04 历史**：100ep × epoch_len1500 / bs8 = **18,700 步**（`dccrn_dm.DCCRN_REF`，出处 README §结果）；`--epochs 100 --batch-size 64` ⇒ 187 步/ep、epoch_len 11,968、总 18,700（Δ=0） |
+| LR / 早停 | DM 缺省 `ReduceLROnPlateau(0.5, patience=20)` + **关早停**（阶段0 §2.3b）；非 DM 保持现状 patience 3 / early-stop 10 |
+| 场景配比 | `--dm-scenarios 0,0.5086,0.4914`（顺序 = **FEST,NST,DT**；= v4 实际训练配方，无 FEST）；manifest 记**具名字典** + `scenarios_explicit` |
+| 从零起 | DM 拒绝从非 DM 谱系（DNS）ckpt 续训（阶段0 §2.3a）；同口径可续训，口径漂移重置 best/bad |
+| val | **静态** `--val <aec_synth 目录>`（与 NN-AEC 同集，模型选择口径可比；val 不 jitter） |
+| 留痕 | `out/train_manifest.json`（run/loss/data{池、清单路径+sha256+计数、互斥、dt_plan 版本/sha、key_map、配比/来源}/epoch_scheme/lr_sched/probe_mem/history_tail）+ ckpt `cfg["train_manifest"]` + stdout；`history.json` 每 epoch 加 epoch_len/steps_per_epoch/target_steps/schedule/patience/early_stop |
+
+**阶段1 可照抄命令（bs64 口径，与 NN-AEC 命令同构；`--val` 必须与 NN-AEC 用同一集）**：
+
+```bash
+python exp/04_dccrn/train.py --device cuda --dynamic-mixing --epochs 100 \
+    --batch-size 64 --num-workers 10 --probe-mem 20 \
+    --dm-scenarios 0,0.5086,0.4914 \
+    --near-dir <srv>/data/dns-clean/near --far-dir <srv>/data/dns-clean/far \
+    --noise-dir <srv>/data/dns-noise \
+    --near-list split_lists/speech_near_train70_files.txt \
+    --far-list  split_lists/speech_far_train70_files.txt \
+    --noise-list split_lists/noise_train70.txt \
+    --rir-dir <rir-pool> --rir-max-ms 100 \
+    --val D:/data/aec-synth/eval_v5 \
+    --out exp/04_dccrn/outputs_dm
+# 输出目录：exp/04_dccrn/outputs_dm/dccrn_dm（tag 带 _dm，不覆盖历史产物）
+# 期望：187 步/epoch × 100ep = 18,700 步（方案 a，与 04 历史等效）；D1 供给按同一 DM 池折算
+```
+
+**回归护航**：不开 `--dynamic-mixing` 时**逐键不变**——ckpt `cfg` 仍是历史键集
+（新增参数被过滤掉）、`early_stop` 仍 10、`epoch_len` 仍 2000、不产出 `train_manifest.json`、
+tag 仍 `dccrn[_realconv][_nodm]`（单测 `tests/test_dccrn_dm.py` 锁死）。
+
 ## 结构
 
 ```

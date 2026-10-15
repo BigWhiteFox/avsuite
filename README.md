@@ -4,7 +4,7 @@
 > 求职技术攻关代码仓（12 周规划，生成队列见 `../WORKLIST.md`）。
 
 [![ci](https://github.com/BigWhiteFox/Avsuite/actions/workflows/ci.yml/badge.svg)](.github/workflows/ci.yml)
-[![tests](https://img.shields.io/badge/tests-257%20passed%20%2B%204%20xfailed-brightgreen)](tests)
+[![tests](https://img.shields.io/badge/tests-412%20passed%20%2B%204%20xfailed-brightgreen)](tests)
 [![python](https://img.shields.io/badge/python-3.11-blue)](requirements.txt)
 [![RTF](https://img.shields.io/badge/CPU%20RTF-0.0084-success)](exp/05a_gtcrn_onnx)
 [![GTCRN](https://img.shields.io/badge/GTCRN-23.67K%20params-orange)](exp/05a_gtcrn_onnx)
@@ -116,6 +116,32 @@ graph LR
   说话人/噪声池重叠、CI 实跑 8 用例 skip、v6"优势腰斩"修正等诚实披露全部落纸
 - ADR 0002/0005/0006 口径附记；新增故障注入用例与变异验证（关键修复均有"回退即红"的固化测试）
 
+## 阶段1 更新摘要（2026-10-13 ~ 10-15：数据隔离 × DM 化训练 × 三代际对照）
+
+> 权威口径见 `docs/NUMBERS.md` 顶部「统一决策（2026-10-15 阶段1 收档）」；
+> 全矩阵读数见 `reports/p1_6_matrix_eval_20261014.md`（108 key / 141,300 条次 / 12 套冻结评测轴）；
+> 训练收档见 `reports/t12_dm_retrain_20261014.md` 与 `reports/t24_cascade_official_20261014.md`。
+> **卡时/费用实测 ≈ 25.3 卡时 / ¥40-65（V100S-32GB 单卡，含返工），约为预算的 1/3。**
+
+**这一阶段做了什么**：按整改方案先修**数据隔离**（噪声池 train70/val15/eval15 哈希三分割、near/far utterance 级互斥、held-out 真实车厢 RIR 份额），再把训练管线 **DM 化**（DataLoader 现场合成，300h 等效组合零预生成存储、组合多样性上不封顶、epoch 等效步数与 v4 逐位对齐），最后在两台租卡上跑出 **v5（DNS 单源隔离数据）/ v5x（扩展池：+LibriSpeech/AISHELL-3/MUSAN）** 两代际，共 7 个正式训练 run + 1 个消融列，12 套冻结评测轴 × 全部模型全配对 CI。
+
+**三条主结论**（数字均以 NUMBERS.md 为准，此处为摘要）：
+1. **级联（MDF 线性级 + NN）= 全矩阵最强者**：`casc_v5x @ eval_v8` DT echo **4.324** / deg **3.998** /
+   PESQ **2.119** / SI-SNR **13.15**，对 v4（4.11/3.46/1.31/8.1）echo/deg 双赢，对纯 NN echo 再赢 0.94~1.49。
+   MDF-only 消融证明：FEST 表现由**架构是否含线性级**决定（仅线性级 FEST echo 3.208 > trad > v4 ≫ 纯 NN 1.625），
+   且两级互补（线性级 DT echo 弱、NN 在 DT 上再叠 +1.85）——不是"级联里 NN 可省"。
+2. **扩数据主要买 DT echo**：v5x vs v5 在 **12/12 轴**显著更好（中文远端 −0.309、LS 远端 −0.214、
+   MUSAN 噪声 −0.153）；消融显示收益主引擎是 **MUSAN 噪声多样性**（去掉后 12/12 轴显著更差），
+   但低 SNR 轴存在 echo/deg 权衡（负结果留档）。
+3. **数据隔离修出真结论**：隔离版 eval_v8 证明旧"FEST echo NN 优势"系泄漏口径产物（已撤回）；
+   DT echo 优势在隔离后反而更强（DiD +0.195 显著），而 DT deg 缺口为**结构性**——损失矩阵对照
+   （心理声学损失列）未能收回（seed 间不可复现，负结果留档）⇒ 数据侧优先级不降反升。
+
+**工程增量**：`scripts/split_*`/`verify_*` 三分割清单与验证族、`dm_dataset` 多源池训练协议、
+`train_manifest` 全口径留痕（含 RIR 池指纹防污染）、`eval_matrix` 全矩阵评测驱动、
+跨平台复现性修复（池枚举字节序 / PosixPath ckpt 打桩 / 清单驱动 RIR）。
+全仓单测 **416 项 = 412 passed + 4 xfailed**。
+
 ## 快速开始（Windows / Git Bash）
 
 环境已锁定：`environment.yml` 是从本机 `avsuite` 环境实测 `conda env export` 导出的
@@ -138,11 +164,11 @@ pip install -r requirements.txt
 
 # ── 重建后自检 ───────────────────────────────────────────────────────────
 python env_check.py --strict     # 关键库/GPU/数据目录（缺失 -> 退出码 1）
-python -m pytest tests -q        # 261 项单测（257 passed + 4 xfail；本地全量，CI 少于本地，见下）
+python -m pytest tests -q        # 416 项单测（412 passed + 4 xfail；本地全量，CI 少于本地，见下）
 python scripts/verify_data.py    # 数据集就绪度报告
 ```
 
-> **测试计数口径（本地 ≠ CI）**：本地全量 **261 项 = 257 passed + 4 xfailed / 0 failed**（`pytest tests -q`，约 56s；
+> **测试计数口径（本地 ≠ CI）**：本地全量 **416 项 = 412 passed + 4 xfailed / 0 failed**（`pytest tests -q`，约 60s；
 > 4 个 xfail 为已文档化的待裁决/待重构项（R14/R16/T12-b/v3a-010）。CI 因全新检出无 `D:/data`、且
 > `outputs/`、`*.onnx`、`*.ckpt`、`*.pt` 被 `.gitignore` 排除，数据/产物依赖用例走 `skipif` 必跳
 > （清单见 `reports/refactor_wave5/test_gap.md` §1.3）——**CI 侧通过数待下一次 CI 复跑刷新，

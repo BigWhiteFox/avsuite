@@ -23,6 +23,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "06_trad_aec"))
 
+from ckpt_compat import load_ckpt  # noqa: E402 - 服务器 ckpt 含 PosixPath，须打桩加载
 from dataset import _shift  # noqa: E402
 from model import NNAEC  # noqa: E402
 
@@ -38,7 +39,7 @@ def erle_db(sig, ref, skip_s=SKIP_S):
 
 
 def load_model(ckpt, device):
-    st = torch.load(ckpt, map_location=device, weights_only=False)
+    st = load_ckpt(ckpt, map_location=device)      # PosixPath 打桩在 ckpt_compat 内
     m = NNAEC().to(device).eval()
     m.load_state_dict(st["model"])
     return m

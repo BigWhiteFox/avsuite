@@ -1,0 +1,155 @@
+{
+  "note": "单源 v5 黄金基准（t22 改动 dm_dataset 前固化）：固定 fixture/seed=7/epoch_len=6/seg=2.0",
+  "epoch_len": 6,
+  "seed": 7,
+  "items": [
+    {
+      "idx": 0,
+      "audit": {
+        "scenario": "nst",
+        "ser_db": 2.2520718999059186,
+        "snr_db": 19.502494273668383,
+        "leadin_sec": 0.0,
+        "soft_clip": 0,
+        "delay_ms": 10.368571319590231,
+        "name": "dm_0_nst"
+      },
+      "sha256": {
+        "mic": "9d3537cf048aa10bd68e59f42d3c8e036265b0a29ffecfba64e4514254fa1c96",
+        "far": "ed47226075a519cc97b738d0d63e36902a1b521d8ff9a8221b062748708e6605",
+        "near": "8cb75b00e1e959f695044bbf0a5c71c154ce1a199de6f9686d8586e1a5a52259"
+      },
+      "shape": [
+        32000
+      ]
+    },
+    {
+      "idx": 1,
+      "audit": {
+        "scenario": "dt",
+        "ser_db": 1.5995526155905015,
+        "snr_db": 21.47953233054216,
+        "leadin_sec": 1.5,
+        "soft_clip": 0,
+        "delay_ms": 79.49786131962874,
+        "name": "dm_1_dt"
+      },
+      "sha256": {
+        "mic": "776984f6181a3a92f0816f375276dc56e301d3694c3f34d3d36c8a603dbe0e6c",
+        "far": "91caeddd34194765b409d8a62a6058234744753458cfd435419755ac88982458",
+        "near": "9834f7a2e5b1b676da19a2baf4cde70883f046b952fc434e9d89e603b108d4d0"
+      },
+      "shape": [
+        32000
+      ]
+    },
+    {
+      "idx": 2,
+      "audit": {
+        "scenario": "fest",
+        "ser_db": 6.828411581325566,
+        "snr_db": 18.74666494862354,
+        "leadin_sec": 0.0,
+        "soft_clip": 0,
+        "delay_ms": 19.583321532980584,
+        "name": "dm_2_fest"
+      },
+      "sha256": {
+        "mic": "c7da47bcd1149f7713fa211947df39a61dc9b1c91f0b58d466e4a58d2c5070a3",
+        "far": "f9d5338c736e4807e2adc8d26482891ff66a5a9bfbde23a7a4dd8a315fa87964",
+        "near": "eec19bc6af0b3b6dfb97a08782c65f4bb3c3203e789a015d2008b0d689ad08be"
+      },
+      "shape": [
+        32000
+      ]
+    },
+    {
+      "idx": 3,
+      "audit": {
+        "scenario": "dt",
+        "ser_db": 7.3126242638278836,
+        "snr_db": 21.08013817692478,
+        "leadin_sec": 1.5,
+        "soft_clip": 0,
+        "delay_ms": 78.82049757295668,
+        "name": "dm_3_dt"
+      },
+      "sha256": {
+        "mic": "90ea3d2a0e7dd756805b345b310aeedf16f5da9751538e20254252170e049aa8",
+        "far": "cf409bf28ea21732f3495c2af8bcc6c74c8f1269ea26129278df1cc29ccd1c43",
+        "near": "4c3510e4cc66a53a48e6e80ef6c27474e47fa9909f39887680e9939558baafbd"
+      },
+      "shape": [
+        32000
+      ]
+    },
+    {
+      "idx": 4,
+      "audit": {
+        "scenario": "fest",
+        "ser_db": 5.178011554638648,
+        "snr_db": 20.269324514801585,
+        "leadin_sec": 0.0,
+        "soft_clip": 0,
+        "delay_ms": 13.934430274077737,
+        "name": "dm_4_fest"
+      },
+      "sha256": {
+        "mic": "86712123b94a0121beb2198fe92ba1e1c328deb09b5afef9a6c2e0c4daf905c4",
+        "far": "a07f67be5ec71225db22923026913719a7dd38ccbfa130074067809a778a07c9",
+        "near": "eec19bc6af0b3b6dfb97a08782c65f4bb3c3203e789a015d2008b0d689ad08be"
+      },
+      "shape": [
+        32000
+      ]
+    },
+    {
+      "idx": 5,
+      "audit": {
+        "scenario": "fest",
+        "ser_db": 4.600394234996644,
+        "snr_db": 21.158554808455527,
+        "leadin_sec": 0.0,
+        "soft_clip": 0,
+        "delay_ms": 51.17763940212499,
+        "name": "dm_5_fest"
+      },
+      "sha256": {
+        "mic": "3b71eb4340659e7cd6b71e525553812f305d473f2571a86c8e69b964cdf1356c",
+        "far": "aa69a0e35329c2f546e444900781bcaf443db646fe71bca84f9a4936f0165d10",
+        "near": "eec19bc6af0b3b6dfb97a08782c65f4bb3c3203e789a015d2008b0d689ad08be"
+      },
+      "shape": [
+        32000
+      ]
+    }
+  ],
+  "provenance_keys": [
+    "delay_ms_range",
+    "dt_plan",
+    "epoch_len",
+    "jitter_ms",
+    "mode",
+    "mutex",
+    "n_files",
+    "pools",
+    "rir_max_ms",
+    "rir_src",
+    "seed",
+    "seed_mode",
+    "seg_sec",
+    "soft_clip_prob",
+    "split_lists"
+  ],
+  "n_files": {
+    "near": 3,
+    "far": 2,
+    "noise": 2,
+    "rir": 1
+  },
+  "split_lists_near_n": 3,
+  "split_lists_near_sha": "86ffe1fbfc7d1f5a59c4b140cd7df51992acae6f15a2230eb65cf4b212bbb04d",
+  "plan_version": "dt_plan_v1",
+  "plan_preset": "train_v1_repro",
+  "seg_sec": 2.0
+}

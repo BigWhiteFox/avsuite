@@ -23,7 +23,8 @@ graph LR
 | 降噪（VoiceBank PESQ） | 1.97 noisy | **2.53** | 824 对测试集 |
 | 端侧推理（CPU RTF） | — | **0.0084** | GTCRN 23.67K |
 | 流式逐帧对齐 | — | **<1e-5** | 单测锁死 |
-| 单元测试 | — | **261 项 = 257 passed + 4 xfailed** | `pytest tests -q`（约 56s） |
+| 单元测试 | — | **416 项 = 412 passed + 4 xfailed** | `pytest tests -q`（本地全量，约 60s；口径见 NUMBERS §3） |
 
 > 数字权威口径 → [NUMBERS.md](NUMBERS.md)；90 秒项目叙事 → [STORY.md](STORY.md)；
-> 评估报告索引（哪份是当前结论）→ [reports/README.md](../reports/README.md)。
+> 评估报告索引（哪份是当前结论）→ [reports/README.md](../reports/README.md)；
+> 阶段0 验收摘要（0-1…0-5，DP1 决策输入）→ [reports/phase0_acceptance_20261013.md](../reports/phase0_acceptance_20261013.md)。

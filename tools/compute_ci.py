@@ -50,6 +50,14 @@ PAIRS = [
     ("aecmos48_v5fix/eval_v4_speaker_heldout/aecmos_cascade", "aecmos48_v5fix/eval_v4_speaker_heldout/aecmos_nn"),
     ("aecmos48_v5fix/eval_speaker_only_holdout/aecmos_cascade", "aecmos48_v5fix/eval_speaker_only_holdout/aecmos_nn"),
     ("aecmos48_v5fix/eval_ood_delay/aecmos_cascade", "aecmos48_v5fix/eval_ood_delay/aecmos_nn"),
+    # ---- P0-5 损失矩阵（0-1，2026-10-13）：各列 vs v4 主配置，同冻结集同 @48k 口径 ----
+    # 生成：exp/07_nn_aec/eval_p05_matrix.py；判读见 reports/p0_5_loss_matrix.md
+    ("p05/eval_v3/aecmos_lossctrl_240ep", "p05/eval_v3/aecmos_v4"),
+    ("p05/eval_v5/aecmos_lossctrl_240ep", "p05/eval_v5/aecmos_v4"),
+    ("p05/eval_v3/aecmos_psycho_240ep", "p05/eval_v3/aecmos_v4"),
+    ("p05/eval_v5/aecmos_psycho_240ep", "p05/eval_v5/aecmos_v4"),
+    ("p05/eval_v3/aecmos_lossctrl_v4replica", "p05/eval_v3/aecmos_v4"),
+    ("p05/eval_v5/aecmos_lossctrl_v4replica", "p05/eval_v5/aecmos_v4"),
     # 官方 48k 原生链不入 PAIRS：cascade_official 仅 summary（rows 空）、
     # hard_official_fest 行结构为 subset/variant（无 scenario 键），与 compute_ci 行协议不兼容；
     # 官方数字以 docs/NUMBERS.md 真实数据节 + reports/{official_aecmos,ood_real_echoes}.md 为权威。

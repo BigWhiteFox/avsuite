@@ -8,7 +8,7 @@ mic + far(lpb) ──[NN-AEC 流式, 20ms 块进块出]──> aec_out ──[GT
 ```
 
 组件复用（零新训练）：WP-07 NN-AEC 权重 + WP-05b 流式引擎 + WP-05a GTCRN ONNX +
-AECMOS 官方口径。**3 项单测全绿**（全仓 261 项 = 257 passed + 4 xfailed）。
+AECMOS 官方口径。**3 项单测全绿**（全仓 416 项 = 412 passed + 4 xfailed）。
 
 ## 运行
 

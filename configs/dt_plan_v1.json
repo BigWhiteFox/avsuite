@@ -1,0 +1,202 @@
+{
+  "schema": "dt_plan/1",
+  "version": "dt_plan_v1",
+  "created": "2026-10-13",
+  "task": "0-5 DT 合成比例清单化（REMEDIATION_PLAN_V3.1.md §2/§3.2）",
+  "notes": [
+    "值语义：dt_ser_db = DT 的 SER（P_near/P_echo，越大回声越弱）；dt_snr_db = DT 近端相对噪声的 SNR；dt_leadin_sec = DT 近端引导时长，双讲重叠段 = dur_sec - dt_leadin_sec。",
+    "采样口径：单区间均匀，每样本每参数消耗一次 rng（与旧 rng.uniform 同型）；采样顺序固定 ser -> snr -> leadin，换顺序等于换整条随机流。",
+    "缺省（不给 --dt-plan）时 aec_synth.py 不读本清单、不追加列、行为逐比特不变。",
+    "media/dataset 无关：本清单只描述 DT 合成分布，不含噪声/语音池切分（见 split_lists/）。"
+  ],
+  "presets": {
+    "train_v1_repro": {
+      "scenarios": {
+        "fest": 0.4,
+        "nst": 0.3,
+        "dt": 0.3
+      },
+      "dt_leadin_sec": {
+        "kind": "uniform",
+        "lo": 1.5,
+        "hi": 1.5
+      },
+      "dt_ser_db": {
+        "kind": "uniform",
+        "lo": 0.0,
+        "hi": 10.0
+      },
+      "dt_snr_db": {
+        "kind": "uniform",
+        "lo": 15.0,
+        "hi": 30.0
+      },
+      "dur_sec": 4.0,
+      "used_by": "train_v1 / train_v1_drift（seed 21；train_v1_drift 逐行同底座）",
+      "source": "exp/07_nn_aec/README.md §训练数据复现命令"
+    },
+    "eval_v5_repro": {
+      "scenarios": {
+        "fest": 0.25,
+        "nst": 0.25,
+        "dt": 0.5
+      },
+      "dt_leadin_sec": {
+        "kind": "uniform",
+        "lo": 2.0,
+        "hi": 2.0
+      },
+      "dt_ser_db": {
+        "kind": "uniform",
+        "lo": 0.0,
+        "hi": 10.0
+      },
+      "dt_snr_db": {
+        "kind": "uniform",
+        "lo": 20.0,
+        "hi": 30.0
+      },
+      "dur_sec": 8.0,
+      "used_by": "eval_v5 / eval_ood_delay / eval_v6_realrir / eval_v7",
+      "source": "reports/eval_v5_dt300.md、reports/eval_v7_fest_nst.md（同配方）"
+    }
+  },
+  "history": {
+    "role": "只读审计区：实测统计，不参与采样；用于核对清单与历史实际是否一致",
+    "measured": {
+      "train_v1": {
+        "manifest": "D:\\data\\aec-synth\\train_v1\\manifest.csv",
+        "rows": 3000,
+        "scene_counts": {
+          "fest": 1205,
+          "nst": 913,
+          "dt": 882
+        },
+        "scene_frac": {
+          "fest": 0.4017,
+          "nst": 0.3043,
+          "dt": 0.294
+        },
+        "dt_ser_db": {
+          "min": 0.0018,
+          "max": 9.9689,
+          "mean": 5.0617
+        },
+        "dt_snr_db": {
+          "min": 15.0021,
+          "max": 29.9851,
+          "mean": 22.7421
+        },
+        "leadin_sec_unique": [
+          1.5
+        ],
+        "delay_ms": {
+          "min": 10.007,
+          "max": 79.984
+        },
+        "soft_clip_frac": 0.14,
+        "dur_sec": null
+      },
+      "train_v1_drift": {
+        "manifest": "D:\\data\\aec-synth\\train_v1_drift\\manifest.csv",
+        "rows": 3000,
+        "scene_counts": {
+          "fest": 1205,
+          "nst": 913,
+          "dt": 882
+        },
+        "scene_frac": {
+          "fest": 0.4017,
+          "nst": 0.3043,
+          "dt": 0.294
+        },
+        "dt_ser_db": {
+          "min": 0.0018,
+          "max": 9.9689,
+          "mean": 5.0617
+        },
+        "dt_snr_db": {
+          "min": 15.0021,
+          "max": 29.9851,
+          "mean": 22.7421
+        },
+        "leadin_sec_unique": [
+          1.5
+        ],
+        "delay_ms": {
+          "min": 10.007,
+          "max": 79.984
+        },
+        "soft_clip_frac": 0.14,
+        "dur_sec": null
+      },
+      "eval_v5": {
+        "manifest": "D:\\data\\aec-synth\\eval_v5\\manifest.csv",
+        "rows": 300,
+        "scene_counts": {
+          "fest": 70,
+          "nst": 76,
+          "dt": 154
+        },
+        "scene_frac": {
+          "fest": 0.2333,
+          "nst": 0.2533,
+          "dt": 0.5133
+        },
+        "dt_ser_db": {
+          "min": 0.2137,
+          "max": 9.9235,
+          "mean": 5.1676
+        },
+        "dt_snr_db": {
+          "min": 20.0148,
+          "max": 29.9279,
+          "mean": 25.0516
+        },
+        "leadin_sec_unique": [
+          2.0
+        ],
+        "delay_ms": {
+          "min": 10.112,
+          "max": 79.75
+        },
+        "soft_clip_frac": 0.0,
+        "dur_sec": null
+      },
+      "eval_v7": {
+        "manifest": "D:\\data\\aec-synth\\eval_v7\\manifest.csv",
+        "rows": 800,
+        "scene_counts": {
+          "fest": 212,
+          "nst": 182,
+          "dt": 406
+        },
+        "scene_frac": {
+          "fest": 0.265,
+          "nst": 0.2275,
+          "dt": 0.5075
+        },
+        "dt_ser_db": {
+          "min": 0.0274,
+          "max": 9.987,
+          "mean": 5.0899
+        },
+        "dt_snr_db": {
+          "min": 20.007,
+          "max": 29.961,
+          "mean": 25.2902
+        },
+        "leadin_sec_unique": [
+          2.0
+        ],
+        "delay_ms": {
+          "min": 10.078,
+          "max": 79.861
+        },
+        "soft_clip_frac": 0.0,
+        "dur_sec": null
+      }
+    },
+    "history_from_dir": "D:\\data\\aec-synth"
+  }
+}

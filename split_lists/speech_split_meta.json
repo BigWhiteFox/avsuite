@@ -1,0 +1,31 @@
+{
+  "version": "speech_split_v1",
+  "scheme": "sha256('reader:'+reader_id)[:8] % 1000 -> <700 train70 / 700-849 val15 / >=850 holdout15；holdout 内 sha256('nearfar:'+reader_id)[:8] % 1000 -> <500 near_eval / >=500 far_eval",
+  "source": {
+    "clean_dir": "D:\\data\\dns-challenge-mirror\\datasets\\clean"
+  },
+  "thresholds": {
+    "buckets": 1000,
+    "train_hi": 700,
+    "val_hi": 850,
+    "side_hi": 500,
+    "reader_seed": "reader:",
+    "side_seed": "nearfar:"
+  },
+  "counts": {
+    "readers": 305,
+    "readers_train70": 223,
+    "readers_val15": 37,
+    "readers_holdout15": 45,
+    "files": 10000,
+    "files_near_eval": 993,
+    "files_far_eval": 599
+  },
+  "lists_sha256": {
+    "speech_far_eval.txt": "39cb6c046eb435aa4a0c142e96cbc1c61dc279b4809173e9f48ef6622441056a",
+    "speech_near_eval.txt": "a0798b416a5c694063f40504e1644f15e5647e173aa7e8d4d14cac9e07959c4e",
+    "speech_readers_holdout15.txt": "caedf8d9aaacb50d61ff2c9002e4b10ed90bb40a83f6e55482b6288a80337762",
+    "speech_readers_train70.txt": "863c532d6e88a9acba0ad03da362e446b7606e2cb3d00ddf4d8621492707f8df",
+    "speech_readers_val15.txt": "5b0d3002b01d93a4472556dace0520b15ee03a7a98a2f7207e9234b799273a8b"
+  }
+}

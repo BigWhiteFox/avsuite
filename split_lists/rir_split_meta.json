@@ -1,0 +1,30 @@
+{
+  "version": "rir_split_v1",
+  "scheme": "group=IR64CAR_<angle> 或上级目录名；按 sha256('rir_group:'+group)[:8] 升序排名；n_hold=max(1,ceil(0.15G)) 取最高名次组、n_val=max(1,round(0.15G)) 取次高，其余 train；同组文件不跨 split",
+  "source": {
+    "rir_dir": "D:\\data\\rir_real\\pool_16k_mono"
+  },
+  "thresholds": {
+    "hold_frac": 0.15,
+    "val_frac": 0.15,
+    "hash8_len": 8,
+    "group_seed": "rir_group:",
+    "min_hold_groups": 1,
+    "min_val_groups": 1
+  },
+  "counts": {
+    "files": 32,
+    "groups": 8,
+    "groups_train70": 5,
+    "groups_val15": 1,
+    "groups_holdout15": 2,
+    "files_train70": 20,
+    "files_val15": 4,
+    "files_holdout15": 8
+  },
+  "lists_sha256": {
+    "rir_train70.txt": "a9383200bf29752a0b5b9fe6e7d858a8e06bfb39c1f451cc98380ba4dda80d5d",
+    "rir_val15.txt": "cb7f62503bddef21fb37c281d803b5ac69a7b5dd98266f71b035bb6938f7e547",
+    "rir_holdout15.txt": "c0544ab2cdcad6b070d516aac73feeb9e0d3522b971fa287e9d5f4e6c45a5e43"
+  }
+}

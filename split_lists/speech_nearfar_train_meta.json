@@ -1,0 +1,46 @@
+{
+  "version": "speech_nearfar_train_v1",
+  "scheme": "sha256('nearfar_train:'+reader)[:8] ascending; first floor(223/2)=111 -> near_train, rest 112 -> far_train",
+  "purpose": "REMEDIATION_PLAN_V3.1 section 3.1 reader-level near/far mutual exclusion (train distribution matches eval axes)",
+  "source": "split_lists/speech_readers_train70.txt (223 readers from speech_readers_manifest.csv)",
+  "counts": {
+    "near_train_readers": 111,
+    "far_train_readers": 112,
+    "train70_readers": 223
+  },
+  "file_counts": {
+    "near_train_files": 3477,
+    "far_train_files": 3675
+  },
+  "zero_overlap_checks": {
+    "near_train_inter_far_train": 0,
+    "near_train_inter_holdout15": 0,
+    "far_train_inter_holdout15": 0,
+    "union_equals_train70": true
+  },
+  "lists_sha256": {
+    "speech_near_train70.txt": "c780fab8b43b9b9253c30bc74e62cd183062e42e61cf837b814a641d532ccbd0",
+    "speech_far_train70.txt": "94c7cf00b549c6af4de30ad8b68475fb3407bc54405fab86a6fc44affbceaa3a"
+  },
+  "notes": "keep --nearfar-mutex utterance as a double safeguard; per-side pool halving cost recorded in DATA_GAP_20261013.md",
+  "file_lists": {
+    "rule": "reader 清单顺序 × reader 内文件名升序（与训练侧 t11 临时清单逐行一致）；跨 reader 全局字典序会得到不同顺序，故顺序固定于此",
+    "near_file_list": "speech_near_train70_files.txt",
+    "far_file_list": "speech_far_train70_files.txt",
+    "counts": {
+      "near_files": 3477,
+      "far_files": 3675
+    },
+    "sha256": {
+      "speech_near_train70_files.txt": "1d20d55633075f56a87c43267d5d7cb53d9c720393f244e637d8ab005c3d5ef1",
+      "speech_far_train70_files.txt": "82a475cd7e1e97b062653833ae4f04ae8325028627cbd6aabd9071b2589af26b"
+    },
+    "assertions": {
+      "A_near_inter_far_files": 0,
+      "B_union_equals_train70_files": true,
+      "C_no_overlap_with_holdout15_files": true,
+      "D_readers_union_equals_train70": true
+    },
+    "source_pool_basename": "clean"
+  }
+}

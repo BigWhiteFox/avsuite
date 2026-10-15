@@ -257,8 +257,128 @@
 | exp/07_nn_aec/outputs/aecmos48_v5fix/zerotrain/aecmos_zerotrain.json | fest | deg_mos | 26 | 4.999 | 0.000 | 4.999±0.00 |
 | exp/07_nn_aec/outputs/aecmos48_v5fix/zerotrain/aecmos_zerotrain.json | nst | echo_mos | 20 | 4.998 | 0.003 | 4.998±0.00 |
 | exp/07_nn_aec/outputs/aecmos48_v5fix/zerotrain/aecmos_zerotrain.json | nst | deg_mos | 20 | 3.945 | 0.463 | 3.945±0.20 |
+| exp/07_nn_aec/outputs/eval_v8/aecmos_nn_best_v5rerun.json | dt | echo_mos | 154 | 4.248 | 0.286 | 4.248±0.05 |
+| exp/07_nn_aec/outputs/eval_v8/aecmos_nn_best_v5rerun.json | dt | deg_mos | 154 | 3.220 | 0.559 | 3.220±0.09 |
+| exp/07_nn_aec/outputs/eval_v8/aecmos_nn_best_v5rerun.json | fest | echo_mos | 70 | 3.881 | 0.782 | 3.881±0.18 |
+| exp/07_nn_aec/outputs/eval_v8/aecmos_nn_best_v5rerun.json | fest | deg_mos | 70 | 4.999 | 0.001 | 4.999±0.00 |
+| exp/07_nn_aec/outputs/eval_v8/aecmos_nn_best_v5rerun.json | nst | echo_mos | 76 | 4.998 | 0.003 | 4.998±0.00 |
+| exp/07_nn_aec/outputs/eval_v8/aecmos_nn_best_v5rerun.json | nst | deg_mos | 76 | 3.827 | 0.455 | 3.827±0.10 |
+| exp/07_nn_aec/outputs/eval_v8/aecmos_nn_best_v8.json | dt | echo_mos | 706 | 4.106 | 0.336 | 4.106±0.02 |
+| exp/07_nn_aec/outputs/eval_v8/aecmos_nn_best_v8.json | dt | deg_mos | 706 | 3.458 | 0.547 | 3.458±0.04 |
+| exp/07_nn_aec/outputs/eval_v8/aecmos_nn_best_v8.json | fest | echo_mos | 310 | 2.896 | 1.097 | 2.896±0.12 |
+| exp/07_nn_aec/outputs/eval_v8/aecmos_nn_best_v8.json | fest | deg_mos | 310 | 4.999 | 0.001 | 4.999±0.00 |
+| exp/07_nn_aec/outputs/eval_v8/aecmos_nn_best_v8.json | nst | echo_mos | 384 | 4.997 | 0.003 | 4.997±0.00 |
+| exp/07_nn_aec/outputs/eval_v8/aecmos_nn_best_v8.json | nst | deg_mos | 384 | 4.186 | 0.398 | 4.186±0.04 |
+| exp/07_nn_aec/outputs/eval_v8/aecmos_trad_v5rerun.json | dt | echo_mos | 154 | 3.442 | 0.635 | 3.442±0.10 |
+| exp/07_nn_aec/outputs/eval_v8/aecmos_trad_v5rerun.json | dt | deg_mos | 154 | 3.590 | 0.557 | 3.590±0.09 |
+| exp/07_nn_aec/outputs/eval_v8/aecmos_trad_v5rerun.json | fest | echo_mos | 70 | 3.518 | 0.805 | 3.518±0.19 |
+| exp/07_nn_aec/outputs/eval_v8/aecmos_trad_v5rerun.json | fest | deg_mos | 70 | 4.999 | 0.001 | 4.999±0.00 |
+| exp/07_nn_aec/outputs/eval_v8/aecmos_trad_v5rerun.json | nst | echo_mos | 76 | 4.998 | 0.002 | 4.998±0.00 |
+| exp/07_nn_aec/outputs/eval_v8/aecmos_trad_v5rerun.json | nst | deg_mos | 76 | 3.774 | 0.373 | 3.774±0.08 |
+| exp/07_nn_aec/outputs/eval_v8/aecmos_trad_v8.json | dt | echo_mos | 706 | 3.105 | 0.718 | 3.105±0.05 |
+| exp/07_nn_aec/outputs/eval_v8/aecmos_trad_v8.json | dt | deg_mos | 706 | 3.822 | 0.403 | 3.822±0.03 |
+| exp/07_nn_aec/outputs/eval_v8/aecmos_trad_v8.json | fest | echo_mos | 310 | 3.003 | 0.772 | 3.003±0.09 |
+| exp/07_nn_aec/outputs/eval_v8/aecmos_trad_v8.json | fest | deg_mos | 310 | 4.999 | 0.001 | 4.999±0.00 |
+| exp/07_nn_aec/outputs/eval_v8/aecmos_trad_v8.json | nst | echo_mos | 384 | 4.998 | 0.002 | 4.998±0.00 |
+| exp/07_nn_aec/outputs/eval_v8/aecmos_trad_v8.json | nst | deg_mos | 384 | 4.145 | 0.245 | 4.145±0.02 |
 | exp/07_nn_aec/outputs/hardening_rerun/aecmos_trad_hard_official_fest.json | ? | echo_mos | 300 | 2.759 | 1.141 | 2.759±0.13 |
 | exp/07_nn_aec/outputs/hardening_rerun/aecmos_trad_hard_official_fest.json | ? | deg_mos | 300 | 4.999 | 0.001 | 4.999±0.00 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_freshctrl_60ep.json | dt | echo_mos | 14 | 3.188 | 0.666 | 3.188±0.35 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_freshctrl_60ep.json | dt | deg_mos | 14 | 3.115 | 0.468 | 3.115±0.25 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_freshctrl_60ep.json | fest | echo_mos | 26 | 1.824 | 0.230 | 1.824±0.09 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_freshctrl_60ep.json | fest | deg_mos | 26 | 5.000 | 0.000 | 5.000±0.00 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_freshctrl_60ep.json | nst | echo_mos | 20 | 4.998 | 0.003 | 4.998±0.00 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_freshctrl_60ep.json | nst | deg_mos | 20 | 3.941 | 0.418 | 3.941±0.18 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_lossctrl_240ep.json | dt | echo_mos | 14 | 4.041 | 0.317 | 4.041±0.17 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_lossctrl_240ep.json | dt | deg_mos | 14 | 3.089 | 0.446 | 3.089±0.23 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_lossctrl_240ep.json | fest | echo_mos | 26 | 2.685 | 0.824 | 2.685±0.32 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_lossctrl_240ep.json | fest | deg_mos | 26 | 4.999 | 0.001 | 4.999±0.00 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_lossctrl_240ep.json | nst | echo_mos | 20 | 4.998 | 0.003 | 4.998±0.00 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_lossctrl_240ep.json | nst | deg_mos | 20 | 3.892 | 0.460 | 3.892±0.20 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_lossctrl_240ep_seed1.json | dt | echo_mos | 14 | 3.724 | 0.450 | 3.724±0.24 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_lossctrl_240ep_seed1.json | dt | deg_mos | 14 | 3.208 | 0.352 | 3.208±0.18 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_lossctrl_240ep_seed1.json | fest | echo_mos | 26 | 2.248 | 0.715 | 2.248±0.27 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_lossctrl_240ep_seed1.json | fest | deg_mos | 26 | 5.000 | 0.001 | 5.000±0.00 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_lossctrl_240ep_seed1.json | nst | echo_mos | 20 | 4.998 | 0.004 | 4.998±0.00 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_lossctrl_240ep_seed1.json | nst | deg_mos | 20 | 3.892 | 0.422 | 3.892±0.18 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_lossctrl_v4replica.json | dt | echo_mos | 14 | 4.173 | 0.236 | 4.173±0.12 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_lossctrl_v4replica.json | dt | deg_mos | 14 | 3.242 | 0.385 | 3.242±0.20 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_lossctrl_v4replica.json | fest | echo_mos | 26 | 3.219 | 0.959 | 3.219±0.37 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_lossctrl_v4replica.json | fest | deg_mos | 26 | 4.999 | 0.001 | 4.999±0.00 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_lossctrl_v4replica.json | nst | echo_mos | 20 | 4.999 | 0.003 | 4.999±0.00 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_lossctrl_v4replica.json | nst | deg_mos | 20 | 3.941 | 0.429 | 3.941±0.19 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_psycho_240ep.json | dt | echo_mos | 14 | 3.840 | 0.576 | 3.840±0.30 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_psycho_240ep.json | dt | deg_mos | 14 | 3.304 | 0.391 | 3.304±0.20 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_psycho_240ep.json | fest | echo_mos | 26 | 2.250 | 0.572 | 2.250±0.22 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_psycho_240ep.json | fest | deg_mos | 26 | 5.000 | 0.001 | 5.000±0.00 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_psycho_240ep.json | nst | echo_mos | 20 | 4.998 | 0.003 | 4.998±0.00 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_psycho_240ep.json | nst | deg_mos | 20 | 3.925 | 0.390 | 3.925±0.17 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_psycho_240ep_seed1.json | dt | echo_mos | 14 | 3.850 | 0.373 | 3.850±0.20 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_psycho_240ep_seed1.json | dt | deg_mos | 14 | 3.191 | 0.355 | 3.191±0.19 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_psycho_240ep_seed1.json | fest | echo_mos | 26 | 2.328 | 0.577 | 2.328±0.22 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_psycho_240ep_seed1.json | fest | deg_mos | 26 | 5.000 | 0.000 | 5.000±0.00 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_psycho_240ep_seed1.json | nst | echo_mos | 20 | 4.998 | 0.003 | 4.998±0.00 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_psycho_240ep_seed1.json | nst | deg_mos | 20 | 3.865 | 0.464 | 3.865±0.20 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_psycho_cfix_seed1.json | dt | echo_mos | 14 | 3.860 | 0.604 | 3.860±0.32 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_psycho_cfix_seed1.json | dt | deg_mos | 14 | 3.263 | 0.411 | 3.263±0.22 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_psycho_cfix_seed1.json | fest | echo_mos | 26 | 2.562 | 0.809 | 2.562±0.31 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_psycho_cfix_seed1.json | fest | deg_mos | 26 | 5.000 | 0.001 | 5.000±0.00 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_psycho_cfix_seed1.json | nst | echo_mos | 20 | 4.998 | 0.003 | 4.998±0.00 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_psycho_cfix_seed1.json | nst | deg_mos | 20 | 3.907 | 0.400 | 3.907±0.18 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_v4.json | dt | echo_mos | 14 | 4.175 | 0.234 | 4.175±0.12 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_v4.json | dt | deg_mos | 14 | 3.237 | 0.392 | 3.237±0.21 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_v4.json | fest | echo_mos | 26 | 3.194 | 0.962 | 3.194±0.37 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_v4.json | fest | deg_mos | 26 | 4.999 | 0.001 | 4.999±0.00 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_v4.json | nst | echo_mos | 20 | 4.999 | 0.003 | 4.999±0.00 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_v4.json | nst | deg_mos | 20 | 3.941 | 0.430 | 3.941±0.19 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_freshctrl_60ep.json | dt | echo_mos | 154 | 3.407 | 0.559 | 3.407±0.09 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_freshctrl_60ep.json | dt | deg_mos | 154 | 3.304 | 0.447 | 3.304±0.07 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_freshctrl_60ep.json | fest | echo_mos | 70 | 1.899 | 0.293 | 1.899±0.07 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_freshctrl_60ep.json | fest | deg_mos | 70 | 5.000 | 0.000 | 5.000±0.00 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_freshctrl_60ep.json | nst | echo_mos | 76 | 4.997 | 0.003 | 4.997±0.00 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_freshctrl_60ep.json | nst | deg_mos | 76 | 3.865 | 0.421 | 3.865±0.09 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_lossctrl_240ep.json | dt | echo_mos | 154 | 4.102 | 0.338 | 4.102±0.05 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_lossctrl_240ep.json | dt | deg_mos | 154 | 3.129 | 0.525 | 3.129±0.08 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_lossctrl_240ep.json | fest | echo_mos | 70 | 2.690 | 0.887 | 2.690±0.21 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_lossctrl_240ep.json | fest | deg_mos | 70 | 5.000 | 0.001 | 5.000±0.00 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_lossctrl_240ep.json | nst | echo_mos | 76 | 4.998 | 0.002 | 4.998±0.00 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_lossctrl_240ep.json | nst | deg_mos | 76 | 3.741 | 0.496 | 3.741±0.11 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_lossctrl_240ep_seed1.json | dt | echo_mos | 154 | 3.770 | 0.471 | 3.770±0.07 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_lossctrl_240ep_seed1.json | dt | deg_mos | 154 | 3.265 | 0.503 | 3.265±0.08 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_lossctrl_240ep_seed1.json | fest | echo_mos | 70 | 2.350 | 0.696 | 2.350±0.16 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_lossctrl_240ep_seed1.json | fest | deg_mos | 70 | 5.000 | 0.001 | 5.000±0.00 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_lossctrl_240ep_seed1.json | nst | echo_mos | 76 | 4.998 | 0.002 | 4.998±0.00 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_lossctrl_240ep_seed1.json | nst | deg_mos | 76 | 3.812 | 0.457 | 3.812±0.10 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_lossctrl_v4replica.json | dt | echo_mos | 154 | 4.247 | 0.287 | 4.247±0.05 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_lossctrl_v4replica.json | dt | deg_mos | 154 | 3.222 | 0.558 | 3.222±0.09 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_lossctrl_v4replica.json | fest | echo_mos | 70 | 3.912 | 0.770 | 3.912±0.18 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_lossctrl_v4replica.json | fest | deg_mos | 70 | 4.999 | 0.001 | 4.999±0.00 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_lossctrl_v4replica.json | nst | echo_mos | 76 | 4.998 | 0.003 | 4.998±0.00 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_lossctrl_v4replica.json | nst | deg_mos | 76 | 3.826 | 0.455 | 3.826±0.10 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_psycho_240ep.json | dt | echo_mos | 154 | 3.964 | 0.419 | 3.964±0.07 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_psycho_240ep.json | dt | deg_mos | 154 | 3.279 | 0.469 | 3.279±0.07 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_psycho_240ep.json | fest | echo_mos | 70 | 2.348 | 0.640 | 2.348±0.15 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_psycho_240ep.json | fest | deg_mos | 70 | 5.000 | 0.001 | 5.000±0.00 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_psycho_240ep.json | nst | echo_mos | 76 | 4.997 | 0.003 | 4.997±0.00 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_psycho_240ep.json | nst | deg_mos | 76 | 3.864 | 0.410 | 3.864±0.09 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_psycho_240ep_seed1.json | dt | echo_mos | 154 | 3.925 | 0.425 | 3.925±0.07 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_psycho_240ep_seed1.json | dt | deg_mos | 154 | 3.258 | 0.467 | 3.258±0.07 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_psycho_240ep_seed1.json | fest | echo_mos | 70 | 2.373 | 0.643 | 2.373±0.15 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_psycho_240ep_seed1.json | fest | deg_mos | 70 | 5.000 | 0.001 | 5.000±0.00 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_psycho_240ep_seed1.json | nst | echo_mos | 76 | 4.997 | 0.003 | 4.997±0.00 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_psycho_240ep_seed1.json | nst | deg_mos | 76 | 3.835 | 0.437 | 3.835±0.10 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_psycho_cfix_seed1.json | dt | echo_mos | 154 | 3.936 | 0.435 | 3.936±0.07 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_psycho_cfix_seed1.json | dt | deg_mos | 154 | 3.241 | 0.513 | 3.241±0.08 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_psycho_cfix_seed1.json | fest | echo_mos | 70 | 2.540 | 0.797 | 2.540±0.19 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_psycho_cfix_seed1.json | fest | deg_mos | 70 | 5.000 | 0.001 | 5.000±0.00 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_psycho_cfix_seed1.json | nst | echo_mos | 76 | 4.997 | 0.004 | 4.997±0.00 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_psycho_cfix_seed1.json | nst | deg_mos | 76 | 3.837 | 0.470 | 3.837±0.11 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_v4.json | dt | echo_mos | 154 | 4.248 | 0.286 | 4.248±0.05 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_v4.json | dt | deg_mos | 154 | 3.220 | 0.559 | 3.220±0.09 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_v4.json | fest | echo_mos | 70 | 3.881 | 0.782 | 3.881±0.18 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_v4.json | fest | deg_mos | 70 | 4.999 | 0.001 | 4.999±0.00 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_v4.json | nst | echo_mos | 76 | 4.998 | 0.003 | 4.998±0.00 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_v4.json | nst | deg_mos | 76 | 3.827 | 0.455 | 3.827±0.10 |
 | exp/09_cascade_aec/results/aecmos_cascade_official.json | dt | echo_mos | 299 | 3.233 | 1.076 | 3.233±0.12 |
 | exp/09_cascade_aec/results/aecmos_cascade_official.json | dt | deg_mos | 299 | 2.947 | 0.912 | 2.947±0.10 |
 | exp/09_cascade_aec/results/aecmos_cascade_official.json | fest | echo_mos | 299 | 3.096 | 1.189 | 3.096±0.13 |
@@ -304,3 +424,15 @@
 | exp/07_nn_aec/outputs/aecmos48_v5fix/eval_speaker_only_holdout/aecmos_cascade.json vs exp/07_nn_aec/outputs/aecmos48_v5fix/eval_speaker_only_holdout/aecmos_nn.json | dt | deg_mos | 18 | +0.064 | [-0.135, +0.270] | CI 含 0，不显著 |
 | exp/07_nn_aec/outputs/aecmos48_v5fix/eval_ood_delay/aecmos_cascade.json vs exp/07_nn_aec/outputs/aecmos48_v5fix/eval_ood_delay/aecmos_nn.json | dt | echo_mos | 154 | +0.182 | [+0.061, +0.301] | 显著（CI 不含 0） |
 | exp/07_nn_aec/outputs/aecmos48_v5fix/eval_ood_delay/aecmos_cascade.json vs exp/07_nn_aec/outputs/aecmos48_v5fix/eval_ood_delay/aecmos_nn.json | dt | deg_mos | 154 | -0.407 | [-0.493, -0.321] | 显著（CI 不含 0） |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_lossctrl_240ep.json vs exp/07_nn_aec/outputs/p05/eval_v3/aecmos_v4.json | dt | echo_mos | 14 | -0.134 | [-0.227, -0.046] | 显著（CI 不含 0） |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_lossctrl_240ep.json vs exp/07_nn_aec/outputs/p05/eval_v3/aecmos_v4.json | dt | deg_mos | 14 | -0.148 | [-0.290, -0.030] | 显著（CI 不含 0） |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_lossctrl_240ep.json vs exp/07_nn_aec/outputs/p05/eval_v5/aecmos_v4.json | dt | echo_mos | 154 | -0.146 | [-0.183, -0.108] | 显著（CI 不含 0） |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_lossctrl_240ep.json vs exp/07_nn_aec/outputs/p05/eval_v5/aecmos_v4.json | dt | deg_mos | 154 | -0.092 | [-0.152, -0.031] | 显著（CI 不含 0） |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_psycho_240ep.json vs exp/07_nn_aec/outputs/p05/eval_v3/aecmos_v4.json | dt | echo_mos | 14 | -0.335 | [-0.582, -0.138] | 显著（CI 不含 0） |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_psycho_240ep.json vs exp/07_nn_aec/outputs/p05/eval_v3/aecmos_v4.json | dt | deg_mos | 14 | +0.067 | [-0.103, +0.238] | CI 含 0，不显著 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_psycho_240ep.json vs exp/07_nn_aec/outputs/p05/eval_v5/aecmos_v4.json | dt | echo_mos | 154 | -0.285 | [-0.336, -0.236] | 显著（CI 不含 0） |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_psycho_240ep.json vs exp/07_nn_aec/outputs/p05/eval_v5/aecmos_v4.json | dt | deg_mos | 154 | +0.059 | [-0.009, +0.125] | CI 含 0，不显著 |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_lossctrl_v4replica.json vs exp/07_nn_aec/outputs/p05/eval_v3/aecmos_v4.json | dt | echo_mos | 14 | -0.002 | [-0.005, -0.001] | 显著（CI 不含 0） |
+| exp/07_nn_aec/outputs/p05/eval_v3/aecmos_lossctrl_v4replica.json vs exp/07_nn_aec/outputs/p05/eval_v3/aecmos_v4.json | dt | deg_mos | 14 | +0.005 | [-0.001, +0.014] | CI 含 0，不显著 |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_lossctrl_v4replica.json vs exp/07_nn_aec/outputs/p05/eval_v5/aecmos_v4.json | dt | echo_mos | 154 | -0.001 | [-0.002, -0.000] | 显著（CI 不含 0） |
+| exp/07_nn_aec/outputs/p05/eval_v5/aecmos_lossctrl_v4replica.json vs exp/07_nn_aec/outputs/p05/eval_v5/aecmos_v4.json | dt | deg_mos | 154 | +0.001 | [-0.000, +0.003] | CI 含 0，不显著 |

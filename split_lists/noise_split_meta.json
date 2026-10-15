@@ -1,0 +1,38 @@
+{
+  "task": "0-2 噪声池三分割（REMEDIATION_PLAN_V3.1 §2）",
+  "scheme": "sha256(filename)[:8] % 1000",
+  "hash": "sha256",
+  "hash_input": "filename(utf-8, basename, no path)",
+  "seed": "",
+  "buckets": 1000,
+  "thresholds": {
+    "train70": "bucket < 700",
+    "val15": "700 <= bucket < 850",
+    "eval15": "bucket >= 850"
+  },
+  "pool_dir_hint": "<noise-pool>/noise",
+  "pool_files": 659,
+  "counts": {
+    "train70": 472,
+    "val15": 92,
+    "eval15": 95
+  },
+  "ratios": {
+    "train70": 0.716237,
+    "val15": 0.139605,
+    "eval15": 0.144158
+  },
+  "list_files": {
+    "train70": "noise_train70.txt",
+    "val15": "noise_val15.txt",
+    "eval15": "noise_eval15.txt"
+  },
+  "list_sha256": {
+    "train70": "6529516c20054128f6a78b7f2d5697d66ddbd4789528c346885aba6913d5215e",
+    "val15": "b86e5f595421956a70c9c77a8cbec8f2da04c26bfee560c7c5970772bf4713ca",
+    "eval15": "82b4d72cc81ed372201bc3d6e7bb10ff113485dd258c3443b0517a8a76b804ed"
+  },
+  "manifest_file": "noise_split_manifest.csv",
+  "manifest_sha256": "64c26aab24506d2878185327f2de1bdf6687c7a376cef4b407bca7a6b2a9ba59",
+  "mutual_exclusion": "by construction: one filename -> one bucket -> one group"
+}

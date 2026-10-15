@@ -25,8 +25,9 @@ sys.path.insert(0, str(HERE.parent / "07_nn_aec"))      # avsuite/exp/07_nn_aec
 sys.path.insert(0, str(HERE.parent / "06_trad_aec"))    # avsuite/exp/06_trad_aec
 sys.path.insert(0, str(HERE.parents[1]))                # avsuite(core 包)
 
-from pipeline import TradAEC  # noqa: E402
+from ckpt_compat import load_ckpt  # noqa: E402 - 服务器 ckpt 含 PosixPath，须打桩加载
 from model import NNAEC  # noqa: E402
+from pipeline import TradAEC  # noqa: E402
 
 # lin-check 容差：预计算目录现为 FLOAT 子类型（无 PCM_16 量化），同一确定性 MDF 下
 # 实测 max|d|≈0。保留 2/32768 是**兼容旧 PCM_16 时代预计算目录**的宽松上界
@@ -54,7 +55,7 @@ def main():
     args.enh_dir.mkdir(parents=True, exist_ok=True)
 
     aec = TradAEC(method="mdf", partitions=8, mu=0.7)   # 线性级:与 WP-06/08 同配置
-    st = torch.load(args.ckpt, map_location=args.device, weights_only=False)
+    st = load_ckpt(args.ckpt, map_location=args.device)  # PosixPath 打桩在 ckpt_compat 内
     model = NNAEC().to(args.device).eval()
     model.load_state_dict(st["model"])
     print(f"[cascade] ckpt {args.ckpt} val={st.get('val')} -> {args.device}", flush=True)
