@@ -1,4 +1,4 @@
-name: ci
+﻿name: ci
 
 on:
   push:
@@ -18,26 +18,23 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          # CPU 版 torch（CI 无 GPU，模型单测均用随机小输入在 CPU 跑）
-          # torch/numpy/scipy/soundfile 按 environment.yml 实测版钉死：golden 波形
-          # sha256 逐位基准对 float 合成依赖版本敏感（见 tests/golden/），不钉版会在
-          # CI 新版本上产生 ULP 级漂移导致假失败（2026-10-15 run#16 实证）
-          pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu
+          # CPU 鐗?torch锛圕I 鏃?GPU锛屾ā鍨嬪崟娴嬪潎鐢ㄩ殢鏈哄皬杈撳叆鍦?CPU 璺戯級
+          # torch/numpy/scipy/soundfile 鎸?environment.yml 瀹炴祴鐗堥拤姝伙細golden 娉㈠舰
+          # sha256 閫愪綅鍩哄噯瀵?float 鍚堟垚渚濊禆鐗堟湰鏁忔劅锛堣 tests/golden/锛夛紝涓嶉拤鐗堜細鍦?          # CI 鏂扮増鏈笂浜х敓 ULP 绾ф紓绉诲鑷村亣澶辫触锛?026-10-15 run#16 瀹炶瘉锛?          pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu
           pip install numpy==1.26.4 scipy==1.17.1 soundfile==0.14.0
           pip install -r requirements.txt
-          # 兜底：requirements 的宽松下界可能再次抬升已钉版本，重申一遍
-          pip install numpy==1.26.4 scipy==1.17.1 soundfile==0.14.0
+          # 鍏滃簳锛歳equirements 鐨勫鏉句笅鐣屽彲鑳藉啀娆℃姮鍗囧凡閽夌増鏈紝閲嶇敵涓€閬?          pip install numpy==1.26.4 scipy==1.17.1 soundfile==0.14.0
+          # pytest-forked锛氭瘡涓敤渚嬬嫭绔嬪瓙杩涚▼鎵ц锛屼富杩涚▼鍐呭瓨涓嶉殢 416 椤圭疮绉€斺€?          # 淇 CI runner OOM锛坮un#14-23 瀹炶瘉锛氳繘搴︽潯 100% 鍚庛€佹眹鎬昏鍓嶆暣涓?          # 杩涚▼鏍戣鏉€锛宻ummary 姘歌繙涓虹┖锛泂hard 鍑忓崐涔熸锛屾帓闄ょ嚎鎬х疮绉級
+          pip install pytest-forked
 
       - name: Ruff lint
         run: |
-          # 钉版：ruff 0.17.0（= environment.yml 实测版本），避免新版规则集
-          # 让"既有 32 条 lint 债务"的判定随上游漂移（V5 已清本波新增；全量清零排程中）
-          pip install ruff==0.17.0
+          # 閽夌増锛歳uff 0.17.0锛? environment.yml 瀹炴祴鐗堟湰锛夛紝閬垮厤鏂扮増瑙勫垯闆?          # 璁?鏃㈡湁 32 鏉?lint 鍊哄姟"鐨勫垽瀹氶殢涓婃父婕傜Щ锛圴5 宸叉竻鏈尝鏂板锛涘叏閲忔竻闆舵帓绋嬩腑锛?          pip install ruff==0.17.0
           ruff check core exp tools scripts tests
 
       - name: Pytest (shard 1/2, test_[a-m]*.py)
         run: |
-          python -m pytest tests/test_[a-m]*.py -q --tb=short 2>&1 | tee pytest_out_1.txt || true
+          python -m pytest tests/test_[a-m]*.py -q --tb=short --forked 2>&1 | tee pytest_out_1.txt || true
           echo "PYTEST_EXIT=$?" >> "$GITHUB_STEP_SUMMARY"
           grep -iE "killed|oom|out of memory|Segmentation" /var/log/syslog 2>/dev/null | tail -3 >> "$GITHUB_STEP_SUMMARY" || true
           free -m >> "$GITHUB_STEP_SUMMARY" || true
@@ -46,6 +43,6 @@ jobs:
 
       - name: Pytest (shard 2/2, test_[n-z]*.py)
         run: |
-          python -m pytest tests/test_[n-z]*.py -q --tb=short 2>&1 | tee pytest_out_2.txt || true
+          python -m pytest tests/test_[n-z]*.py -q --tb=short --forked 2>&1 | tee pytest_out_2.txt || true
           tail -n 25 pytest_out_2.txt | while IFS= read -r line; do echo "::error::s2 ${line}"; done || true
           grep -qE "[0-9]+ passed" pytest_out_2.txt && ! grep -qE "[1-9][0-9]* failed" pytest_out_2.txt || exit 1
