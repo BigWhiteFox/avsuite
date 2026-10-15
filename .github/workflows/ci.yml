@@ -31,10 +31,8 @@ jobs:
 
       - name: Pytest
         run: |
-          python -m pytest tests -q --tb=short 2>&1 | tee pytest_out.txt || true
-          echo "### pytest_out.txt (full tail)" >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-          tail -c 60000 pytest_out.txt >> "$GITHUB_STEP_SUMMARY" || true
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-          grep -qE "[1-9][0-9]* failed|ERROR" pytest_out.txt && exit 1 || true
-          tail -1 pytest_out.txt | grep -q "passed" || exit 1
+          python -m pytest tests -q --tb=line 2>&1 | tee pytest_out.txt || true
+          grep -E "^(FAILED|ERROR)" pytest_out.txt | while IFS= read -r line; do
+            echo "::error::${line}"
+          done || true
+          grep -qE "^[0-9]+ passed" pytest_out.txt && ! grep -qE " [1-9][0-9]* failed" pytest_out.txt && exit 0 || exit 1
