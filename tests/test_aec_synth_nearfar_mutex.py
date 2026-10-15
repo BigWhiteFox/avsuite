@@ -282,7 +282,10 @@ def test_default_matches_prechange_golden_baseline(tmp_path):
     rr = _run(fx / "near", fx / "far", fx / "noise", out, _GOLDEN / "rir",
               num=_G_NUM, dur=str(_G_DUR), seed=_G_SEED)
     assert rr.returncode == 0, rr.stderr.decode("utf-8", "replace")[-2000:]
-    assert (out / "manifest.csv").read_bytes() == (expect / "manifest.csv").read_bytes()
+    # 平台换行归一化：Windows 文本模式写出 CRLF、Linux 写出 LF（wav 仍严格 bytes 比较）
+    def _norm(p):
+        return p.read_bytes().replace(b"\r\n", b"\n")
+    assert _norm(out / "manifest.csv") == _norm(expect / "manifest.csv")
     names = sorted(p.name for p in (expect / "mic").glob("*.wav"))
     assert len(names) == _G_NUM
     for sub in SUBS:

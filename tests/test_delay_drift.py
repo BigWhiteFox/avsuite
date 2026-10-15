@@ -162,8 +162,13 @@ def test_drift0_matches_golden_baseline(tmp_path):
         f"缺少黄金基准目录 {_GOLDEN_DIR}（生成命令见本用例 docstring）")
     out = _run_golden_synth(tmp_path / "out", fx, _GOLDEN_RIR_DIR)
 
-    assert (out / "manifest.csv").read_bytes() == \
-        (_GOLDEN_EXPECT / "manifest.csv").read_bytes(), "manifest.csv 与黄金基准不一致"
+    # 平台换行归一化：Windows 文本模式写出 CRLF、Linux 写出 LF，行内容逐位一致即可
+    # （wav 仍为严格 bytes 比较——wav 是二进制格式，无换行翻译问题）
+    def _norm_manifest(p):
+        return p.read_bytes().replace(b"\r\n", b"\n")
+
+    assert _norm_manifest(out / "manifest.csv") == \
+        _norm_manifest(_GOLDEN_EXPECT / "manifest.csv"), "manifest.csv 与黄金基准不一致"
     names = sorted(p.name for p in (_GOLDEN_EXPECT / "mic").glob("*.wav"))
     assert len(names) == _GOLDEN_NUM, f"基准内 mic wav 数 {len(names)} != {_GOLDEN_NUM}"
     for sub in _GOLDEN_SUBS:

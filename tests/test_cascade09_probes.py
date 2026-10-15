@@ -84,9 +84,13 @@ def test_erle_db_rejects_python_list():
 
 
 # ------------------------------------------------------------------ T12-b
+_HAS_D_DATA = Path("D:/data/aec-synth/eval_v3").is_dir()   # Linux/CI 无数据 ⇒ 跳过
+
 @pytest.mark.parametrize("script", [
-    "probe_clip.py",
-    "probe_env.py",
+    pytest.param("probe_clip.py", marks=pytest.mark.skipif(
+        not _HAS_D_DATA, reason="探针模块级直读 D:/data（Windows 素材）；无数据环境跳过")),
+    pytest.param("probe_env.py", marks=pytest.mark.skipif(
+        not _HAS_D_DATA, reason="探针模块级直读 D:/data（Windows 素材）；无数据环境跳过")),
     pytest.param("probe_compare.py", marks=pytest.mark.xfail(
         strict=False, reason="probe_compare.py **模块级**读取 "
                              "exp/07_nn_aec/outputs/aecmos_trad_wp06.json（import 即执行、"
