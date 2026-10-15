@@ -38,7 +38,8 @@ jobs:
       - name: Pytest
         run: |
           python -m pytest tests -q --tb=line 2>&1 | tee pytest_out.txt || true
-          tail -n 40 pytest_out.txt | while IFS= read -r line; do
+          tail -n 25 pytest_out.txt | while IFS= read -r line; do
             echo "::error::${line}"
           done || true
-          grep -qE "^[0-9]+ passed" pytest_out.txt && ! grep -qE " [1-9][0-9]* failed" pytest_out.txt && exit 0 || exit 1
+          # 判定：有 "passed" 统计行 且 无 "failed"（pytest -q 汇总行两侧有 == 包裹，不能锚定行首）
+          grep -qE "[0-9]+ passed" pytest_out.txt && ! grep -qE "[1-9][0-9]* failed" pytest_out.txt && exit 0 || exit 1
