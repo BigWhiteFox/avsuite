@@ -145,9 +145,11 @@ def test_single_source_matches_v5_golden(tmp_path):
             import math
             for key in ("mic", "far", "near"):
                 w = it[key].numpy()
-                rms = math.sqrt(float((w * w).mean()))
-                assert rms > 1e-6, f"idx {ref['idx']}/{key} 波形塌陷"
                 assert math.isfinite(float(np.abs(w).max())), f"idx {ref['idx']}/{key} 非有限值"
+                rms = math.sqrt(float((w * w).mean()))
+                if ref["audit"]["scenario"] == "fest" and key == "near":
+                    continue  # FEST 语义 = 近端静音（纯回声抑制场景），near 全零合法
+                assert rms > 1e-6, f"idx {ref['idx']}/{key} 波形塌陷"
     prov = ds.provenance()
     assert prov["sampling_scheme"] == "single_source"
     assert prov["split_lists"]["near"]["n"] == 3            # v5 形状保持
