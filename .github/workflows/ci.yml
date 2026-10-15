@@ -31,11 +31,10 @@ jobs:
 
       - name: Pytest
         run: |
-          set -o pipefail
-          python -m pytest tests -q --tb=short 2>&1 | tee pytest_out.txt; test ${PIPESTATUS[0]} -eq 0 || true
-          echo "### pytest_out.txt (full)" >> "$GITHUB_STEP_SUMMARY"
+          python -m pytest tests -q --tb=short 2>&1 | tee pytest_out.txt || true
+          echo "### pytest_out.txt (full tail)" >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
           tail -c 60000 pytest_out.txt >> "$GITHUB_STEP_SUMMARY" || true
           echo '```' >> "$GITHUB_STEP_SUMMARY"
-          if grep -qE "passed" pytest_out.txt; then true; fi
-          exit 1
+          grep -qE "[1-9][0-9]* failed|ERROR" pytest_out.txt && exit 1 || true
+          tail -1 pytest_out.txt | grep -q "passed" || exit 1
